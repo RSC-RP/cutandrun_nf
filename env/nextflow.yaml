@@ -1,0 +1,8 @@
+name: nextflow
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - python=3.7
+  - nextflow=22.04.0
+  - nf-core=2.3.2

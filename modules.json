@@ -1,0 +1,23 @@
+{
+    "name": "",
+    "homePage": "",
+    "repos": {
+        "nf-core/modules": {
+            "bowtie2/align": {
+                "git_sha": "cbc47767f7bb4751a9d178395bd66f051401a0c1"
+            },
+            "bowtie2/build": {
+                "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d"
+            },
+            "macs2/callpeak": {
+                "git_sha": "f0800157544a82ae222931764483331a81812012"
+            },
+            "seacr/callpeak": {
+                "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d"
+            },
+            "trimgalore": {
+                "git_sha": "85ec13ff1fc2196c5a507ea497de468101baabed"
+            }
+        }
+    }
+}

@@ -1,0 +1,16 @@
+.Rproj.user
+.DS_Store
+.Rhistory
+.RData
+.Ruserdata
+.html
+.snakemake/
+.nextflow/
+.nextflow.log*
+*.html
+*.html.*
+#https://stackoverflow.com/questions/40460216/how-do-i-make-git-ignore-symlink
+resources
+resources/
+results/
+test_data/
