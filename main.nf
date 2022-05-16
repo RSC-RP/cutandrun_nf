@@ -8,7 +8,7 @@ include { MACS2_CALLPEAK } from './modules/nf-core/modules/nf-core/macs2/callpea
 
 //Define stdout message for the command line use
 log.info """\
-         XXXX-  P I P E L I N E
+         C U T & R U N-  P I P E L I N E
          ===================================
          Project           : $workflow.projectDir
          Project workDir   : $workflow.workDir
@@ -47,13 +47,19 @@ workflow call_peaks {
                   params.save_unaligned, params.sort_bam)
     //Conver the bam files to bedtools 
     BAMTOBEDGRAPH(BOWTIE2_ALIGN.out.bam, genome_file)
-    //SEACR peak calling - *SHOULD BE A SUBWORKFLOW FOR THE BEDGRAPH GENERATION??*
+    /*
+    //SEACR peak calling - *SHOULD THERE BE A SUBWORKFLOW FOR THE BEDGRAPH GENERATION??*
     //Need to have channel with a tuple [meta, signal bdg, control bdg]
     BAMTOBEDGRAPH.out.bedgraph
         .map { meta -> [meta, [signal_bedgraph], [control_bedgraph] ] }
         .set { begraphs_ch }
-    SEACR_CALLPEAK(begraphs_ch)
-
+    //SEACR_CALLPEAK(begraphs_ch)
+    //MACS2 peak calling 
+    BOWTIE2_ALIGN.out.bam
+        .map { [meta, [ipbam], [controlbam] ] }
+        .set { bam_ch }
+    MACS2_CALLPEAK(bam_ch)
+    */
 }
 
 //Generate the index file 

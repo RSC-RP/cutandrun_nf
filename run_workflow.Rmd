@@ -34,4 +34,23 @@ groundhog::groundhog.library(pkgs, "2022-04-18")
 getwd()
 ```
 
-# 
+# Define functions
+
+```{r}
+
+```
+
+# Create Symlinked Data Directories 
+
+```{r}
+sample_sheet <- read.delim("sample_sheets/nguyen_e_cutandrun_mouse_acomys_sample_sheet.txt")
+
+# sample_sheet %>% 
+#   filter(grepl("^M1.+NK", sample_id), 
+#          grepl("K27|K4|IgG", sample_id)) %>% 
+#   write.table(., "sample_sheets/test_sample_sheet.txt",
+#               sep="\t", quote=FALSE, row.names=FALSE)
+
+```
+
+
