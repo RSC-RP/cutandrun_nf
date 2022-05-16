@@ -14,7 +14,7 @@ process BAMTOBEDGRAPH {
     path genome_file
 
     output:
-    tuple val(meta), path(".fragments.bedgraph"), emit: bedgraph
+    tuple val(meta), path("*.fragments.bedgraph"), emit: bedgraph
     path "versions.yml"           , emit: versions
 
     when:

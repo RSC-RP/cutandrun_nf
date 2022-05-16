@@ -1,0 +1,37 @@
+---
+title: "Run Cut&Run Peak Calling"
+always_allow_html: true
+output:
+  html_document:
+    theme: yeti
+    highlight: breezedark
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    number_sections: true
+    fig_caption: true
+    df_print: paged
+---
+
+# Set-up 
+
+```{r set-up, echo=FALSE}
+knitr::opts_knit$set(root.dir = PROJHOME)
+knitr::opts_chunk$set(tidy.opts=list(width.cutoff=80),
+                      tidy=TRUE,
+                      fig.align='center',
+                      fig.width = 10, fig.height = 10,
+                      eval = FALSE)
+
+options(stringsAsFactors = FALSE, max.print = 100)
+table = function (..., useNA = 'ifany') base::table(..., useNA = useNA)
+```
+
+```{r message = FALSE, warning=FALSE, echo=FALSE}
+pkgs <- c("stringr","magrittr","ggplot2","dplyr","tidyr","tibble")
+groundhog::groundhog.library(pkgs, "2022-04-18")
+
+getwd()
+```
+
+# 
