@@ -29,7 +29,7 @@ process BAMTOBEDGRAPH {
         -i $sample.bam \\
         $args > ${prefix}_bamtobed.bed
 
-    awk '$1==$4 && $6-$2 < 1000 {print $0}' ${prefix}_bamtobed.bed > ${prefix}_bamtobed.clean.bed
+    awk '\$1==\$4 && \$6-\$2 < 1000 {print \$0}' ${prefix}_bamtobed.bed > ${prefix}_bamtobed.clean.bed
     cut -f 1,2,6 ${prefix}_bamtobed.clean.bed | sort -k1,1 -k2,2n -k3,3n > ${prefix}_bamtobed.fragments.bed
     
     bedtools genomecov \\

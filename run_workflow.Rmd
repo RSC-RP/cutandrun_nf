@@ -28,8 +28,13 @@ table = function (..., useNA = 'ifany') base::table(..., useNA = useNA)
 ```
 
 ```{r message = FALSE, warning=FALSE, echo=FALSE}
-pkgs <- c("stringr","magrittr","ggplot2","dplyr","tidyr","tibble")
-groundhog::groundhog.library(pkgs, "2022-04-18")
+# pkgs <- c("stringr","magrittr","ggplot2","dplyr","tidyr","tibble")
+# groundhog::groundhog.library(pkgs, "2022-04-18")
+library(stringr)
+library(magrittr)
+library(dplyr)
+library(tidyr)
+library(tibble)
 
 getwd()
 ```
@@ -37,20 +42,175 @@ getwd()
 # Define functions
 
 ```{r}
-
+#Function to create symlinks to the original data files on active to the current working directory of the R project. 
+mk_symlinks <- function(linked_dirname,filepaths){
+  dir.create(linked_dirname, recursive = TRUE)
+  lapply(filepaths,function(file){
+    target <- file.path(linked_dirname, basename(file))
+    if(!file.exists(target)){
+      command <- paste("ln -svf",file, target)
+      system(command)
+    }
+  })
+}
 ```
 
-# Create Symlinked Data Directories 
+# Background Information 
 
+https://www.protocols.io/view/cut-amp-run-targeted-in-situ-genome-wide-profiling-14egnr4ql5dy/v3?step=113
+
+# Activate the Environment
+
+Optional: use tmux on the cybertron login nodes. Name the session Nextflow and then request an interactive session before activating the nextflow conda environment. The project's that one has been assigned can be found with `project info` command. 
+
+```{bash optional}
+ml python/3.8.0 
+tmux new-session -s nextflow
+qsub -I -q sceaq -P $(project name RSC_adhoc) -l select=1: -l walltime=8:00:00
+```
+
+Then create the conda environment that has the appropriate software, including `nextflow`, `nf-core`, and `graphviz`. 
+
+```{bash required}
+conda env create -f env/nextflow.yaml
+conda activate nextflow
+```
+
+
+# Examine the Sample Sheet
+
+The sample sheet is created in the analysis directory, also found on bitbucket repo: `https://childrens-atlassian/bitbucket/projects/RSC/repos/nguyen_e_2022.04_kidney_cutnrun`. This sample sheet **must** have the following column names: 
+  * "sample_id"
+  * "target_or_control"
+  * "read1"
+  * "read2"
+  * "single_end"
+  
+The columns "read1" and "read2" must contain full filepaths, even if they are symlinks. The "target_or_control" column must contain the values "target" for the antibodies using the immunoprecipitation for the proteins of interest (eg transcription factors examined, histone modifications like H3K27me3), or the value "control" for the isotype control (eg IgG). 
+ 
 ```{r}
-sample_sheet <- read.delim("sample_sheets/nguyen_e_cutandrun_mouse_acomys_sample_sheet.txt")
+sample_sheet <- read.delim("sample_sheets/nguyen_e_cutandrun_mouse_acomys_sample_sheet.txt") %>% 
+  mutate(single_end="false")
 
-# sample_sheet %>% 
-#   filter(grepl("^M1.+NK", sample_id), 
-#          grepl("K27|K4|IgG", sample_id)) %>% 
-#   write.table(., "sample_sheets/test_sample_sheet.txt",
+head(sample_sheet)
+dim(sample_sheet)
+```
+
+Create a small test dataset if needed. Example code is below. 
+
+```{r eval=FALSE}
+test_sheet <- sample_sheet %>%
+  filter(grepl("^M1.+NK", sample_id),
+         grepl("K27|K4|IgG", sample_id))
+
+subsample_fqs <- purrr::map(1:nrow(test_sheet), function(x){
+  sampler1 <- ShortRead::FastqSampler(test_sheet[x,"read1"], 10000)
+  set.seed(123)
+  R1 <- ShortRead::yield(sampler1)
+  sampler2 <- ShortRead::FastqSampler(test_sheet[x,"read2"], 10000)
+  set.seed(123)
+  R2 <- ShortRead::yield(sampler2)
+
+  ab <- test_sheet %>% 
+    slice(x) %>% 
+    pull(sample_id) %>% 
+    str_split_fixed(.,pattern = "_", n=3) %>% 
+    .[,2]
+
+  ShortRead::writeFastq(R1, file = paste0("test_data/Sample_ID_001_", ab,"_R1.fastq.gz"))
+  ShortRead::writeFastq(R2, file = paste0("test_data/Sample_ID_001_", ab,"_R2.fastq.gz"))
+})
+
+test_sheet <- test_sheet %>% 
+  mutate(read1=dir("test_data", pattern="*R1.fastq.gz", full.names=TRUE),
+         read2=dir("test_data", pattern="*R2.fastq.gz", full.names = TRUE))
+
+
+# #write a sample sheet for testing dataset 
+# write.table(test_sheet, "sample_sheets/test_sample_sheet.txt",
 #               sep="\t", quote=FALSE, row.names=FALSE)
+```
+
+# Configuration file 
+
+Open the configuration file `nextflow.config` and edit the necessary parameters for building the index, and/or running the alignment or peak calling steps. 
 
 ```
+//global parameters
+params {
+    // general options
+    sample_sheet                = "sample_sheets/test_sample_sheet.txt"
+    queue                       = 'sceaq'
+    project                     = '207f23bf-acb6-4835-8bfe-142436acb58c'
+    outdir                      = "./results/"
+    publish_dir_mode            = 'copy'
+    enable_conda                = false
+
+    //Bowtie params
+    fasta                       = './test_data/mm39_chr1_chr2.fa'
+    index                       = './results/bowtie2'
+    save_unaligned              = 'false'
+    sort_bam                    = 'true'
+
+    //trimgalore module specific parameters
+    clip_r1                     = ''
+    clip_r2                     = ''
+    three_prime_clip_r1         = ''
+    three_prime_clip_r2         = ''
+
+    //SEACR params
+    genome_file                 = './test_data/mm39_chr1_chr2.chrom.sizes'
+
+    //MACS2 params
+    macs2_gsize                 = ''
+}
+```
+
+# Run Script 
+
+## Optional: Build an index
+
+First edit the script `main_run.sh` to generate the bowtie2 index (See the example lines below). Decide on the executor profile, which means you can run the index process:
+  1) locally on an interactive session cybertron with singularity 
+    * requires appropriate computational resources be requested using `qsub -I -q <queue_name> -P <project_code> -l select=1:ncpus=4:mem=32GB`
+  2) you can submit a PBS job that will use singularity containers 
+    * This takes care of requesting the appropriate resources using PBS
+  3) run it locally on your machine with docker (requires docker to be installed already). 
+    * Ensure the configs under scope `docker` in `.nextflow.config` are appropriate for your local computer
+
+Also, one will need to change the entry-point of the workflow, which is accomplished by setting the `NFX_ENTRY` variable to be `bowtie2_index`.
+
+```
+#Options: 'bowtie2_index' or 'call_peaks'
+NFX_ENTRY='bowtie2_index'
+#Options: 'local_singularity', 'PBS_singularity', and 'local_docker'
+NFX_PROFILE='PBS_singularity'
+```
+
+Then invoke the `main_run.sh` script on the command line. The command line argument following `.main_rush.sh` should be a string that describes your current project, like  "bowtie2_index", which will be a prefix on the nextflow log,report HTML, and DAG image generated during that workflow execution. Otherwise the default value will be used `nextflow_report`. 
+
+```{bash}
+./main_run.sh "bowtie2_index"
+```
+
+## Alignment and Peak Calls
+
+Again, edit the variables in the `main_run.sh` script for entry-point of the workflow, and optionally, the executor. This time input the option *"call_peaks"* for the `NFX_ENTRY` variable. 
+
+```
+#Options: 'bowtie2_index' or 'call_peaks'
+NFX_ENTRY='call_peaks'
+#Options: 'local_singularity', 'PBS_singularity', and 'local_docker'
+NFX_PROFILE='PBS_singularity'
+```
+
+Then, execute the `main_run.sh` script in order to complete the peak calling on the samples. 
+
+```{bash}
+./main_run.sh "cutandrun_test"
+```
+
+
+
 
 

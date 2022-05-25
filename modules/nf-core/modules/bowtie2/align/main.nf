@@ -43,7 +43,8 @@ process BOWTIE2_ALIGN {
     INDEX=`find -L ./ -name "*.rev.1.bt2" | sed "s/.rev.1.bt2//"`
     [ -z "\$INDEX" ] && INDEX=`find -L ./ -name "*.rev.1.bt2l" | sed "s/.rev.1.bt2l//"`
     [ -z "\$INDEX" ] && echo "Bowtie2 index files not found" 1>&2 && exit 1
-
+    
+    echo "The index is" \$INDEX
     bowtie2 \\
         -x \$INDEX \\
         $reads_args \\
