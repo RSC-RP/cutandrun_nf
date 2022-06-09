@@ -90,45 +90,51 @@ The columns "read1" and "read2" must contain full filepaths, even if they are sy
  
 ```{r}
 sample_sheet <- read.delim("sample_sheets/nguyen_e_cutandrun_mouse_acomys_sample_sheet.txt") %>% 
-  mutate(single_end="false")
+  mutate(single_end="false") %>% 
+  mutate(sample=str_split_fixed(sample_id, pattern = "_", n=3)[,1]) %>% 
+  select(sample, everything())
 
 head(sample_sheet)
 dim(sample_sheet)
+table(sample_sheet$sample)
 ```
 
 Create a small test dataset if needed. Example code is below. 
 
 ```{r eval=FALSE}
-test_sheet <- sample_sheet %>%
-  filter(grepl("^M1.+NK", sample_id),
+subset_sheet <- sample_sheet %>%
+  filter(grepl("^M[12].+NK", sample_id),
          grepl("K27|K4|IgG", sample_id))
 
-subsample_fqs <- purrr::map(1:nrow(test_sheet), function(x){
-  sampler1 <- ShortRead::FastqSampler(test_sheet[x,"read1"], 10000)
-  set.seed(123)
-  R1 <- ShortRead::yield(sampler1)
-  sampler2 <- ShortRead::FastqSampler(test_sheet[x,"read2"], 10000)
-  set.seed(123)
-  R2 <- ShortRead::yield(sampler2)
-
-  ab <- test_sheet %>% 
-    slice(x) %>% 
-    pull(sample_id) %>% 
-    str_split_fixed(.,pattern = "_", n=3) %>% 
-    .[,2]
-
-  ShortRead::writeFastq(R1, file = paste0("test_data/Sample_ID_001_", ab,"_R1.fastq.gz"))
-  ShortRead::writeFastq(R2, file = paste0("test_data/Sample_ID_001_", ab,"_R2.fastq.gz"))
+subsample_fqs <- purrr::map(1:nrow(subset_sheet), function(x){
+          sampler1 <- ShortRead::FastqSampler(subset_sheet[x,"read1"], 10000)
+          set.seed(123)
+          R1 <- ShortRead::yield(sampler1)
+          sampler2 <- ShortRead::FastqSampler(subset_sheet[x,"read2"], 10000)
+          set.seed(123)
+          R2 <- ShortRead::yield(sampler2)
+        
+          subset <- subset_sheet %>% 
+            slice(x) 
+          ab <- subset %>% 
+            pull(sample_id)
+          s <- subset %>% 
+            pull(sample)
+        
+          # ShortRead::writeFastq(R1, file = paste("test_data/Sample_ID",s, ab,"R1.fastq.gz", sep="_"))
+          # ShortRead::writeFastq(R2, file = paste("test_data/Sample_ID",s, ab,"R2.fastq.gz",sep="_"))
 })
 
-test_sheet <- test_sheet %>% 
+
+test_sheet <- subset_sheet %>%
   mutate(read1=dir("test_data", pattern="*R1.fastq.gz", full.names=TRUE),
-         read2=dir("test_data", pattern="*R2.fastq.gz", full.names = TRUE))
+         read2=dir("test_data", pattern="*R2.fastq.gz", full.names = TRUE)) 
 
 
-# #write a sample sheet for testing dataset 
-# write.table(test_sheet, "sample_sheets/test_sample_sheet.txt",
-#               sep="\t", quote=FALSE, row.names=FALSE)
+
+#write a sample sheet for testing dataset
+write.table(test_sheet, "test_data/test_sample_sheet.txt",
+              sep="\t", quote=FALSE, row.names=FALSE)
 ```
 
 # Configuration file 

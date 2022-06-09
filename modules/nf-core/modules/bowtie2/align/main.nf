@@ -40,6 +40,8 @@ process BOWTIE2_ALIGN {
     def samtools_command = sort_bam ? 'sort' : 'view'
 
     """
+    set -eu -o pipefail
+
     INDEX=`find -L ./ -name "*.rev.1.bt2" | sed "s/.rev.1.bt2//"`
     [ -z "\$INDEX" ] && INDEX=`find -L ./ -name "*.rev.1.bt2l" | sed "s/.rev.1.bt2l//"`
     [ -z "\$INDEX" ] && echo "Bowtie2 index files not found" 1>&2 && exit 1

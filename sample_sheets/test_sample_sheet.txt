@@ -1,4 +1,0 @@
-sample_id	target_or_control	read1	read2	single_end
-M1_H3K27_NK	target	test_data/Sample_ID_001_H3K27_R1.fastq.gz	test_data/Sample_ID_001_H3K27_R2.fastq.gz	false
-M1_H3K4_NK	target	test_data/Sample_ID_001_H3K4_R1.fastq.gz	test_data/Sample_ID_001_H3K4_R2.fastq.gz	false
-M1_IgG_NK	control	test_data/Sample_ID_001_IgG_R1.fastq.gz	test_data/Sample_ID_001_IgG_R2.fastq.gz	false
