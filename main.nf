@@ -27,29 +27,26 @@ workflow call_peaks {
         Channel.empty()
             .set { versions }
         //if there is no filepath to the index provided, create the index from a fasta file
-        if ( params.index == '' ) {
+        if ( params.build_index ) {
             bowtie2_index()
             bowtie2_index.out.index
                 .set { index }
             versions = versions.concat(bowtie2_index.out.versions)
         } else {
             //Stage the genome index directory
-            Channel.fromPath(params.index)
-                .ifEmpty { error "No directory found for bowtie2 index at ${params.index}." }
+            Channel.fromPath(file(params.index, checkIfExists: true))
                 .collect() //collect converts this to a value channel and used multiple times
                 .set { index }
         }
         //Create the input channel which contains the SAMPLE_ID, whether its single-end, and the file paths for the fastqs. 
-        Channel.fromPath(file(params.sample_sheet))
-            .ifEmpty { error  "No sample sheet found at ${params.sample_sheet}." }
-            .splitCsv(header: true, sep: '\t')
+        Channel.fromPath(file(params.sample_sheet, checkIfExists: true))
+            .splitCsv(header: true, sep: ',')
             .map { meta -> [ [ "id":meta["sample_id"], "single_end":meta["single_end"].toBoolean(), "group":meta["target_or_control"], "sample":meta["sample"] ], //meta
                              [ file(meta["read1"], checkIfExists: true), file(meta["read2"], checkIfExists: true) ] //reads
                            ] }
             .set { meta_ch }
         //Stage the file for bedgraph generations
-        Channel.fromPath(params.genome_file)
-            .ifEmpty { error  "No chrom sizes file found at ${params.genome_file}." }
+        Channel.fromPath(file(params.genome_file, checkIfExists: true))
             .collect()
             .set { genome_file }
         //Adapter and Quality trimming of the fastq files 
@@ -69,21 +66,28 @@ workflow call_peaks {
         controls
             .cross(targets){ meta -> meta[0].sample }
             .map { meta -> [ meta[1][0], meta[1][1], meta[0][1] ] }
-            .subscribe onNext: { println "item: " + it }
             .set { seacr_ch }
+        
         //SEACR peak calling
-        // SEACR_CALLPEAK(seacr_ch, params.threshold)
+        SEACR_CALLPEAK(seacr_ch, params.threshold)
         //MACS2 peak calling 
-        // BOWTIE2_ALIGN.out.bam
-        //     .map { [meta, [ipbam], [controlbam] ] }
-        //     .set { bam_ch }
-        // MACS2_CALLPEAK(bam_ch)
+        BOWTIE2_ALIGN.out.bam
+            .branch { 
+               control: it =~ /^.+control.+/
+               targets: it =~ /^.target.+/
+            }
+            .set { conditions }
+        conditions.control
+            .cross(conditions.targets){ meta -> meta[0].sample }
+            .map { meta -> [ meta[1][0], meta[1][1], meta[0][1] ] }
+            .set { macs_ch }
+        // MACS2_CALLPEAK(macs_ch, params.macs2_gsize)
 
-        versions.concat(TRIMGALORE.out.versions, 
-                        BOWTIE2_ALIGN.out.versions,
-                        BAMTOBEDGRAPH.out.versions)
-                .collect()
-                .collectFile(name: 'versions.txt', newLine: true)
+        // versions.concat(TRIMGALORE.out.versions, 
+        //                 BOWTIE2_ALIGN.out.versions,
+        //                 BAMTOBEDGRAPH.out.versions)
+        //         .collect()
+        //         .collectFile(name: 'versions.txt', newLine: true)
 }
 
 //Generate the index file 

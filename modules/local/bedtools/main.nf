@@ -14,7 +14,7 @@ process BAMTOBEDGRAPH {
     path genome_file
 
     output:
-    tuple val(meta), path("*.fragments.bedgraph"), emit: bedgraph
+    tuple val(meta), path("*.fragments.bg"), emit: bedgraph
     tuple val(meta), path("*.bed"), emit: bedfiles
     path "versions.yml"           , emit: versions
 
@@ -38,7 +38,7 @@ process BAMTOBEDGRAPH {
     bedtools genomecov \\
         -bg \\
         -i ${prefix}_aligned.fragments.bed \\
-        -g ${genome_file} > ${prefix}_aligned.fragments.bedgraph
+        -g ${genome_file} > ${prefix}_aligned.fragments.bg
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

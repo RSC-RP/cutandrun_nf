@@ -63,7 +63,7 @@ https://www.protocols.io/view/cut-amp-run-targeted-in-situ-genome-wide-profiling
 
 Optional: use tmux on the cybertron login nodes. Name the session Nextflow and then request an interactive session before activating the nextflow conda environment. The project's that one has been assigned can be found with `project info` command. 
 
-```{bash optional}
+```{bash optional, eval=FALSE}
 ml python/3.8.0 
 tmux new-session -s nextflow
 qsub -I -q sceaq -P $(project name RSC_adhoc) -l select=1: -l walltime=8:00:00
@@ -71,7 +71,7 @@ qsub -I -q sceaq -P $(project name RSC_adhoc) -l select=1: -l walltime=8:00:00
 
 Then create the conda environment that has the appropriate software, including `nextflow`, `nf-core`, and `graphviz`. 
 
-```{bash required}
+```{bash required, eval=FALSE}
 conda env create -f env/nextflow.yaml
 conda activate nextflow
 ```
@@ -106,35 +106,33 @@ subset_sheet <- sample_sheet %>%
   filter(grepl("^M[12].+NK", sample_id),
          grepl("K27|K4|IgG", sample_id))
 
-subsample_fqs <- purrr::map(1:nrow(subset_sheet), function(x){
-          sampler1 <- ShortRead::FastqSampler(subset_sheet[x,"read1"], 10000)
-          set.seed(123)
-          R1 <- ShortRead::yield(sampler1)
-          sampler2 <- ShortRead::FastqSampler(subset_sheet[x,"read2"], 10000)
-          set.seed(123)
-          R2 <- ShortRead::yield(sampler2)
-        
-          subset <- subset_sheet %>% 
-            slice(x) 
-          ab <- subset %>% 
-            pull(sample_id)
-          s <- subset %>% 
-            pull(sample)
-        
-          # ShortRead::writeFastq(R1, file = paste("test_data/Sample_ID",s, ab,"R1.fastq.gz", sep="_"))
-          # ShortRead::writeFastq(R2, file = paste("test_data/Sample_ID",s, ab,"R2.fastq.gz",sep="_"))
-})
-
-
-test_sheet <- subset_sheet %>%
-  mutate(read1=dir("test_data", pattern="*R1.fastq.gz", full.names=TRUE),
-         read2=dir("test_data", pattern="*R2.fastq.gz", full.names = TRUE)) 
+# subsample_fqs <- purrr::map(1:nrow(subset_sheet), function(x){
+#           sampler1 <- ShortRead::FastqSampler(subset_sheet[x,"read1"], 1e6)
+#           set.seed(123)
+#           R1 <- ShortRead::yield(sampler1)
+#           sampler2 <- ShortRead::FastqSampler(subset_sheet[x,"read2"], 1e6)
+#           set.seed(123)
+#           R2 <- ShortRead::yield(sampler2)
+#         
+#           subset <- subset_sheet %>% 
+#             slice(x) 
+#           ab <- subset %>% 
+#             pull(sample_id)
+#           s <- subset %>% 
+#             pull(sample)
+#         
+#           ShortRead::writeFastq(R1, file = paste("test_data/Sample_ID",s, ab,"R1.fastq.gz", sep="_"))
+#           ShortRead::writeFastq(R2, file = paste("test_data/Sample_ID",s, ab,"R2.fastq.gz",sep="_"))
+# })
+# test_sheet <- subset_sheet %>%
+#   mutate(read1=dir("test_data", pattern="*R1.fastq.gz", full.names=TRUE),
+#          read2=dir("test_data", pattern="*R2.fastq.gz", full.names = TRUE)) 
 
 
 
 #write a sample sheet for testing dataset
-write.table(test_sheet, "test_data/test_sample_sheet.txt",
-              sep="\t", quote=FALSE, row.names=FALSE)
+# write.table(subset_sheet, "test_data/test_sample_sheet.txt",
+#               sep=",", quote=FALSE, row.names=FALSE)
 ```
 
 # Configuration file 
