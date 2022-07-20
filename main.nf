@@ -61,22 +61,22 @@ workflow call_peaks {
         //Perform the alignement 
         BOWTIE2_ALIGN(TRIMGALORE.out.reads, index,
                       params.save_unaligned, params.sort_bam)
-        //Conver the bam files to bed format with bedtools 
-        //BAMTOBEDGRAPH()
-        // //Define the control and the target channels. should be a custom groovy function really - need to figure this out.
-        // BAMTOBEDGRAPH.out.bedgraph
-        //     .branch { 
-        //        control: it[0].group =~ /control/
-        //        targets: it[0].group =~ /target/
-        //     }
-        //     .set { bedgraphs }
-        // bedgraphs.control
-        //     .cross(bedgraphs.targets){ meta -> meta[0].sample } // join by the key name "sample"
-        //     .map { meta -> [ meta[1][0], meta[1][1], meta[0][1] ] }
-        //     .set { seacr_ch }
-        // seacr_ch.view { "the SEACR channel is $it" }
-        // //SEACR peak calling
-        // SEACR_CALLPEAK(seacr_ch, params.threshold)
+
+        // Conver the bam files to bed format with bedtools 
+        BAMTOBEDGRAPH(BOWTIE2_ALIGN.out.bam, genome_file)
+        //Define the control and the target channels. should be a custom groovy function really - need to figure this out.
+        BAMTOBEDGRAPH.out.bedgraph
+            .branch { 
+               control: it[0].group =~ /control/
+               targets: it[0].group =~ /target/
+            }
+            .set { bedgraphs }
+        bedgraphs.control
+            .cross(bedgraphs.targets){ meta -> meta[0].sample } // join by the key name "sample"
+            .map { meta -> [ meta[1][0], meta[1][1], meta[0][1] ] }
+            .set { seacr_ch }
+        //SEACR peak calling
+        SEACR_CALLPEAK(seacr_ch, params.threshold)
 
         // MACS2 peak calling , Optionally run macs2 peak calling
         // can the channel creation be done in the subworkflow?
