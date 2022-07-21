@@ -1,0 +1,7 @@
+sample,sample_id,target_or_control,read1,read2,single_end
+M1,M1_H3K27_NK,target,/active/nguyen_e/test_data/raw_data_NK_20200215/M1_H3K27_1.fq.gz,/active/nguyen_e/test_data/raw_data_NK_20200215/M1_H3K27_2.fq.gz,false
+M1,M1_H3K4_NK,target,/active/nguyen_e/test_data/raw_data_NK_20200215/M1_H3K4_1.fq.gz,/active/nguyen_e/test_data/raw_data_NK_20200215/M1_H3K4_2.fq.gz,false
+M1,M1_IgG_NK,control,/active/nguyen_e/test_data/raw_data_NK_20200215/M1_IgG_1.fq.gz,/active/nguyen_e/test_data/raw_data_NK_20200215/M1_IgG_2.fq.gz,false
+M2,M2_H3K27_NK,target,/active/nguyen_e/test_data/raw_data_NK_20200215/M2_H3K27_1.fq.gz,/active/nguyen_e/test_data/raw_data_NK_20200215/M2_H3K27_2.fq.gz,false
+M2,M2_H3K4_NK,target,/active/nguyen_e/test_data/raw_data_NK_20200215/M2_H3K4_1.fq.gz,/active/nguyen_e/test_data/raw_data_NK_20200215/M2_H3K4_2.fq.gz,false
+M2,M2_IgG_NK,control,/active/nguyen_e/test_data/raw_data_NK_20200215/M2_IgG_1.fq.gz,/active/nguyen_e/test_data/raw_data_NK_20200215/M2_IgG_2.fq.gz,false
