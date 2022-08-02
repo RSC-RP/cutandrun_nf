@@ -15,6 +15,12 @@
             "macs2/callpeak": {
                 "git_sha": "f0800157544a82ae222931764483331a81812012"
             },
+            "picard/markduplicates": {
+                "git_sha": "682f789f93070bd047868300dd018faf3d434e7c"
+            },
+            "samtools/stats": {
+                "git_sha": "f48a24770e24358e58de66e9b805a70d77cd154b"
+            },
             "seacr/callpeak": {
                 "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d"
             },
