@@ -28,7 +28,6 @@ https://khmer.readthedocs.io/en/stable/user/scripts.html#unique-kmers-py
 */
 
 //run the workflow for alignment, to bedgraph, to peak calling for Cut&Run data
-//QUESTION: need a switch of MACS vs SEACR peak caller to be used? or do both all the time?
 workflow call_peaks {
         //Empty channel to collect the versions of software used 
         Channel.empty()
@@ -61,7 +60,6 @@ workflow call_peaks {
         //Perform the alignement 
         BOWTIE2_ALIGN(TRIMGALORE.out.reads, index,
                       params.save_unaligned, params.sort_bam)
-
         // Conver the bam files to bed format with bedtools 
         BAMTOBEDGRAPH(BOWTIE2_ALIGN.out.bam, genome_file)
         //Define the control and the target channels. should be a custom groovy function really - need to figure this out.
@@ -122,7 +120,7 @@ workflow macs2_peaks {
     macs_ch
 
     main:
-    //Either run khmer to determine effective genome size for macs2, or use a value provided as params.macs2_gsize?
+    //Either run khmer to determine effective genome size for macs2, or use a value provided as params.macs2_gsize
     if ( params.run_khmer ) {
         Channel.fromPath(file(params.fasta, checkIfExists: true))
             .set { fasta }

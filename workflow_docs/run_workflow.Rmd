@@ -16,7 +16,7 @@ output:
 # Set-up 
 
 ```{r set-up, echo=FALSE}
-knitr::opts_knit$set(root.dir = PROJHOME)
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 knitr::opts_chunk$set(tidy.opts=list(width.cutoff=80),
                       tidy=TRUE,
                       fig.align='center',
@@ -27,16 +27,12 @@ options(stringsAsFactors = FALSE, max.print = 100)
 table = function (..., useNA = 'ifany') base::table(..., useNA = useNA)
 ```
 
-```{r message = FALSE, warning=FALSE, echo=FALSE}
-# pkgs <- c("stringr","magrittr","ggplot2","dplyr","tidyr","tibble")
-# groundhog::groundhog.library(pkgs, "2022-04-18")
+```{r message = FALSE, warning=FALSE, echo=FALSE, eval=TRUE}
 library(stringr)
 library(magrittr)
 library(dplyr)
 library(tidyr)
 library(tibble)
-
-getwd()
 ```
 
 # Define functions
@@ -57,19 +53,36 @@ mk_symlinks <- function(linked_dirname,filepaths){
 
 # Background Information 
 
-https://www.protocols.io/view/cut-amp-run-targeted-in-situ-genome-wide-profiling-14egnr4ql5dy/v3?step=113
+SEACR Methodology:
+
+  * [SEACR publication](https://epigeneticsandchromatin.biomedcentral.com/articles/10.1186/s13072-019-0287-4#Abs1)
+
+
+Library Prep Protocol:
+
+  * [Protocols.io](https://www.protocols.io/view/cut-amp-run-targeted-in-situ-genome-wide-profiling-14egnr4ql5dy/v3?step=113)
+
+
+# About the Pipeline 
+
+The pipeline runs the Bowtie2 alignment, quality trimming of reads with trimgalore, SEACR peak calling, and optionally MACS2 peak calling. 
+
+<img align="center" width="100%" height="100%" src="/active/taylor_s/people/jsmi26/RPDEV/cutandrun_nf/dag/pipeline_report_2022-07-20_dag.png">
 
 # Activate the Environment
 
-Optional: use tmux on the cybertron login nodes. Name the session Nextflow and then request an interactive session before activating the nextflow conda environment. The project's that one has been assigned can be found with `project info` command. 
+Optional: use tmux on the cybertron login nodes. Name the session nextflow and then request an interactive session before activating the nextflow conda environment. The project codes can be found with `project info` command. 
+
+Change the QUEUE and NAME variables in the code chunk below to be accurate for your Cybertron projects. 
 
 ```{bash optional, eval=FALSE}
-ml python/3.8.0 
 tmux new-session -s nextflow
-qsub -I -q sceaq -P $(project name RSC_adhoc) -l select=1: -l walltime=8:00:00
+NAME="RSC_adhoc"
+QUEUE="sceaq"
+qsub -I -q $QUEUE -P $(project code $NAME) -l select=1:ncpus=1:mem=8g -l walltime=8:00:00
 ```
 
-Then create the conda environment that has the appropriate software, including `nextflow`, `nf-core`, and `graphviz`. 
+Then create the conda environment that has the appropriate software, including `nextflow`, `nf-core`, and `graphviz`. The conda environment will need to be built only 1 time, afterwards, simply use `conda activate nextflow`.
 
 ```{bash required, eval=FALSE}
 conda env create -f env/nextflow.yaml
@@ -79,142 +92,198 @@ conda activate nextflow
 
 # Examine the Sample Sheet
 
-The sample sheet is created in the analysis directory, also found on bitbucket repo: `https://childrens-atlassian/bitbucket/projects/RSC/repos/nguyen_e_2022.04_kidney_cutnrun`. This sample sheet **must** have the following column names: 
+A sample sheet in csv (comma separated values) format is used as input to the pipeline.  This sample sheet **must** have the following column names in any order:
+
+  * "sample"
   * "sample_id"
   * "target_or_control"
   * "read1"
   * "read2"
   * "single_end"
-  
-The columns "read1" and "read2" must contain full filepaths, even if they are symlinks. The "target_or_control" column must contain the values "target" for the antibodies using the immunoprecipitation for the proteins of interest (eg transcription factors examined, histone modifications like H3K27me3), or the value "control" for the isotype control (eg IgG). 
+
+```{r echo=FALSE, eval=TRUE}
+sample_desc <- c("Any alphanumeric string for each biological sample in the dataset. Will have the same sample IDs for each antibody used. For example SAMPLE_1 has both H3K27me3 and IgG control CUT&RUN, and thus SAMPLE_1 has 1 row with the files for H3K27me3, and SAMPLE_1 has 2nd row with the files for IgG data.")
+
+sample_id_desc <- glue::glue("Any alphanumeric string for each unique sample+condition. No duplicates allowed.  For example SAMPLE_1 has both H3K27me3 and IgG control CUT&RUN. Thus, SAMPLE_1 is the value in `sample`, and   \"SAMPLE_1_H3K27me3\" is the value in `sample_id`. Again, SAMPLE_1 has 2nd row with the files for IgG data, where SAMPLE_1 is the value in `sample`, and   \"SAMPLE_1_IgG\" is the value in `sample_id`")
+
+target_desc <- c("Must contain the values [target or control] case-sensitive. Target is for the antibodies using the immunoprecipitation for the proteins of interest, such as transcription factors or histone modifications like H3K27me3, or the value control for the isotype control (eg IgG).")
+
+read1 <- c("Contain full filepaths to  read 1 in paired-end fastqs.")
+read2 <- c("Contain full filepaths to  read 2 in paired-end fastqs.")
+single_end <- c("For CUT&RUN data it should always be [false] case-sensitive.")
+```
+
+```{r eval=TRUE, echo=FALSE}
+data.frame(column_name=c("sample","sample_id", "target_or_control","read1", "read2","single_end"),
+       column_description=c(sample_desc,sample_id_desc,target_desc,read1, read2, single_end)) %>% 
+  DT::datatable()
+```
  
-```{r}
-sample_sheet <- read.delim("sample_sheets/nguyen_e_cutandrun_mouse_acomys_sample_sheet.txt") %>% 
+Below is an example of a complete sample sheet for use in the pipeline. 
+ 
+```{r eval=TRUE}
+sample_sheet <- read.csv(here::here("test_data/test_sample_sheet.csv")) %>% 
   mutate(single_end="false") %>% 
-  mutate(sample=str_split_fixed(sample_id, pattern = "_", n=3)[,1]) %>% 
+  mutate(sample=str_split_fixed(sample_id, pattern = "_", n=3)[,1]) %>%
   select(sample, everything())
 
 head(sample_sheet)
-dim(sample_sheet)
-table(sample_sheet$sample)
+# dim(sample_sheet)
 ```
 
-Create a small test dataset if needed. Example code is below. 
+# Run the Example Data
 
-```{r eval=FALSE}
-subset_sheet <- sample_sheet %>%
-  filter(grepl("^M[12].+NK", sample_id),
-         grepl("K27|K4|IgG", sample_id))
+To ensure that the pipeline works, first run the test data set. This example will run using the data found in the `test_sample_sheet.csv`. 
 
-# subsample_fqs <- purrr::map(1:nrow(subset_sheet), function(x){
-#           sampler1 <- ShortRead::FastqSampler(subset_sheet[x,"read1"], 1e6)
-#           set.seed(123)
-#           R1 <- ShortRead::yield(sampler1)
-#           sampler2 <- ShortRead::FastqSampler(subset_sheet[x,"read2"], 1e6)
-#           set.seed(123)
-#           R2 <- ShortRead::yield(sampler2)
-#         
-#           subset <- subset_sheet %>% 
-#             slice(x) 
-#           ab <- subset %>% 
-#             pull(sample_id)
-#           s <- subset %>% 
-#             pull(sample)
-#         
-#           ShortRead::writeFastq(R1, file = paste("test_data/Sample_ID",s, ab,"R1.fastq.gz", sep="_"))
-#           ShortRead::writeFastq(R2, file = paste("test_data/Sample_ID",s, ab,"R2.fastq.gz",sep="_"))
-# })
-# test_sheet <- subset_sheet %>%
-#   mutate(read1=dir("test_data", pattern="*R1.fastq.gz", full.names=TRUE),
-#          read2=dir("test_data", pattern="*R2.fastq.gz", full.names = TRUE)) 
+**NOTE**: Glenn, only you or anyone with access to the `nguyen_e` directory will be able to run this test data.
 
+To Do: create VERY small fastq files which can be uploaded to bitbucket and be available when someone clones the git repo.
 
-
-#write a sample sheet for testing dataset
-# write.table(subset_sheet, "test_data/test_sample_sheet.txt",
-#               sep=",", quote=FALSE, row.names=FALSE)
+```{bash}
+./main_run.sh "test_dataset"
 ```
 
-# Configuration file 
+# Configure Pipeline for Your Data
+
+## Configuration file 
 
 Open the configuration file `nextflow.config` and edit the necessary parameters for building the index, and/or running the alignment or peak calling steps. 
 
+```{r eval=TRUE}
+usethis::edit_file(here::here("nextflow.config"))
 ```
-//global parameters
+
+Be sure to change the following lines for the queue, project code, alignment refernece files, and whether to run MACS2 calls along with the SEACR peak calling algorithm. 
+
+```
 params {
     // general options
-    sample_sheet                = "sample_sheets/test_sample_sheet.txt"
-    queue                       = 'sceaq'
-    project                     = '207f23bf-acb6-4835-8bfe-142436acb58c'
+    sample_sheet                = "./test_data/test_sample_sheet.txt"
+    queue                       = [QUEUE]
+    project                     = [PROJECT CODE]
     outdir                      = "./results/"
     publish_dir_mode            = 'copy'
     enable_conda                = false
 
     //Bowtie params
-    fasta                       = './test_data/mm39_chr1_chr2.fa'
-    index                       = './results/bowtie2'
-    save_unaligned              = 'false'
-    sort_bam                    = 'true'
+    build_index                 = false
+    fasta                       = '/PATH/TO/genome.fasta' [REQUIRED if build_index=true]
+    index                       = '/PATH/TO/mm39_index' [REQUIRED if build_index=false]
+    save_unaligned              = false
+    sort_bam                    = true
 
     //trimgalore module specific parameters
-    clip_r1                     = ''
-    clip_r2                     = ''
-    three_prime_clip_r1         = ''
-    three_prime_clip_r2         = ''
+    clip_r1                     = 0
+    clip_r2                     = 0
+    three_prime_clip_r1         = 0
+    three_prime_clip_r2         = 0
 
     //SEACR params
-    genome_file                 = './test_data/mm39_chr1_chr2.chrom.sizes'
+    genome_file                 = '/PATH/TO/genome.chrom.sizes'
+    threshold                   = 0
 
-    //MACS2 params
-    macs2_gsize                 = ''
+    //MACS2 and khmer effective genome size params
+    //kmer_size is the read-length
+    run_macs2                   = [true or false]
+    run_khmer                   = [true or false]
+    kmer_size                   = [INTEGER of fastq read length] 
+    macs2_gsize                 = [INTEGER of effective genome size, eg 3.0E+9 for mouse. Scientific notation OK.]
 }
 ```
 
+### Advanced Options
+
+TO DO: add details on the `ext.args` process directives configuration. 
+
 # Run Script 
 
-## Optional: Build an index
+```{r eval=TRUE}
+usethis::edit_file(here::here("main_run.sh"))
+```
 
-First edit the script `main_run.sh` to generate the bowtie2 index (See the example lines below). Decide on the executor profile, which means you can run the index process:
-  1) locally on an interactive session cybertron with singularity 
-    * requires appropriate computational resources be requested using `qsub -I -q <queue_name> -P <project_code> -l select=1:ncpus=4:mem=32GB`
-  2) you can submit a PBS job that will use singularity containers 
+Decide on the `NFX_PROFILE`, which allows you to run the processes either locally, or using the PBS job scheduler on Cybertron, and determine if you'd like to use singularity containers or docker containers.
+
+  2) `PBS_singularity` [DEFAULT, recommended]
+    * you can submit a PBS job that will use singularity containers on Cybertron
     * This takes care of requesting the appropriate resources using PBS
-  3) run it locally on your machine with docker (requires docker to be installed already). 
-    * Ensure the configs under scope `docker` in `.nextflow.config` are appropriate for your local computer
+    
+  1) `local_singularity`
+    * locally on an interactive session Cybertron with singularity 
+    * requires appropriate computational resources be requested using `qsub -I -q <queue_name> -P <project_code> -l select=1:ncpus=4:mem=32GB`
+    
+  3) `local_docker`
+    * run it locally on your personal machine with docker (requires docker to be installed). 
+    * Ensure the configs under scope `docker` in `.nextflow.config` are appropriate for your local computer.
 
-Also, one will need to change the entry-point of the workflow, which is accomplished by setting the `NFX_ENTRY` variable to be `bowtie2_index`.
+Edit the script `main_run.sh` and change the values for the `NFX_PROFILE` variable if desired. 
 
 ```
-#Options: 'bowtie2_index' or 'call_peaks'
-NFX_ENTRY='bowtie2_index'
 #Options: 'local_singularity', 'PBS_singularity', and 'local_docker'
 NFX_PROFILE='PBS_singularity'
 ```
 
-Then invoke the `main_run.sh` script on the command line. The command line argument following `.main_rush.sh` should be a string that describes your current project, like  "bowtie2_index", which will be a prefix on the nextflow log,report HTML, and DAG image generated during that workflow execution. Otherwise the default value will be used `nextflow_report`. 
+## Alignment and Peak Calls
+
+Edit the variables in the `main_run.sh` script for entry-point of the workflow. The default option *"call_peaks"* for the `NFX_ENTRY` variable will run the entire pipeline including the building the index if the parameter `build_index=true` and then call peaks for all samples using SEACR and optionally MACS2. 
+
+```
+#Options: 'bowtie2_index' or 'call_peaks'
+NFX_ENTRY='call_peaks'
+```
+
+Then, execute the `main_run.sh` script in order to complete the peak calling on the samples. Provide a small descriptive prefix for the pipeline run. 
+
+```{bash}
+./main_run.sh "my_analysis"
+```
+
+## Optional: Build the Index and Exit Pipeline
+
+You can also change the entry-point of the workflow, which is accomplished by setting the `NFX_ENTRY` variable in the `main_run.sh` script  to be `bowtie2_index`. This will allow the pipeline to run only the Bowtie2 build process and exit upon completion of the index.
+
+```
+#Options: 'local_singularity', 'PBS_singularity', and 'local_docker'
+NFX_PROFILE='PBS_singularity'
+
+#Options: 'bowtie2_index' or 'call_peaks'
+NFX_ENTRY='bowtie2_index'
+```
 
 ```{bash}
 ./main_run.sh "bowtie2_index"
 ```
 
-## Alignment and Peak Calls
 
-Again, edit the variables in the `main_run.sh` script for entry-point of the workflow, and optionally, the executor. This time input the option *"call_peaks"* for the `NFX_ENTRY` variable. 
+# Expected Outputs 
 
-```
-#Options: 'bowtie2_index' or 'call_peaks'
-NFX_ENTRY='call_peaks'
-#Options: 'local_singularity', 'PBS_singularity', and 'local_docker'
-NFX_PROFILE='PBS_singularity'
-```
+Under the path provided in the nextflow config for params "outdir", you will find directories named for each of the modules. Lets say "params.outdir = ./results". There will be the following file structure:
 
-Then, execute the `main_run.sh` script in order to complete the peak calling on the samples. 
+results/
+  
+  * trimgalore/
+    * {sample_id}_1.gz_trimming_report.txt
+    * {sample_id}_2.gz_trimming_report.txt
+    * {sample_id}.M1_H3K27_NK_1_val_1.fq.gz
+    * {sample_id}.M1_H3K27_NK_1_val_2.fq.gz
+    
+  * bowtie2/ 
+    * {sample_id}.bam
+    * {sample_id}.bowtie2.log
+    
+  * seacr/
+    * {sample_id}.[stringent or relaxed].bed
+  
+  * macs2/
+    * {sample_id}_peaks.[narrowPeak or broadPeak]
+    * {sample_id}_peaks.xls 
+    * {sample_id}_summits.bed
 
-```{bash}
-./main_run.sh "cutandrun_test"
-```
 
+In addition, there will be an HTML report with information on where the temp data is stored in the `workDir` path, and general run statistics such as resource utilized  versus requested, which helps with optimization. It will also provide information on how much walltime was used per sample, total CPU hours, etc. 
 
+The HTML file is found in `reports` directory and will have the prefix defined on the command line when the `./main_run.sh "my_analysis"` was invoked, so in this example it would be named "my_analysis_{DATE}.html". 
 
+There will also be a detailed nextflow log file that is useful for de-bugging which will also be named in this example, "my_analysis_{DATE}_nextflow.log".
 
+Finally, the pipeline will produce a DAG - Directed acyclic graph,  which describes the workflow channels (inputs) and the modules. The DAG image will be saved under `dag/` directory with the name "my_analysis_{DATE}_dag.pdf". 
 
