@@ -3,8 +3,8 @@
 .Rhistory
 .RData
 .Ruserdata
-.html
-.snakemake/
+
+# nextflow pipeline files
 .nextflow/
 .nextflow.log*
 *.html
@@ -17,3 +17,4 @@ test_data/*skeleton
 test_data/*.nf
 reports/
 dag/
+sample_sheets/
