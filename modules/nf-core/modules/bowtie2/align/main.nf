@@ -10,6 +10,7 @@ process BOWTIE2_ALIGN {
     input:
     tuple val(meta), path(reads)
     path  index
+    val   spike_in
     val   save_unaligned
     val   sort_bam
 
@@ -26,7 +27,7 @@ process BOWTIE2_ALIGN {
     def args = task.ext.args ?: ""
     def args2 = task.ext.args2 ?: ""
     def prefix = task.ext.prefix ?: "${meta.id}"
-
+    def spike_args = "${spike_in}" ? '--no-overlap --no-dovetail' : ''
     def unaligned = ""
     def reads_args = ""
     if (meta.single_end) {
@@ -53,6 +54,7 @@ process BOWTIE2_ALIGN {
         --threads $task.cpus \\
         $unaligned \\
         $args \\
+        $spike_args \\
         2> ${prefix}.bowtie2.log \\
         | samtools $samtools_command $args2 --threads $task.cpus -o ${prefix}.bam -
 

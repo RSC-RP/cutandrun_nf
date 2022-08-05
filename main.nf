@@ -3,6 +3,7 @@ nextflow.enable.dsl = 2
 include { BOWTIE2_BUILD } from './modules/nf-core/modules/bowtie2/build/main.nf'
 include { TRIMGALORE } from './modules/nf-core/modules/trimgalore/main.nf'
 include { BOWTIE2_ALIGN } from './modules/nf-core/modules/bowtie2/align/main.nf'
+include { BOWTIE2_ALIGN as SPIKEIN_ALIGN } from './modules/nf-core/modules/bowtie2/align/main.nf'
 include { BAMTOBEDGRAPH } from './modules/local/bedtools/main.nf'
 include { SEACR_CALLPEAK } from './modules/nf-core/modules/seacr/callpeak/main.nf'
 include { MACS2_CALLPEAK } from './modules/nf-core/modules/macs2/callpeak/main.nf'
@@ -32,11 +33,30 @@ workflow call_peaks {
         //Empty channel to collect the versions of software used 
         Channel.empty()
             .set { versions }
-        //if there is no filepath to the index provided, create the index from a fasta file
+        //Optionally, create the index from a fasta file
         if ( params.build_index ) {
-            bowtie2_index()
+            //Stage the fasta files
+             Channel.fromPath(file(params.fasta, checkIfExists: true))
+                .set { fasta }
+            bowtie2_index(fasta)
             bowtie2_index.out.index
                 .set { index }
+            versions = versions.concat(bowtie2_index.out.versions)
+        } else {
+            //Stage the genome index directory
+            Channel.fromPath(file(params.index, checkIfExists: true))
+                .collect() //collect converts this to a value channel and used multiple times
+                .set { index }
+        }
+        //Optionally, create the spike-in index from a fasta file
+        if ( params.build_spike_index ) {
+            //Stage the fasta files
+            Channel.fromPath(file(params.spike_fasta, checkIfExists: true))
+                .set { spike_fasta }
+            //Can I call the same subworkflow twice? 
+            bowtie2_index(spike_fasta)
+            bowtie2_index.out.index
+                .set { spike_index }
             versions = versions.concat(bowtie2_index.out.versions)
         } else {
             //Stage the genome index directory
@@ -57,9 +77,17 @@ workflow call_peaks {
             .set { genome_file }
         //Adapter and Quality trimming of the fastq files 
         TRIMGALORE(meta_ch)
-        //Perform the alignement 
-        BOWTIE2_ALIGN(TRIMGALORE.out.reads, index,
+        //Perform the alignement
+        spike_in = false
+        BOWTIE2_ALIGN(TRIMGALORE.out.reads, index, spike_in,
                       params.save_unaligned, params.sort_bam)
+        if ( params.spike_norm ){
+            spike_in = true
+            SPIKEIN_ALIGN(TRIMGALORE.out.reads, spike_index, spike_in,
+                         params.save_unaligned, params.sort_bam)
+        }
+        //Add module here to create the spike-in normalization factor 
+        //Add module here to run the normalization from https://github.com/Henikoff/Cut-and-Run
         // Conver the bam files to bed format with bedtools 
         BAMTOBEDGRAPH(BOWTIE2_ALIGN.out.bam, genome_file)
         //Define the control and the target channels. should be a custom groovy function really - need to figure this out.
@@ -102,10 +130,10 @@ workflow call_peaks {
 
 //Generate the index file (subworkflow)
 workflow bowtie2_index {
-    main:        
-    //Stage the fasta files
-    Channel.fromPath(file(params.fasta, checkIfExists: true))
-        .set { fasta }
+    take:
+    fasta
+
+    main:
     //execute the BOWTIE2 genome index process
     BOWTIE2_BUILD(fasta)
 
