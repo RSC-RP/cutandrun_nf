@@ -22,12 +22,6 @@ log.info """\
          """
          .stripIndent()
 
-
-/*
-https://deeptools.readthedocs.io/en/develop/content/feature/effectiveGenomeSize.html
-https://khmer.readthedocs.io/en/stable/user/scripts.html#unique-kmers-py
-*/
-
 //run the workflow for alignment, to bedgraph, to peak calling for Cut&Run data
 workflow call_peaks {
         //Empty channel to collect the versions of software used 
@@ -75,6 +69,7 @@ workflow call_peaks {
         Channel.fromPath(file(params.genome_file, checkIfExists: true))
             .collect()
             .set { genome_file }
+        //Add fastqc module here 
         //Adapter and Quality trimming of the fastq files 
         TRIMGALORE(meta_ch)
         //Perform the alignement
@@ -86,8 +81,13 @@ workflow call_peaks {
             SPIKEIN_ALIGN(TRIMGALORE.out.reads, spike_index, spike_in,
                          params.save_unaligned, params.sort_bam)
         }
+        //Add samtools index module here
+        //Add picard markDuplicates module here
+        //Add Samtools stats module here for QC
         //Add module here to create the spike-in normalization factor 
         //Add module here to run the normalization from https://github.com/Henikoff/Cut-and-Run
+        //Add Deeptools module here to split the BAM file into ≤120- and ≥150-bp size classes 
+        
         // Conver the bam files to bed format with bedtools 
         BAMTOBEDGRAPH(BOWTIE2_ALIGN.out.bam, genome_file)
         //Define the control and the target channels. should be a custom groovy function really - need to figure this out.
@@ -120,6 +120,8 @@ workflow call_peaks {
             //Run MAC2 peak calling
             macs2_peaks(macs_ch)
         }
+        //Add Deeptools module to calculate FRIP here
+        //Add multiQC module here 
         // versions.concat(TRIMGALORE.out.versions, 
         //                 BOWTIE2_ALIGN.out.versions,
         //                 BAMTOBEDGRAPH.out.versions, 

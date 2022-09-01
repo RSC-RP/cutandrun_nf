@@ -11,7 +11,7 @@ NFX_ENTRY='call_peaks'
 REPORT=${1:-"pipeline_report"}
 
 # Load the modules 
-module load singularity/3.9.9
+module load singularity
 
 # Nextflow run to execute the workflow 
 PREFIX=${REPORT}_${DATE}

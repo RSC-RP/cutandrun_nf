@@ -9,12 +9,17 @@
 .nextflow.log*
 *.html
 *.html.*
+
+#Pipeline specific
 #https://stackoverflow.com/questions/40460216/how-do-i-make-git-ignore-symlink
 resources
 resources/
-results/
-test_data/*skeleton
-test_data/*.nf
+results*/
+test_data/bams/
+test_data/fastqs/
+test_data/*skeleton*
+test_data/test.nf
 reports/
 dag/
 sample_sheets/
+env/create_test_dataset.yml
