@@ -8,6 +8,8 @@ include { BAMTOBEDGRAPH } from './modules/local/bedtools/main.nf'
 include { SEACR_CALLPEAK } from './modules/nf-core/modules/seacr/callpeak/main.nf'
 include { MACS2_CALLPEAK } from './modules/nf-core/modules/macs2/callpeak/main.nf'
 include { KHMER_UNIQUEKMERS } from './modules/nf-core/modules/khmer/uniquekmers/main.nf'
+include { FASTQC } from './modules/nf-core/modules/fastqc/main.nf'
+include { FASTQC as FASTQC_TRIM } from './modules/nf-core/modules/fastqc/main.nf'
 
 //Define stdout message for the command line use
 idx_or_fasta = (params.index == '' ? params.fasta : params.index)
@@ -69,9 +71,12 @@ workflow call_peaks {
         Channel.fromPath(file(params.genome_file, checkIfExists: true))
             .collect()
             .set { genome_file }
-        //Add fastqc module here 
+        //fastqc of raw sequence
+        FASTQC(meta_ch)
         //Adapter and Quality trimming of the fastq files 
         TRIMGALORE(meta_ch)
+        //fastqc of trimgalore'd sequence
+        FASTQC_TRIM(TRIMGALORE.out.reads)
         //Perform the alignement
         spike_in = false
         BOWTIE2_ALIGN(TRIMGALORE.out.reads, index, spike_in,
