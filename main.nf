@@ -123,9 +123,11 @@ workflow call_peaks {
         }
         //Add Deeptools module to calculate FRIP here
         //Add multiQC module here 
-        sample_sheet = file(params.sample_sheet, checkIfExists: true)
-        multiqc_ch = TRIMGALORE.out.reads.collect()
-        MULTIQC(multiqc_ch, sample_sheet)
+        // sample_sheet = file(params.sample_sheet, checkIfExists: true)
+        // want to pass in trim_galore.fq.gz, bowtie_align.bam
+        multiqc_ch = TRIMGALORE.out.reads
+            // .combine(BOWTIE2_ALIGN.out.bam[1].collect())
+        MULTIQC(multiqc_ch)//, sample_sheet)
         // versions.concat(TRIMGALORE.out.versions, 
         //                 BOWTIE2_ALIGN.out.versions,
         //                 BAMTOBEDGRAPH.out.versions, 
