@@ -2,6 +2,7 @@ nextflow.enable.dsl = 2
 
 include { BOWTIE2_BUILD } from './modules/nf-core/modules/bowtie2/build/main.nf'
 include { TRIMGALORE } from './modules/nf-core/modules/trimgalore/main.nf'
+include { MULTIQC } from './modules/nf-core/modules/multiqc/main.nf'
 include { BOWTIE2_ALIGN } from './modules/nf-core/modules/bowtie2/align/main.nf'
 include { BOWTIE2_ALIGN as SPIKEIN_ALIGN } from './modules/nf-core/modules/bowtie2/align/main.nf'
 include { BAMTOBEDGRAPH } from './modules/local/bedtools/main.nf'
@@ -122,6 +123,9 @@ workflow call_peaks {
         }
         //Add Deeptools module to calculate FRIP here
         //Add multiQC module here 
+        sample_sheet = file(params.sample_sheet, checkIfExists: true)
+        multiqc_ch = TRIMGALORE.out.reads.collect()
+        MULTIQC(multiqc_ch, sample_sheet)
         // versions.concat(TRIMGALORE.out.versions, 
         //                 BOWTIE2_ALIGN.out.versions,
         //                 BAMTOBEDGRAPH.out.versions, 
