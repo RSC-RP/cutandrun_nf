@@ -14,15 +14,22 @@ tools:
       licence: ["GPL-3.0-or-later"]
 
 input:
-  - meta:
-      type: map
-      description: |
-        Groovy Map containing sample information
-        e.g. [ id:'test', single_end:false ]
   - multiqc_files:
       type: file
       description: |
-        List of reports / files recognised by MultiQC, for example the html and zip output of FastQC        
+        List of reports / files recognised by MultiQC, for example the html and zip output of FastQC
+  - multiqc_config:
+      type: file
+      description: Optional config yml for MultiQC
+      pattern: "*.{yml,yaml}"
+  - extra_multiqc_config:
+      type: file
+      description: Second optional config yml for MultiQC. Will override common sections in multiqc_config.
+      pattern: "*.{yml,yaml}"
+  - multiqc_logo:
+      type: file
+      description: Optional logo file for MultiQC
+      pattern: "*.{png}"
 
 output:
   - report:
