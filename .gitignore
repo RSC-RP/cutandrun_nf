@@ -20,6 +20,8 @@ test_data/fastqs/
 test_data/*skeleton*
 test_data/test.nf
 test_data/*.sh
+#only used for testing MACS2 params
+env/macs.yml 
 reports/
 dag/
 sample_sheets/
