@@ -1,13 +1,14 @@
 nextflow.enable.dsl = 2
 
-include { BOWTIE2_BUILD } from './modules/nf-core/modules/bowtie2/build/main.nf'
+//Include Modules
 include { TRIMGALORE } from './modules/nf-core/modules/trimgalore/main.nf'
-include { BOWTIE2_ALIGN } from './modules/nf-core/modules/bowtie2/align/main.nf'
-include { BOWTIE2_ALIGN as SPIKEIN_ALIGN } from './modules/nf-core/modules/bowtie2/align/main.nf'
+include { BOWTIE2_ALIGN; BOWTIE2_ALIGN as SPIKEIN_ALIGN } from './modules/nf-core/modules/bowtie2/align/main.nf'
 include { BAMTOBEDGRAPH } from './modules/local/bedtools/main.nf'
 include { SEACR_CALLPEAK } from './modules/nf-core/modules/seacr/callpeak/main.nf'
-include { MACS2_CALLPEAK } from './modules/nf-core/modules/macs2/callpeak/main.nf'
-include { KHMER_UNIQUEKMERS } from './modules/nf-core/modules/khmer/uniquekmers/main.nf'
+
+//Include subworkflows
+include { bowtie2_index; bowtie2_index as bowtie2_index_spike } from './subworkflows/bowtie_index.nf'
+include { macs2_peaks } from './subworkflows/macs2_peaks.nf'
 
 //Define stdout message for the command line use
 idx_or_fasta = (params.index == '' ? params.fasta : params.index)
@@ -48,10 +49,10 @@ workflow call_peaks {
             Channel.fromPath(file(params.spike_fasta, checkIfExists: true))
                 .set { spike_fasta }
             //Can I call the same subworkflow twice? 
-            bowtie2_index(spike_fasta)
-            bowtie2_index.out.index
+            bowtie2_index_spike(spike_fasta)
+            bowtie2_index_spike.out.index
                 .set { spike_index }
-            versions = versions.concat(bowtie2_index.out.versions)
+            versions = versions.concat(bowtie2_index_spike.out.versions)
         } else {
             //Stage the genome index directory
             Channel.fromPath(file(params.index, checkIfExists: true))
@@ -103,7 +104,6 @@ workflow call_peaks {
             .set { seacr_ch }
         //SEACR peak calling
         SEACR_CALLPEAK(seacr_ch, params.threshold)
-
         // MACS2 peak calling , Optionally run macs2 peak calling
         // can the channel creation be done in the subworkflow?
         if ( params.run_macs2 ){
@@ -128,47 +128,6 @@ workflow call_peaks {
         //                 SEACR_CALLPEAK.out.versions)
         //         .collect()
         //         .collectFile(name: 'versions.txt', newLine: true)
-}
-
-//Generate the index file (subworkflow)
-workflow bowtie2_index {
-    take:
-    fasta
-
-    main:
-    //execute the BOWTIE2 genome index process
-    BOWTIE2_BUILD(fasta)
-
-    emit:
-    index = BOWTIE2_BUILD.out.index
-    versions = BOWTIE2_BUILD.out.versions
-}
-
-// Run MAC2 peak calling (subworkflow)
-workflow macs2_peaks {
-    take:
-    macs_ch
-
-    main:
-    //Either run khmer to determine effective genome size for macs2, or use a value provided as params.macs2_gsize
-    if ( params.run_khmer ) {
-        Channel.fromPath(file(params.fasta, checkIfExists: true))
-            .set { fasta }
-        Channel.value(params.kmer_size)
-            .set { khmer_size }
-        KHMER_UNIQUEKMERS(fasta, khmer_size)
-        KHMER_UNIQUEKMERS.out.kmers
-                .set { macs2_gsize }
-    } else {
-        Channel.value(params.macs2_gsize)
-                .set { macs2_gsize }
-    }
-    // Run Macs2 peak calling
-    MACS2_CALLPEAK(macs_ch, macs2_gsize)
-
-    emit:
-    macs_ver = MACS2_CALLPEAK.out.versions
-    khmer_ver = params.run_khmer ? KHMER_UNIQUEKMERS.out.versions : ''
 }
 
 
