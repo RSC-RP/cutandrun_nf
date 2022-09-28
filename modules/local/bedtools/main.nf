@@ -12,6 +12,8 @@ process BAMTOBEDGRAPH {
     input:
     tuple val(meta), path(bam)
     path genome_file
+    val spike_norm
+    tuple val(seq_depth), val(constant)
 
     output:
     tuple val(meta), path("*.fragments.bg"),    emit: bedgraph
@@ -32,10 +34,20 @@ process BAMTOBEDGRAPH {
         -i ${bam} \\
         $args > ${prefix}_aligned.bed
 
+    # Keep the read pairs that are on the same chromosome and fragment length less than 1000bp.
     awk '\$1==\$4 && \$6-\$2 < 1000 {print \$0}' ${prefix}_aligned.bed > ${prefix}_aligned.clean.bed
     cut -f 1,2,6 ${prefix}_aligned.clean.bed | sort -k1,1 -k2,2n -k3,3n > ${prefix}_aligned.fragments.bed
     
+    if [[ $spike_norm ]]
+    then
+        scale_factor=$(echo "$constant / $seq_depth" | bc -l)
+        scale_arg="-scale $scale_factor"
+    else
+        scale_arg=''
+    fi
+
     bedtools genomecov \\
+        \$scale_arg \\
         -bg \\
         -i ${prefix}_aligned.fragments.bed \\
         -g ${genome_file} > ${prefix}_aligned.fragments.bg

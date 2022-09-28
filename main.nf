@@ -77,12 +77,24 @@ workflow call_peaks {
         TRIMGALORE(meta_ch)
         //Perform the alignement
         spike_in = false
+        //NOTE: should have bowtie2 save unaligned reads to a seperate file. 
         BOWTIE2_ALIGN(TRIMGALORE.out.reads, index, spike_in,
                       params.save_unaligned)
         if ( params.spike_norm ){
             spike_in = true
             SPIKEIN_ALIGN(TRIMGALORE.out.reads, spike_index, spike_in,
                          params.save_unaligned)
+            //Channel containing tuples of the spikeIn seqdepth and scaling factor constant "C"
+            Channel.value(params.scale_factor_constant)
+                .set { C }
+            SPIKEIN_ALIGN.out.seq_depth
+                .combine( C )
+                .map { val -> [ "seq_depth":val[0], "constant":val[1] ] }
+                .set { seq_depth_ch }
+        } else {
+            //If not using the spikeIn normalization, then just need empty lists
+            Channel.value( [ "seq_depth":[],"constant":[] ] )
+                .set { seq_depth_ch }
         }
         //Add samtools index module here
         //Add picard markDuplicates modules here
@@ -96,12 +108,17 @@ workflow call_peaks {
                 .set { bams }
         }
         //Add Samtools stats module here for QC
+        //Add [optional] samtools quality score filtering here 
         //Add module here to create the spike-in normalization factor 
         //Add module here to run the normalization from https://github.com/Henikoff/Cut-and-Run
         //Add Deeptools module here to split the BAM file into ≤120- and ≥150-bp size classes 
         
         // Conver the bam files to bed format with bedtools 
-        BAMTOBEDGRAPH(bams, genome_file)
+        //params.spike_norm, params.scale_factor_constant,SPIKEIN_ALIGN.out.seq_depth
+        Channel.value(params.spike_norm)
+            .set { spike_norm }
+        //BAMTOBEDGRAPH(bams, genome_file, spike_norm, seq_depth_ch)
+        /*
         //Define the control and the target channels. should be a custom groovy function really - need to figure this out.
         BAMTOBEDGRAPH.out.bedgraph
             .branch { 
@@ -131,6 +148,7 @@ workflow call_peaks {
             //Run MAC2 peak calling
             macs2_peaks(macs_ch)
         }
+        */
         //Add Deeptools module to calculate FRIP here
         //Add multiQC module here 
         // versions.concat(TRIMGALORE.out.versions, 
