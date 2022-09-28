@@ -5,6 +5,7 @@ include { TRIMGALORE } from './modules/nf-core/modules/trimgalore/main.nf'
 include { BOWTIE2_ALIGN; BOWTIE2_ALIGN as SPIKEIN_ALIGN } from './modules/nf-core/modules/bowtie2/align/main.nf'
 include { BAMTOBEDGRAPH } from './modules/local/bedtools/main.nf'
 include { SEACR_CALLPEAK } from './modules/nf-core/modules/seacr/callpeak/main.nf'
+include { PICARD_MARKDUPLICATES; PICARD_MARKDUPLICATES as PICARD_RMDUPLICATES } from './modules/nf-core/modules/picard/markduplicates/main.nf'
 
 //Include subworkflows
 include { bowtie2_index; bowtie2_index as bowtie2_index_spike } from './subworkflows/bowtie_index.nf'
@@ -35,12 +36,13 @@ workflow call_peaks {
                 .set { fasta }
             bowtie2_index(fasta)
             bowtie2_index.out.index
+                .collect() //collect converts this to a value channel and to be used multiple times
                 .set { index }
             versions = versions.concat(bowtie2_index.out.versions)
         } else {
             //Stage the genome index directory
             Channel.fromPath(file(params.index, checkIfExists: true))
-                .collect() //collect converts this to a value channel and used multiple times
+                .collect()
                 .set { index }
         }
         //Optionally, create the spike-in index from a fasta file
@@ -48,9 +50,9 @@ workflow call_peaks {
             //Stage the fasta files
             Channel.fromPath(file(params.spike_fasta, checkIfExists: true))
                 .set { spike_fasta }
-            //Can I call the same subworkflow twice? 
             bowtie2_index_spike(spike_fasta)
             bowtie2_index_spike.out.index
+                .collect()
                 .set { spike_index }
             versions = versions.concat(bowtie2_index_spike.out.versions)
         } else {
@@ -76,21 +78,30 @@ workflow call_peaks {
         //Perform the alignement
         spike_in = false
         BOWTIE2_ALIGN(TRIMGALORE.out.reads, index, spike_in,
-                      params.save_unaligned, params.sort_bam)
+                      params.save_unaligned)
         if ( params.spike_norm ){
             spike_in = true
             SPIKEIN_ALIGN(TRIMGALORE.out.reads, spike_index, spike_in,
-                         params.save_unaligned, params.sort_bam)
+                         params.save_unaligned)
         }
         //Add samtools index module here
-        //Add picard markDuplicates module here
+        //Add picard markDuplicates modules here
+        PICARD_MARKDUPLICATES(BOWTIE2_ALIGN.out.bam)
+        if ( params.remove_dups ){
+            PICARD_RMDUPLICATES(BOWTIE2_ALIGN.out.bam)
+            PICARD_RMDUPLICATES.out.bam
+                .set { bams }
+        }else {
+            BOWTIE2_ALIGN.out.bam
+                .set { bams }
+        }
         //Add Samtools stats module here for QC
         //Add module here to create the spike-in normalization factor 
         //Add module here to run the normalization from https://github.com/Henikoff/Cut-and-Run
         //Add Deeptools module here to split the BAM file into ≤120- and ≥150-bp size classes 
         
         // Conver the bam files to bed format with bedtools 
-        BAMTOBEDGRAPH(BOWTIE2_ALIGN.out.bam, genome_file)
+        BAMTOBEDGRAPH(bams, genome_file)
         //Define the control and the target channels. should be a custom groovy function really - need to figure this out.
         BAMTOBEDGRAPH.out.bedgraph
             .branch { 

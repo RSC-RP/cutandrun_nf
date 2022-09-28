@@ -22,6 +22,7 @@ process PICARD_MARKDUPLICATES {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def suffix = (args.contains('REMOVE_DUPLICATES')) ? "rmDup" : "markedDup" 
     def avail_mem = 3
     if (!task.memory) {
         log.info '[Picard MarkDuplicates] Available memory not known - defaulting to 3GB. Specify process memory requirements to change this.'
@@ -29,13 +30,14 @@ process PICARD_MARKDUPLICATES {
         avail_mem = task.memory.giga
     }
     """
+    echo "the suffix is $suffix"
     picard \\
         -Xmx${avail_mem}g \\
         MarkDuplicates \\
         $args \\
         --INPUT $bam \\
-        --OUTPUT ${prefix}.bam \\
-        --METRICS_FILE ${prefix}.MarkDuplicates.metrics.txt
+        --OUTPUT ${prefix}_${suffix}.bam \\
+        --METRICS_FILE ${prefix}_${suffix}.metrics.txt
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
