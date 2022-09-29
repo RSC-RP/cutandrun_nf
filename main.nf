@@ -69,9 +69,9 @@ workflow call_peaks {
                            ] }
             .set { meta_ch }
         //Stage the file for bedgraph generations
-        Channel.fromPath(file(params.genome_file, checkIfExists: true))
+        Channel.fromPath(file(params.chrom_sizes, checkIfExists: true))
             .collect()
-            .set { genome_file }
+            .set { chrom_sizes }
         //Add fastqc module here 
         //Adapter and Quality trimming of the fastq files 
         TRIMGALORE(meta_ch)
@@ -104,20 +104,18 @@ workflow call_peaks {
             PICARD_RMDUPLICATES.out.bam
                 .set { bams }
         }else {
-            BOWTIE2_ALIGN.out.bam
+            // BOWTIE2_ALIGN.out.bam
+            PICARD_MARKDUPLICATES.out.bam
                 .set { bams }
         }
         //Add Samtools stats module here for QC
         //Add [optional] samtools quality score filtering here 
-        //Add module here to create the spike-in normalization factor 
-        //Add module here to run the normalization from https://github.com/Henikoff/Cut-and-Run
         //Add Deeptools module here to split the BAM file into ≤120- and ≥150-bp size classes 
         
-        // Conver the bam files to bed format with bedtools 
-        //params.spike_norm, params.scale_factor_constant,SPIKEIN_ALIGN.out.seq_depth
+        // Convert the bam files to bed format with bedtools 
         Channel.value(params.spike_norm)
             .set { spike_norm }
-        //BAMTOBEDGRAPH(bams, genome_file, spike_norm, seq_depth_ch)
+        BAMTOBEDGRAPH(bams, chrom_sizes, spike_norm, seq_depth_ch)
         /*
         //Define the control and the target channels. should be a custom groovy function really - need to figure this out.
         BAMTOBEDGRAPH.out.bedgraph
