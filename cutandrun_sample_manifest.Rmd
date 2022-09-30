@@ -1,0 +1,117 @@
+---
+title: "Run Cut&Run Peak Calling"
+always_allow_html: true
+output:
+  html_document:
+    theme: yeti
+    highlight: breezedark
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    number_sections: true
+    fig_caption: true
+    df_print: paged
+---
+
+# Set-up 
+
+```{r set-up, echo=FALSE}
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+knitr::opts_chunk$set(tidy.opts=list(width.cutoff=80),
+                      tidy=TRUE,
+                      fig.align='center',
+                      fig.width = 10, fig.height = 10,
+                      eval = FALSE)
+
+options(stringsAsFactors = FALSE, max.print = 100)
+table = function (..., useNA = 'ifany') base::table(..., useNA = useNA)
+```
+
+```{r message = FALSE, warning=FALSE, echo=FALSE}
+library(stringr)
+library(dplyr)
+library(tidyr)
+library(tibble)
+```
+
+# Define Functions 
+
+```{r echo=FALSE}
+#Function to create symlinks to the original data files on active to the current working directory of the R project. 
+mk_symlinks <- function(linked_dirname,filepaths){
+  dir.create(linked_dirname, recursive = TRUE)
+  lapply(filepaths,function(file){
+    target <- file.path(linked_dirname, basename(file))
+    if(!file.exists(target)){
+      command <- paste("ln -svf",file, target)
+      system(command)
+    }
+  })
+}
+```
+
+# Define Samples 
+
+```{r}
+fastq_files <- dir(
+    # "/gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/", 
+    "test_data/fastqs",
+                    pattern = "_R[12].+.fastq.gz",
+                    recursive = TRUE,
+                    full.names = TRUE)
+
+# fastq_files
+fastq_manifest <- tibble(fastq_paths=fastq_files) %>% 
+    mutate(filename=basename(fastq_paths), 
+           path=dirname(fastq_paths)) %>% 
+    mutate(read=case_when(
+        grepl("_R1.+.fastq", filename) ~ "read1",
+        TRUE  ~ "read2")) %>% 
+    mutate(species="Mus musculus",
+           sample_id=gsub("_chr17_R[12].+.fastq.gz", "", filename),
+           sample=str_split_fixed(filename, pattern = "_", n=3)[,1],
+           antibody=str_split_fixed(filename, pattern = "_", n=3)[,2],
+           target_or_control=ifelse(antibody=="IgG", "control", "target")) %>% 
+    select(sample_id,sample,species:target_or_control,filename:read)
+
+
+sample_manifest <- fastq_manifest %>% 
+    pivot_wider(names_from=read,
+                values_from=filename)
+
+sample_manifest
+any(duplicated(sample_manifest$sample_id)) #OK
+write.csv(sample_manifest,"test_data/test_dataset_sample_manifest.csv", row.names = F)
+```
+
+# Peak Calling 
+
+https://childrens-atlassian/bitbucket/projects/RPDEV/repos/cutandrun_nf/browse
+
+https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5444249/
+
+Histone marks such as H3K9me3 or H3K27me3 are broad while others such as H3K4me3 and proteins such as CTCF are narrow.
+
+```{r}
+sample_sheet <- sample_manifest %>% 
+    mutate_at(vars(matches("read")), ~file.path(path, .)) %>% 
+    mutate(single_end="false") %>% 
+    select(sample_id,
+           sample,
+           single_end,
+           target_or_control,
+           matches("read")) 
+
+sample_sheet
+# write.csv(sample_sheet,"test_data/test_dataset_sample_sheet.csv", row.names = FALSE, quote = FALSE)
+```
+
+
+# Session Information 
+
+```{r}
+sessionInfo()
+```
+
+
+
