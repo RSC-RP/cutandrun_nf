@@ -58,9 +58,9 @@ workflow call_peaks {
             versions = versions.concat(bowtie2_index_spike.out.versions)
         } else {
             //Stage the genome index directory
-            Channel.fromPath(file(params.index, checkIfExists: true))
+            Channel.fromPath(file(params.spike_fasta, checkIfExists: true))
                 .collect() //collect converts this to a value channel and used multiple times
-                .set { index }
+                .set { spike_index }
         }
         //Create the input channel which contains the SAMPLE_ID, whether its single-end, and the file paths for the fastqs. 
         Channel.fromPath(file(params.sample_sheet, checkIfExists: true))
