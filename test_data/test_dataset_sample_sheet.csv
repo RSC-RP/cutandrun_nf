@@ -1,7 +1,0 @@
-sample_id,sample,single_end,target_or_control,read1,read2
-M1_H3K27_NK,M1,false,target,/gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M1_H3K27_NK_chr17_R1.fastq.gz,/gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M1_H3K27_NK_chr17_R2.fastq.gz
-M1_H3K4_NK,M1,false,target,/gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M1_H3K4_NK_chr17_R1.fastq.gz,/gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M1_H3K4_NK_chr17_R2.fastq.gz
-M1_IgG_NK,M1,false,control,/gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M1_IgG_NK_chr17_R1.fastq.gz,/gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M1_IgG_NK_chr17_R2.fastq.gz
-M2_H3K27_NK,M2,false,target,/gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_H3K27_NK_chr17_R1.fastq.gz,/gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_H3K27_NK_chr17_R2.fastq.gz
-M2_H3K4_NK,M2,false,target,/gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_H3K4_NK_chr17_R1.fastq.gz,/gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_H3K4_NK_chr17_R2.fastq.gz
-M2_IgG_NK,M2,false,control,/gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_IgG_NK_chr17_R1.fastq.gz,/gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_IgG_NK_chr17_R2.fastq.gz

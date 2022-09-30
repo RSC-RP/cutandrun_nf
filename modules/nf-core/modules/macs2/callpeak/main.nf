@@ -39,6 +39,7 @@ process MACS2_CALLPEAK {
     macs2 \\
         callpeak \\
         ${args_list.join(' ')} \\
+        --tempdir \$PWD \\
         --gsize $macs2_gsize \\
         --format $format \\
         --name $prefix \\
