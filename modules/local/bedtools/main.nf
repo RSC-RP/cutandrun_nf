@@ -44,7 +44,7 @@ process BAMTOBEDGRAPH {
     if [[ $spike_norm ]]
     then
         echo "The spikein scale factor is: $scale_factor"
-    else
+    fi
 
     bedtools genomecov \\
         $scale_arg \\

@@ -91,11 +91,11 @@ workflow call_peaks {
             SPIKEIN_ALIGN.out.seq_depth
                 .combine( C )
                 .map { val -> [ "seq_depth":val[0].toInteger() , "constant":val[1] ] }
-                .map { val -> [ val.constant.div(val.seq_depth) ] } // I need a way to check for zeros in the seq_depth
+                .map { val ->  val.constant.div(val.seq_depth)  } // I need a way to check for zeros in the seq_depth
                 .set { scale_factor }
         } else {
-            //If not using the spikeIn normalization, then just need empty lists
-            Channel.value( [ [] ] )
+            //If not using the spikeIn normalization, then just need empty list
+            Channel.value( [] )
                 .set { scale_factor }
         }
 
