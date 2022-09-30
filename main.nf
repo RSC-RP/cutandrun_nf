@@ -6,6 +6,7 @@ include { BOWTIE2_ALIGN; BOWTIE2_ALIGN as SPIKEIN_ALIGN } from './modules/nf-cor
 include { BAMTOBEDGRAPH } from './modules/local/bedtools/main.nf'
 include { SEACR_CALLPEAK } from './modules/nf-core/modules/seacr/callpeak/main.nf'
 include { PICARD_MARKDUPLICATES; PICARD_MARKDUPLICATES as PICARD_RMDUPLICATES } from './modules/nf-core/modules/picard/markduplicates/main.nf'
+include { SAMTOOLS_SORT } from './modules/nf-core/modules/samtools/sort/main.nf'
 
 //Include subworkflows
 include { bowtie2_index; bowtie2_index as bowtie2_index_spike } from './subworkflows/bowtie_index.nf'
@@ -103,11 +104,13 @@ workflow call_peaks {
             PICARD_RMDUPLICATES(BOWTIE2_ALIGN.out.bam)
             PICARD_RMDUPLICATES.out.bam
                 .set { bams }
-        }else {
+        } else {
             // BOWTIE2_ALIGN.out.bam
             PICARD_MARKDUPLICATES.out.bam
                 .set { bams }
         }
+        //Sort bam files by read names
+        SAMTOOLS_SORT(bams)
         //Add Samtools stats module here for QC
         //Add [optional] samtools quality score filtering here 
         //Add Deeptools module here to split the BAM file into ≤120- and ≥150-bp size classes 
@@ -115,19 +118,27 @@ workflow call_peaks {
         // Convert the bam files to bed format with bedtools 
         Channel.value(params.spike_norm)
             .set { spike_norm }
-        BAMTOBEDGRAPH(bams, chrom_sizes, spike_norm, seq_depth_ch)
-        /*
-        //Define the control and the target channels. should be a custom groovy function really - need to figure this out.
+        BAMTOBEDGRAPH(SAMTOOLS_SORT.out.bam, chrom_sizes, spike_norm, seq_depth_ch)
+        //Split the control and the target channels. should be a custom groovy function really - need to figure this out.
         BAMTOBEDGRAPH.out.bedgraph
             .branch { 
                control: it[0].group =~ /control/
                targets: it[0].group =~ /target/
             }
             .set { bedgraphs }
-        bedgraphs.control
-            .cross(bedgraphs.targets){ meta -> meta[0].sample } // join by the key name "sample"
-            .map { meta -> [ meta[1][0], meta[1][1], meta[0][1] ] }
-            .set { seacr_ch }
+        //Define SEACR formatted input channels
+        if ( params.threshold > 0 ){
+            //Channel containing an empty/dummy value for the control file
+            bedgraphs.targets
+                .combine( Channel.value( [[]] ) )
+                .set { seacr_ch }
+        } else {
+            //Channel containing the targets and the control bedgraphs 
+            bedgraphs.control
+                .cross(bedgraphs.targets){ meta -> meta[0].sample } // join by the key name "sample"
+                .map { meta -> [ meta[1][0], meta[1][1], meta[0][1] ] }
+                .set { seacr_ch }
+        }
         //SEACR peak calling
         SEACR_CALLPEAK(seacr_ch, params.threshold)
         // MACS2 peak calling , Optionally run macs2 peak calling
@@ -146,7 +157,8 @@ workflow call_peaks {
             //Run MAC2 peak calling
             macs2_peaks(macs_ch)
         }
-        */
+
+
         //Add Deeptools module to calculate FRIP here
         //Add multiQC module here 
         // versions.concat(TRIMGALORE.out.versions, 
@@ -156,7 +168,6 @@ workflow call_peaks {
         //         .collect()
         //         .collectFile(name: 'versions.txt', newLine: true)
 }
-
 
 //End with a message to print to standard out on workflow completion. 
 workflow.onComplete {
