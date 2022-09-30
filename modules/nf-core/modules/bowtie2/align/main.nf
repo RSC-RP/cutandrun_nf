@@ -67,6 +67,7 @@ process BOWTIE2_ALIGN {
     if [[ ${spike_in} ]]; then
         seq_count=\$(samtools view -F 0x04 ${prefix}.bam | wc -l )
         seq_depth=\$((\$seq_count/2))
+        echo "The seq_depth for $prefix is \$seq_depth"
     fi
     
     if [ -f ${prefix}.unmapped.fastq.1.gz ]; then

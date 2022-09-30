@@ -58,7 +58,7 @@ workflow call_peaks {
             versions = versions.concat(bowtie2_index_spike.out.versions)
         } else {
             //Stage the genome index directory
-            Channel.fromPath(file(params.spike_fasta, checkIfExists: true))
+            Channel.fromPath(file(params.spike_index, checkIfExists: true))
                 .collect() //collect converts this to a value channel and used multiple times
                 .set { spike_index }
         }
@@ -90,13 +90,15 @@ workflow call_peaks {
                 .set { C }
             SPIKEIN_ALIGN.out.seq_depth
                 .combine( C )
-                .map { val -> [ "seq_depth":val[0], "constant":val[1] ] }
-                .set { seq_depth_ch }
+                .map { val -> [ "seq_depth":val[0].toInteger() , "constant":val[1] ] }
+                .map { val ->  val.constant.div(val.seq_depth)  } // I need a way to check for zeros in the seq_depth
+                .set { scale_factor }
         } else {
-            //If not using the spikeIn normalization, then just need empty lists
-            Channel.value( [ "seq_depth":[],"constant":[] ] )
-                .set { seq_depth_ch }
+            //If not using the spikeIn normalization, then just need empty list
+            Channel.value( [] )
+                .set { scale_factor }
         }
+
         //Add samtools index module here
         //Add picard markDuplicates modules here
         PICARD_MARKDUPLICATES(BOWTIE2_ALIGN.out.bam)
@@ -118,7 +120,7 @@ workflow call_peaks {
         // Convert the bam files to bed format with bedtools 
         Channel.value(params.spike_norm)
             .set { spike_norm }
-        BAMTOBEDGRAPH(SAMTOOLS_SORT.out.bam, chrom_sizes, spike_norm, seq_depth_ch)
+        BAMTOBEDGRAPH(SAMTOOLS_SORT.out.bam, chrom_sizes, spike_norm, scale_factor)
         //Split the control and the target channels. should be a custom groovy function really - need to figure this out.
         BAMTOBEDGRAPH.out.bedgraph
             .branch { 
