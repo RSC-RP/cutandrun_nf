@@ -91,7 +91,11 @@ workflow call_peaks {
             SPIKEIN_ALIGN.out.seq_depth
                 .combine( C )
                 .map { val -> [ "seq_depth":val[0].toInteger() , "constant":val[1] ] }
-                .map { val ->  val.constant.div(val.seq_depth)  } // I need a way to check for zeros in the seq_depth
+                .map { val -> if (val.seq_depth > 0 ) {
+                                    val.constant.div(val.seq_depth) 
+                                } else {
+                                    val.constant.div(1)
+                                } }
                 .set { scale_factor }
         } else {
             //If not using the spikeIn normalization, then just need empty list
