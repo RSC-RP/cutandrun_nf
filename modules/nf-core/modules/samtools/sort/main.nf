@@ -11,7 +11,7 @@ process SAMTOOLS_SORT {
     tuple val(meta), path(bam)
 
     output:
-    tuple val(meta), path("*.bam"), emit: bam
+    tuple val(meta), path("*.sort.bam"), emit: bam
     tuple val(meta), path("*.csi"), emit: csi, optional: true
     path  "versions.yml"          , emit: versions
 
@@ -23,7 +23,9 @@ process SAMTOOLS_SORT {
     def prefix = task.ext.prefix ?: "${meta.id}"
     if ("$bam" == "${prefix}.sort.bam") error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
     """
+    
     samtools sort $args -@ $task.cpus -o ${prefix}.sort.bam -T $prefix $bam
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
