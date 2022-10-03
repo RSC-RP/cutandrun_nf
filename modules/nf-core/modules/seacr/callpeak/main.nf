@@ -25,7 +25,7 @@ process SEACR_CALLPEAK {
     def prefix = task.ext.prefix ?: "${meta.id}"
     def function_switch = ctrlbedgraph ? "$ctrlbedgraph" : "$threshold"
     def type = "${function_switch.toString().replaceAll("_aligned.+","")}"
-    def suffix = ctrlbedgraph ? "vs_$type" : "threshold$type"
+    def suffix = ctrlbedgraph ? "norm" : "threshold$type"
     """
     SEACR_1.3.sh \\
         $bedgraph \\

@@ -13,17 +13,18 @@ process DEEPTOOLS_BAMCOVERAGE {
     path(fasta_fai)
 
     output:
-    tuple val(meta), path("*.bigWig")       ,   emit: bigwig, optional: true
-    tuple val(meta), path("*.bedgraph")     ,   emit: bedgraph, optional: true
+    tuple val(meta), path("*.bigWig")        ,  emit: bigwig, optional: true
+    tuple val(meta), path("*.bedgraph")      ,  emit: bedgraph, optional: true
     tuple val(meta), path("*.coord.sort.bam"),  emit: bam
-    path "versions.yml"                     ,   emit: versions
+    tuple val(meta), path("*.bai")           ,  emit: bai
+    path "versions.yml"                      ,  emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}.bigWig"
+    def prefix = task.ext.prefix ?: "${meta.id}"
 
     // cram_input is currently not working with deeptools
     // therefore it's required to convert cram to bam first
@@ -31,10 +32,16 @@ process DEEPTOOLS_BAMCOVERAGE {
     def input_out = is_cram ? input.BaseName + ".bam" : "${input}"
     def sorted_bam = input.simpleName + ".coord.sort.bam"
     def fai_reference = fasta_fai ? "--fai-reference ${fasta_fai}" : ""
+    def method = ( args =~ /--normalizeUsing (CPM|RPKM|BPM|RPGC)/ )
+    def suffix = method.find() ? method.group(1) : ''
+    def file_ext = args.contains('--outFileFormat bedgraph') ? 'bedgraph' : 'bigWig'
+    // if (is_cram){
+    """
+        if [[ $is_cram ]]
+        then
+            samtools view -T $fasta $input $fai_reference -@ $task.cpus -o $input_out
+        fi
 
-    if (is_cram){
-        """
-        samtools view -T $fasta $input $fai_reference -@ $task.cpus -o $input_out
         samtools sort -o $sorted_bam $input_out
         samtools index -b $sorted_bam -@ $task.cpus
 
@@ -42,16 +49,16 @@ process DEEPTOOLS_BAMCOVERAGE {
             --bam $sorted_bam \\
             $args \\
             --numberOfProcessors ${task.cpus} \\
-            --outFileName ${prefix}
+            --outFileName ${prefix}_${suffix}.${file_ext}
 
         cat <<-END_VERSIONS > versions.yml
         "${task.process}":
             samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
             deeptools: \$(bamCoverage --version | sed -e "s/bamCoverage //g")
         END_VERSIONS
-        """
-
-    }
+    """
+    // }
+    /*
     else {
         """
         bamCoverage \\
@@ -66,5 +73,6 @@ process DEEPTOOLS_BAMCOVERAGE {
         END_VERSIONS
         """
     }
+    */
 
 }

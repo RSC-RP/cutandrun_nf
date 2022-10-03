@@ -33,6 +33,7 @@ workflow call_peaks {
             .set { versions }
         //Stage the fasta file(s)
         Channel.fromPath(file(params.fasta, checkIfExists: true))
+            .collect()
             .set { fasta }
         //Optionally, create the index from a fasta file
         if ( params.build_index ) {
