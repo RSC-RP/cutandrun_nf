@@ -35,7 +35,7 @@ process DEEPTOOLS_BAMCOVERAGE {
     def method = ( args =~ /--normalizeUsing (CPM|RPKM|BPM|RPGC)/ )
     def suffix = method.find() ? method.group(1) : ''
     def file_ext = args.contains('--outFileFormat bedgraph') ? 'bedgraph' : 'bigWig'
-    // if (is_cram){
+    if (is_cram){
     """
         if [[ $is_cram ]]
         then
@@ -57,8 +57,7 @@ process DEEPTOOLS_BAMCOVERAGE {
             deeptools: \$(bamCoverage --version | sed -e "s/bamCoverage //g")
         END_VERSIONS
     """
-    // }
-    /*
+    }
     else {
         """
         bamCoverage \\
@@ -73,6 +72,4 @@ process DEEPTOOLS_BAMCOVERAGE {
         END_VERSIONS
         """
     }
-    */
-
 }

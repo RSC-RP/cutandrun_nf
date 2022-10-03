@@ -6,7 +6,7 @@ include { BOWTIE2_ALIGN; BOWTIE2_ALIGN as SPIKEIN_ALIGN } from './modules/nf-cor
 include { BAMTOBEDGRAPH } from './modules/local/bedtools/main.nf'
 include { SEACR_CALLPEAK } from './modules/nf-core/modules/seacr/callpeak/main.nf'
 include { PICARD_MARKDUPLICATES; PICARD_MARKDUPLICATES as PICARD_RMDUPLICATES } from './modules/nf-core/modules/picard/markduplicates/main.nf'
-include { SAMTOOLS_SORT } from './modules/nf-core/modules/samtools/sort/main.nf'
+include { SAMTOOLS_SORT; SAMTOOLS_SORT as SAMTOOLS_NSORT } from './modules/nf-core/modules/samtools/sort/main.nf'
 include { DEEPTOOLS_BAMCOVERAGE } from './modules/nf-core/modules/deeptools/bamcoverage/main.nf'
 
 //Include subworkflows
@@ -113,18 +113,17 @@ workflow call_peaks {
             PICARD_RMDUPLICATES.out.bam
                 .set { bams }
         } else {
-            // BOWTIE2_ALIGN.out.bam
             PICARD_MARKDUPLICATES.out.bam
                 .set { bams }
         }
         //Sort bam files by read names
-        SAMTOOLS_SORT(bams)
+        SAMTOOLS_NSORT(bams)
         //Add Samtools stats module here for QC
         //Add [optional] samtools quality score filtering here 
         // Convert the bam files to bed format with bedtools 
         Channel.value(params.spike_norm)
             .set { spike_norm }
-        BAMTOBEDGRAPH(SAMTOOLS_SORT.out.bam, chrom_sizes, spike_norm, scale_factor)
+        BAMTOBEDGRAPH(SAMTOOLS_NSORT.out.bam, chrom_sizes, spike_norm, scale_factor)
         //Split the control and the target channels. should be a custom groovy function really - need to figure this out.
         BAMTOBEDGRAPH.out.bedgraph
             .branch { 
@@ -163,11 +162,12 @@ workflow call_peaks {
             macs2_peaks(macs_ch)
         }
         // calculate coverage track with Deeptools
+        SAMTOOLS_SORT(bams)
         Channel.value( [[]] )
             .set { bai } //dummy channel for the bam index file (bai)
         Channel.value( [] )
             .set { fai } //dummy channel for the fasta index file (fai)
-        bams
+        SAMTOOLS_SORT.out.bam
             .combine( bai )
             .set { coverage_ch }
         DEEPTOOLS_BAMCOVERAGE(coverage_ch, fasta, fai)
