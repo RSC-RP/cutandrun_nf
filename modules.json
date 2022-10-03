@@ -24,6 +24,9 @@
             "picard/markduplicates": {
                 "git_sha": "682f789f93070bd047868300dd018faf3d434e7c"
             },
+            "samtools/index": {
+                "git_sha": "897c33d5da084b61109500ee44c01da2d3e4e773"
+            },
             "samtools/sort": {
                 "git_sha": "d5d785b3d8b422cda9c6d84a23f629a8e9ff8cd8"
             },
