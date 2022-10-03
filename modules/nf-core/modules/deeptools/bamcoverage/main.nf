@@ -13,9 +13,10 @@ process DEEPTOOLS_BAMCOVERAGE {
     path(fasta_fai)
 
     output:
-    tuple val(meta), path("*.bigWig")   , emit: bigwig, optional: true
-    tuple val(meta), path("*.bedgraph") , emit: bedgraph, optional: true
-    path "versions.yml"                 , emit: versions
+    tuple val(meta), path("*.bigWig")       ,   emit: bigwig, optional: true
+    tuple val(meta), path("*.bedgraph")     ,   emit: bedgraph, optional: true
+    tuple val(meta), path("*.coord.sort.bam"),  emit: bam
+    path "versions.yml"                     ,   emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -28,15 +29,17 @@ process DEEPTOOLS_BAMCOVERAGE {
     // therefore it's required to convert cram to bam first
     def is_cram = input.Extension == "cram" ? true : false
     def input_out = is_cram ? input.BaseName + ".bam" : "${input}"
+    def sorted_bam = input.simpleName + ".coord.sort.bam"
     def fai_reference = fasta_fai ? "--fai-reference ${fasta_fai}" : ""
 
     if (is_cram){
         """
         samtools view -T $fasta $input $fai_reference -@ $task.cpus -o $input_out
-        samtools index -b $input_out -@ $task.cpus
+        samtools sort -o $sorted_bam $input_out
+        samtools index -b $sorted_bam -@ $task.cpus
 
         bamCoverage \\
-            --bam $input_out \\
+            --bam $sorted_bam \\
             $args \\
             --numberOfProcessors ${task.cpus} \\
             --outFileName ${prefix}

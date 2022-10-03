@@ -7,6 +7,7 @@ include { BAMTOBEDGRAPH } from './modules/local/bedtools/main.nf'
 include { SEACR_CALLPEAK } from './modules/nf-core/modules/seacr/callpeak/main.nf'
 include { PICARD_MARKDUPLICATES; PICARD_MARKDUPLICATES as PICARD_RMDUPLICATES } from './modules/nf-core/modules/picard/markduplicates/main.nf'
 include { SAMTOOLS_SORT } from './modules/nf-core/modules/samtools/sort/main.nf'
+include { DEEPTOOLS_BAMCOVERAGE } from './modules/nf-core/modules/deeptools/bamcoverage/main.nf'
 
 //Include subworkflows
 include { bowtie2_index; bowtie2_index as bowtie2_index_spike } from './subworkflows/bowtie_index.nf'
@@ -30,11 +31,11 @@ workflow call_peaks {
         //Empty channel to collect the versions of software used 
         Channel.empty()
             .set { versions }
+        //Stage the fasta file(s)
+        Channel.fromPath(file(params.fasta, checkIfExists: true))
+            .set { fasta }
         //Optionally, create the index from a fasta file
         if ( params.build_index ) {
-            //Stage the fasta files
-             Channel.fromPath(file(params.fasta, checkIfExists: true))
-                .set { fasta }
             bowtie2_index(fasta)
             bowtie2_index.out.index
                 .collect() //collect converts this to a value channel and to be used multiple times
@@ -119,8 +120,6 @@ workflow call_peaks {
         SAMTOOLS_SORT(bams)
         //Add Samtools stats module here for QC
         //Add [optional] samtools quality score filtering here 
-        //Add Deeptools module here to split the BAM file into ≤120- and ≥150-bp size classes 
-        
         // Convert the bam files to bed format with bedtools 
         Channel.value(params.spike_norm)
             .set { spike_norm }
@@ -147,23 +146,30 @@ workflow call_peaks {
         }
         //SEACR peak calling
         SEACR_CALLPEAK(seacr_ch, params.threshold)
-        // MACS2 peak calling , Optionally run macs2 peak calling
-        // can the channel creation be done in the subworkflow?
+        // MACS2 peak calling, Optional
         if ( params.run_macs2 ){
-            BOWTIE2_ALIGN.out.bam
-                .branch { 
+            //Separate the bam files by target or control antibody
+            bams.branch { 
                     control: it[0].group =~ /control/
                     targets: it[0].group =~ /target/
                 }
-                .set { bams }
-            bams.control
-                .cross(bams.targets){ meta -> meta[0].sample }
+                .set { bam_groups }
+            bam_groups.control
+                .cross(bam_groups.targets){ meta -> meta[0].sample }
                 .map { meta -> [ meta[1][0], meta[1][1], meta[0][1] ] }
                 .set { macs_ch }
             //Run MAC2 peak calling
             macs2_peaks(macs_ch)
         }
-
+        // calculate coverage track with Deeptools
+        Channel.value( [[]] )
+            .set { bai } //dummy channel for the bam index file (bai)
+        Channel.value( [] )
+            .set { fai } //dummy channel for the fasta index file (fai)
+        bams
+            .combine( bai )
+            .set { coverage_ch }
+        DEEPTOOLS_BAMCOVERAGE(coverage_ch, fasta, fai)
 
         //Add Deeptools module to calculate FRIP here
         //Add multiQC module here 
