@@ -9,6 +9,9 @@
             "bowtie2/build": {
                 "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d"
             },
+            "deeptools/bamcoverage": {
+                "git_sha": "a21cfb666eed7517060f1d2d61a21c340753b0ec"
+            },
             "fastqc": {
                 "git_sha": "49b18b1639f4f7104187058866a8fab33332bdfe"
             },
