@@ -7,7 +7,7 @@ workflow macs2_peaks {
     macs_ch
 
     main:
-    //Either run khmer to determine effective genome size for macs2, or use a value provided as params.macs2_gsize
+    //Either run khmer to determine effective genome size for macs2, or use a value provided as params.gsize
     if ( params.run_khmer ) {
         Channel.fromPath(file(params.fasta, checkIfExists: true))
             .set { fasta }
@@ -15,13 +15,13 @@ workflow macs2_peaks {
             .set { khmer_size }
         KHMER_UNIQUEKMERS(fasta, khmer_size)
         KHMER_UNIQUEKMERS.out.kmers
-                .set { macs2_gsize }
+                .set { gsize }
     } else {
-        Channel.value(params.macs2_gsize)
-                .set { macs2_gsize }
+        Channel.value(params.gsize)
+                .set { gsize }
     }
     // Run Macs2 peak calling
-    MACS2_CALLPEAK(macs_ch, macs2_gsize)
+    MACS2_CALLPEAK(macs_ch, gsize)
 
     emit:
     macs_ver = MACS2_CALLPEAK.out.versions
