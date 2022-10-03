@@ -15,8 +15,6 @@ process DEEPTOOLS_BAMCOVERAGE {
     output:
     tuple val(meta), path("*.bigWig")        ,  emit: bigwig, optional: true
     tuple val(meta), path("*.bedgraph")      ,  emit: bedgraph, optional: true
-    tuple val(meta), path("*.coord.sort.bam"),  emit: bam
-    tuple val(meta), path("*.bai")           ,  emit: bai
     path "versions.yml"                      ,  emit: versions
 
     when:
@@ -35,7 +33,7 @@ process DEEPTOOLS_BAMCOVERAGE {
     def method = ( args =~ /--normalizeUsing (CPM|RPKM|BPM|RPGC)/ )
     def suffix = method.find() ? method.group(1) : ''
     def file_ext = args.contains('--outFileFormat bedgraph') ? 'bedgraph' : 'bigWig'
-    // if (is_cram){
+    if (is_cram){
     """
         if [[ $is_cram ]]
         then
@@ -57,22 +55,18 @@ process DEEPTOOLS_BAMCOVERAGE {
             deeptools: \$(bamCoverage --version | sed -e "s/bamCoverage //g")
         END_VERSIONS
     """
-    // }
-    /*
-    else {
-        """
-        bamCoverage \\
-            --bam $input_out \\
-            $args \\
-            --numberOfProcessors ${task.cpus} \\
-            --outFileName ${prefix}
+    } else {
+    """
+    bamCoverage \\
+        --bam $input_out \\
+        $args \\
+        --numberOfProcessors ${task.cpus} \\
+        --outFileName ${prefix}_${suffix}.${file_ext}
 
-        cat <<-END_VERSIONS > versions.yml
-        "${task.process}":
-            deeptools: \$(bamCoverage --version | sed -e "s/bamCoverage //g")
-        END_VERSIONS
-        """
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        deeptools: \$(bamCoverage --version | sed -e "s/bamCoverage //g")
+    END_VERSIONS
+    """
     }
-    */
-
 }

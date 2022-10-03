@@ -6,7 +6,8 @@ include { BOWTIE2_ALIGN; BOWTIE2_ALIGN as SPIKEIN_ALIGN } from './modules/nf-cor
 include { BAMTOBEDGRAPH } from './modules/local/bedtools/main.nf'
 include { SEACR_CALLPEAK } from './modules/nf-core/modules/seacr/callpeak/main.nf'
 include { PICARD_MARKDUPLICATES; PICARD_MARKDUPLICATES as PICARD_RMDUPLICATES } from './modules/nf-core/modules/picard/markduplicates/main.nf'
-include { SAMTOOLS_SORT } from './modules/nf-core/modules/samtools/sort/main.nf'
+include { SAMTOOLS_SORT; SAMTOOLS_SORT as SAMTOOLS_NSORT } from './modules/nf-core/modules/samtools/sort/main.nf'
+include { SAMTOOLS_INDEX } from './modules/nf-core/modules/samtools/index/main.nf'
 include { DEEPTOOLS_BAMCOVERAGE } from './modules/nf-core/modules/deeptools/bamcoverage/main.nf'
 
 //Include subworkflows
@@ -104,27 +105,24 @@ workflow call_peaks {
             Channel.value( [] )
                 .set { scale_factor }
         }
-
-        //Add samtools index module here
-        //Add picard markDuplicates modules here
+        //Run picard markduplicates, optionally remove duplicates
         PICARD_MARKDUPLICATES(BOWTIE2_ALIGN.out.bam)
         if ( params.remove_dups ){
             PICARD_RMDUPLICATES(BOWTIE2_ALIGN.out.bam)
             PICARD_RMDUPLICATES.out.bam
                 .set { bams }
         } else {
-            // BOWTIE2_ALIGN.out.bam
             PICARD_MARKDUPLICATES.out.bam
                 .set { bams }
         }
-        //Sort bam files by read names
-        SAMTOOLS_SORT(bams)
+        //Sort bam files by read names for bam to bedpe conversion
+        SAMTOOLS_NSORT(bams)
         //Add Samtools stats module here for QC
         //Add [optional] samtools quality score filtering here 
         // Convert the bam files to bed format with bedtools 
         Channel.value(params.spike_norm)
             .set { spike_norm }
-        BAMTOBEDGRAPH(SAMTOOLS_SORT.out.bam, chrom_sizes, spike_norm, scale_factor)
+        BAMTOBEDGRAPH(SAMTOOLS_NSORT.out.bam, chrom_sizes, spike_norm, scale_factor)
         //Split the control and the target channels. should be a custom groovy function really - need to figure this out.
         BAMTOBEDGRAPH.out.bedgraph
             .branch { 
@@ -162,14 +160,17 @@ workflow call_peaks {
             //Run MAC2 peak calling
             macs2_peaks(macs_ch)
         }
-        // calculate coverage track with Deeptools
-        Channel.value( [[]] )
-            .set { bai } //dummy channel for the bam index file (bai)
+        //Sort and index the picard marked dups bams 
+        SAMTOOLS_SORT(bams)
+        SAMTOOLS_INDEX(SAMTOOLS_SORT.out.bam)
+        //Create a channel for bedtools genomecov
         Channel.value( [] )
             .set { fai } //dummy channel for the fasta index file (fai)
-        bams
-            .combine( bai )
+        SAMTOOLS_SORT.out.bam
+            .cross(SAMTOOLS_INDEX.out.bai){ meta -> meta[0].id } // join by the key name "id"
+            .map { meta -> [ meta[0][0], meta[0][1], meta[1][1] ] }
             .set { coverage_ch }
+        // calculate coverage track with Deeptools
         DEEPTOOLS_BAMCOVERAGE(coverage_ch, fasta, fai)
 
         //Add Deeptools module to calculate FRIP here
