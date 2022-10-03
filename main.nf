@@ -7,6 +7,7 @@ include { BAMTOBEDGRAPH } from './modules/local/bedtools/main.nf'
 include { SEACR_CALLPEAK } from './modules/nf-core/modules/seacr/callpeak/main.nf'
 include { PICARD_MARKDUPLICATES; PICARD_MARKDUPLICATES as PICARD_RMDUPLICATES } from './modules/nf-core/modules/picard/markduplicates/main.nf'
 include { SAMTOOLS_SORT; SAMTOOLS_SORT as SAMTOOLS_NSORT } from './modules/nf-core/modules/samtools/sort/main.nf'
+include { SAMTOOLS_INDEX } from './modules/nf-core/modules/samtools/index/main.nf'
 include { DEEPTOOLS_BAMCOVERAGE } from './modules/nf-core/modules/deeptools/bamcoverage/main.nf'
 
 //Include subworkflows
@@ -104,9 +105,7 @@ workflow call_peaks {
             Channel.value( [] )
                 .set { scale_factor }
         }
-
-        //Add samtools index module here
-        //Add picard markDuplicates modules here
+        //Run picard markduplicates, optionally remove duplicates
         PICARD_MARKDUPLICATES(BOWTIE2_ALIGN.out.bam)
         if ( params.remove_dups ){
             PICARD_RMDUPLICATES(BOWTIE2_ALIGN.out.bam)
@@ -116,7 +115,7 @@ workflow call_peaks {
             PICARD_MARKDUPLICATES.out.bam
                 .set { bams }
         }
-        //Sort bam files by read names
+        //Sort bam files by read names for bam to bedpe conversion
         SAMTOOLS_NSORT(bams)
         //Add Samtools stats module here for QC
         //Add [optional] samtools quality score filtering here 
@@ -161,15 +160,17 @@ workflow call_peaks {
             //Run MAC2 peak calling
             macs2_peaks(macs_ch)
         }
-        // calculate coverage track with Deeptools
+        //Sort and index the picard marked dups bams 
         SAMTOOLS_SORT(bams)
-        Channel.value( [[]] )
-            .set { bai } //dummy channel for the bam index file (bai)
+        SAMTOOLS_INDEX(SAMTOOLS_SORT.out.bam)
+        //Create a channel for bedtools genomecov
         Channel.value( [] )
             .set { fai } //dummy channel for the fasta index file (fai)
         SAMTOOLS_SORT.out.bam
-            .combine( bai )
+            .cross(SAMTOOLS_INDEX.out.bai){ meta -> meta[0].id } // join by the key name "id"
+            .map { meta -> [ meta[0][0], meta[0][1], meta[1][1] ] }
             .set { coverage_ch }
+        // calculate coverage track with Deeptools
         DEEPTOOLS_BAMCOVERAGE(coverage_ch, fasta, fai)
 
         //Add Deeptools module to calculate FRIP here
