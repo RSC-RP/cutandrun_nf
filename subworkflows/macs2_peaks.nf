@@ -4,9 +4,19 @@ include { KHMER_UNIQUEKMERS } from '../modules/nf-core/modules/khmer/uniquekmers
 // Run MAC2 peak calling (subworkflow)
 workflow macs2_peaks {
     take:
-    macs_ch
+    bams
 
     main:
+    //Separate the bam files by target or control antibody
+    bams.branch { 
+            control: it[0].group =~ /control/
+            targets: it[0].group =~ /target/
+        }
+        .set { bam_groups }
+    bam_groups.control
+        .cross(bam_groups.targets){ meta -> meta[0].sample }
+        .map { meta -> [ meta[1][0], meta[1][1], meta[0][1] ] }
+        .set { macs_ch }
     //Either run khmer to determine effective genome size for macs2, or use a value provided as params.gsize
     if ( params.run_khmer ) {
         Channel.fromPath(file(params.fasta, checkIfExists: true))
