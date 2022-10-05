@@ -54,8 +54,7 @@ mk_symlinks <- function(linked_dirname,filepaths){
 
 ```{r}
 fastq_files <- dir(
-    # "/gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/", 
-    "test_data/fastqs",
+    "/gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/",
                     pattern = "_R[12].+.fastq.gz",
                     recursive = TRUE,
                     full.names = TRUE)
@@ -103,7 +102,7 @@ sample_sheet <- sample_manifest %>%
            matches("read")) 
 
 sample_sheet
-# write.csv(sample_sheet,"test_data/test_dataset_sample_sheet.csv", row.names = FALSE, quote = FALSE)
+write.csv(sample_sheet,"test_data/test_dataset_sample_sheet.csv", row.names = FALSE, quote = FALSE)
 ```
 
 
