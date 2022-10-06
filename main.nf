@@ -1,20 +1,17 @@
 nextflow.enable.dsl = 2
 
-//Include Modules
+// Include Modules
 include { TRIMGALORE } from './modules/nf-core/modules/trimgalore/main.nf'
 include { BOWTIE2_ALIGN; BOWTIE2_ALIGN as SPIKEIN_ALIGN } from './modules/nf-core/modules/bowtie2/align/main.nf'
-include { BAMTOBEDGRAPH } from './modules/local/bedtools/main.nf'
-include { SEACR_CALLPEAK } from './modules/nf-core/modules/seacr/callpeak/main.nf'
 include { PICARD_MARKDUPLICATES; PICARD_MARKDUPLICATES as PICARD_RMDUPLICATES } from './modules/nf-core/modules/picard/markduplicates/main.nf'
-include { SAMTOOLS_SORT; SAMTOOLS_SORT as SAMTOOLS_NSORT } from './modules/nf-core/modules/samtools/sort/main.nf'
-include { SAMTOOLS_INDEX } from './modules/nf-core/modules/samtools/index/main.nf'
-include { DEEPTOOLS_BAMCOVERAGE } from './modules/nf-core/modules/deeptools/bamcoverage/main.nf'
 
-//Include subworkflows
+// Include subworkflows
 include { bowtie2_index; bowtie2_index as bowtie2_index_spike } from './subworkflows/bowtie_index.nf'
+include { coverage_tracks } from './subworkflows/coverage_tracks.nf'
+include { seacr_peaks } from './subworkflows/seacr_peaks.nf'
 include { macs2_peaks } from './subworkflows/macs2_peaks.nf'
 
-//Define stdout message for the command line use
+// Define stdout message for the command line use
 idx_or_fasta = (params.index == '' ? params.fasta : params.index)
 log.info """\
          C U T & R U N-  P I P E L I N E
@@ -22,12 +19,13 @@ log.info """\
          Project           : $workflow.projectDir
          Project workDir   : $workflow.workDir
          Container Engine  : $workflow.containerEngine
+         Results           : ${params.outdir}
          Samples           : ${params.sample_sheet}
          Genome            : ${idx_or_fasta}
          """
          .stripIndent()
 
-//run the workflow for alignment, to bedgraph, to peak calling for Cut&Run data
+// Run the workflow for alignment, to bedgraph, to peak calling for Cut&Run data
 workflow call_peaks {
         //Empty channel to collect the versions of software used 
         Channel.empty()
@@ -115,64 +113,17 @@ workflow call_peaks {
             PICARD_MARKDUPLICATES.out.bam
                 .set { bams }
         }
-        //Sort bam files by read names for bam to bedpe conversion
-        SAMTOOLS_NSORT(bams)
+        //Create coverage (bigwig or bedgraph) files for IGV/UCSC
+        coverage_tracks(bams, fasta)
         //Add Samtools stats module here for QC
         //Add [optional] samtools quality score filtering here 
-        // Convert the bam files to bed format with bedtools 
-        Channel.value(params.spike_norm)
-            .set { spike_norm }
-        BAMTOBEDGRAPH(SAMTOOLS_NSORT.out.bam, chrom_sizes, spike_norm, scale_factor)
-        //Split the control and the target channels. should be a custom groovy function really - need to figure this out.
-        BAMTOBEDGRAPH.out.bedgraph
-            .branch { 
-               control: it[0].group =~ /control/
-               targets: it[0].group =~ /target/
-            }
-            .set { bedgraphs }
-        //Define SEACR formatted input channels
-        if ( params.threshold > 0 ){
-            //Channel containing an empty/dummy value for the control file
-            bedgraphs.targets
-                .combine( Channel.value( [[]] ) )
-                .set { seacr_ch }
-        } else {
-            //Channel containing the targets and the control bedgraphs 
-            bedgraphs.control
-                .cross(bedgraphs.targets){ meta -> meta[0].sample } // join by the key name "sample"
-                .map { meta -> [ meta[1][0], meta[1][1], meta[0][1] ] }
-                .set { seacr_ch }
-        }
-        //SEACR peak calling
-        SEACR_CALLPEAK(seacr_ch, params.threshold)
+        // SEACR peak calling
+        seacr_peaks(bams, chrom_sizes, scale_factor)
         // MACS2 peak calling, Optional
         if ( params.run_macs2 ){
-            //Separate the bam files by target or control antibody
-            bams.branch { 
-                    control: it[0].group =~ /control/
-                    targets: it[0].group =~ /target/
-                }
-                .set { bam_groups }
-            bam_groups.control
-                .cross(bam_groups.targets){ meta -> meta[0].sample }
-                .map { meta -> [ meta[1][0], meta[1][1], meta[0][1] ] }
-                .set { macs_ch }
             //Run MAC2 peak calling
-            macs2_peaks(macs_ch)
+            macs2_peaks(bams)
         }
-        //Sort and index the picard marked dups bams 
-        SAMTOOLS_SORT(bams)
-        SAMTOOLS_INDEX(SAMTOOLS_SORT.out.bam)
-        //Create a channel for bedtools genomecov
-        Channel.value( [] )
-            .set { fai } //dummy channel for the fasta index file (fai)
-        SAMTOOLS_SORT.out.bam
-            .cross(SAMTOOLS_INDEX.out.bai){ meta -> meta[0].id } // join by the key name "id"
-            .map { meta -> [ meta[0][0], meta[0][1], meta[1][1] ] }
-            .set { coverage_ch }
-        // calculate coverage track with Deeptools
-        DEEPTOOLS_BAMCOVERAGE(coverage_ch, fasta, fai)
-
         //Add Deeptools module to calculate FRIP here
         //Add multiQC module here 
         // versions.concat(TRIMGALORE.out.versions, 

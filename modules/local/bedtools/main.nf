@@ -28,7 +28,7 @@ process BAMTOBEDGRAPH {
     def args2 = task.ext.args2 ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def scale_arg = spike_norm ? "-scale $scale_factor" : ''
-    def suffix = spike_norm ? '_normalized' : ''
+    def suffix = spike_norm ? '_spikein_norm' : ''
     """
     set -eu -o pipefail
 

@@ -26,37 +26,38 @@ process DEEPTOOLS_BAMCOVERAGE {
 
     // cram_input is currently not working with deeptools
     // therefore it's required to convert cram to bam first
+    def temp_dir = "${workflow.workDir}/matplotlib"
     def is_cram = input.Extension == "cram" ? true : false
     def input_out = is_cram ? input.BaseName + ".bam" : "${input}"
     def sorted_bam = input.simpleName + ".coord.sort.bam"
     def fai_reference = fasta_fai ? "--fai-reference ${fasta_fai}" : ""
     def method = ( args =~ /--normalizeUsing (CPM|RPKM|BPM|RPGC)/ )
-    def suffix = method.find() ? method.group(1) : ''
+    def suffix = method.find() ? "_${method.group(1)}" : ''
     def file_ext = args.contains('--outFileFormat bedgraph') ? 'bedgraph' : 'bigWig'
     if (is_cram){
     """
-        if [[ $is_cram ]]
-        then
-            samtools view -T $fasta $input $fai_reference -@ $task.cpus -o $input_out
-        fi
+    export MPLCONFIGDIR="$temp_dir"
+    
+    samtools view -T $fasta $input $fai_reference -@ $task.cpus -o $input_out
+    samtools sort -o $sorted_bam $input_out
+    samtools index -b $sorted_bam -@ $task.cpus
 
-        samtools sort -o $sorted_bam $input_out
-        samtools index -b $sorted_bam -@ $task.cpus
+    bamCoverage \\
+        --bam $sorted_bam \\
+        $args \\
+        --numberOfProcessors ${task.cpus} \\
+        --outFileName ${prefix}${suffix}.${file_ext}
 
-        bamCoverage \\
-            --bam $sorted_bam \\
-            $args \\
-            --numberOfProcessors ${task.cpus} \\
-            --outFileName ${prefix}_${suffix}.${file_ext}
-
-        cat <<-END_VERSIONS > versions.yml
-        "${task.process}":
-            samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
-            deeptools: \$(bamCoverage --version | sed -e "s/bamCoverage //g")
-        END_VERSIONS
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
+        deeptools: \$(bamCoverage --version | sed -e "s/bamCoverage //g")
+    END_VERSIONS
     """
     } else {
     """
+    export MPLCONFIGDIR="$temp_dir"
+
     bamCoverage \\
         --bam $input_out \\
         $args \\
