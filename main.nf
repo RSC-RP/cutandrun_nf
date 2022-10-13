@@ -130,14 +130,17 @@ workflow call_peaks {
         sample_sheet_name = file(params.sample_sheet, checkIfExists: true)
             .simpleName
         // want to pass in trim_galore.fq.gz, bowtie_align.bam files or directories
-        TRIMGALORE.out.log
+        TRIMGALORE.out.log    
             .combine(BOWTIE2_ALIGN.out.log)
-            .map {filenames -> [filenames]}
-            // .set {multiqc_ch}
-            .subscribe {println "value: $it"}
+            .flatten()
+            .filter(~/^\/.+(\.txt|\.log)$/) //only keep list items that start with / and end with .txt or .log
+            .collect()
+            .set {multiqc_ch}
+            // .subscribe {println "value: $it"}
         
         // println multiqc_ch
-        // MULTIQC(multiqc_ch, sample_sheet_name)
+        MULTIQC(multiqc_ch, sample_sheet_name)
+            
         // versions.concat(TRIMGALORE.out.versions, 
         //                 BOWTIE2_ALIGN.out.versions,
         //                 BAMTOBEDGRAPH.out.versions, 
