@@ -11,10 +11,12 @@ process BAMTOBEDGRAPH {
 
     input:
     tuple val(meta), path(bam)
-    path genome_file
+    path chrom_sizes
+    val spike_norm
+    val scale_factor
 
     output:
-    tuple val(meta), path("*.fragments.bg"),    emit: bedgraph
+    tuple val(meta), path("*fragments.bg"),    emit: bedgraph
     tuple val(meta), path("*.bed"),             emit: bedfiles
     path "versions.yml"           ,             emit: versions
 
@@ -23,7 +25,10 @@ process BAMTOBEDGRAPH {
 
     script:
     def args = task.ext.args ?: ''
+    def args2 = task.ext.args2 ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def scale_arg = spike_norm ? "-scale $scale_factor" : ''
+    def suffix = spike_norm ? '_spikein_norm' : ''
     """
     set -eu -o pipefail
 
@@ -32,13 +37,21 @@ process BAMTOBEDGRAPH {
         -i ${bam} \\
         $args > ${prefix}_aligned.bed
 
+    # Keep the read pairs that are on the same chromosome and fragment length less than 1000bp.
     awk '\$1==\$4 && \$6-\$2 < 1000 {print \$0}' ${prefix}_aligned.bed > ${prefix}_aligned.clean.bed
     cut -f 1,2,6 ${prefix}_aligned.clean.bed | sort -k1,1 -k2,2n -k3,3n > ${prefix}_aligned.fragments.bed
     
+    if [[ $spike_norm ]]
+    then
+        echo "The spikein scale factor is: $scale_factor"
+    fi
+
     bedtools genomecov \\
+        $scale_arg \\
+        $args \\
         -bg \\
         -i ${prefix}_aligned.fragments.bed \\
-        -g ${genome_file} > ${prefix}_aligned.fragments.bg
+        -g ${chrom_sizes} > ${prefix}_aligned${suffix}_fragments.bg
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

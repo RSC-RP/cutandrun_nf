@@ -11,7 +11,8 @@ process SEACR_CALLPEAK {
 
     input:
     tuple val(meta), path(bedgraph), path(ctrlbedgraph)
-    val (threshold)
+    val threshold
+    val spike_norm
 
     output:
     tuple val(meta), path("*.bed"), emit: bed
@@ -24,12 +25,16 @@ process SEACR_CALLPEAK {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def function_switch = ctrlbedgraph ? "$ctrlbedgraph" : "$threshold"
+    def spikein = spike_norm ?  'spikein_norm' : 'non'
+    def type = "${function_switch.toString().replaceAll("_aligned.+","")}"
+    def norm_method = args.contains('norm') ? "norm" : "${spikein}"
+    def suffix = ctrlbedgraph ? "vs_${type}_${norm_method}" : "threshold${type}_${norm_method}"
     """
     SEACR_1.3.sh \\
         $bedgraph \\
         $function_switch \\
         $args \\
-        $prefix
+        ${prefix}_${suffix}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
