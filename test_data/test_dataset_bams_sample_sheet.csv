@@ -1,0 +1,7 @@
+sample_id,sample,single_end,target_or_control,bam
+M1_H3K27_NK,M1_NK,false,target,results/mouse/picard_markduplicates/M1_H3K27_NK_markedDup.bam
+M1_H3K4_NK,M1_NK,false,target,results/mouse/picard_markduplicates/M1_H3K4_NK_markedDup.bam
+M1_IgG_NK,M1_NK,false,control,results/mouse/picard_markduplicates/M1_IgG_NK_markedDup.bam
+M2_H3K27_NK,M2_NK,false,target,results/mouse/picard_markduplicates/M2_H3K27_NK_markedDup.bam
+M2_H3K4_NK,M2_NK,false,target,results/mouse/picard_markduplicates/M2_H3K4_NK_markedDup.bam
+M2_IgG_NK,M2_NK,false,control,results/mouse/picard_markduplicates/M2_IgG_NK_markedDup.bam
