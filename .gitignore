@@ -15,11 +15,15 @@
 resources
 resources/
 results*/
+test_data/params_notes.txt
 test_data/bams/
 test_data/fastqs/
+test_data/e_coli_fastq/
 test_data/*skeleton*
 test_data/test.nf
 test_data/*.sh
+#only used for testing MACS2 params
+env/macs.yml 
 reports/
 dag/
 sample_sheets/
