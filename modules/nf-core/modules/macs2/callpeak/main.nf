@@ -9,7 +9,7 @@ process MACS2_CALLPEAK {
 
     input:
     tuple val(meta), path(ipbam), path(controlbam)
-    val   macs2_gsize
+    val   gsize
 
     output:
     tuple val(meta), path("*.{narrowPeak,broadPeak}"), emit: peak
@@ -39,7 +39,8 @@ process MACS2_CALLPEAK {
     macs2 \\
         callpeak \\
         ${args_list.join(' ')} \\
-        --gsize $macs2_gsize \\
+        --tempdir \$PWD \\
+        --gsize $gsize \\
         --format $format \\
         --name $prefix \\
         --treatment $ipbam \\

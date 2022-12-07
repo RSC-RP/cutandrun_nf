@@ -12,12 +12,13 @@ process BOWTIE2_ALIGN {
     path  index
     val   spike_in
     val   save_unaligned
-    val   sort_bam
+    //val   sort_bam
 
     output:
     tuple val(meta), path("*.bam")    , emit: bam
     tuple val(meta), path("*.log")    , emit: log
-    tuple val(meta), path("*fastq.gz"), emit: fastq, optional:true
+    env seq_depth                     , emit: seq_depth, optional: true
+    tuple val(meta), path("*fastq.gz"), emit: fastq, optional: true
     path  "versions.yml"              , emit: versions
 
     when:
@@ -27,7 +28,12 @@ process BOWTIE2_ALIGN {
     def args = task.ext.args ?: ""
     def args2 = task.ext.args2 ?: ""
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def spike_args = "${spike_in}" ? '--no-overlap --no-dovetail' : ''
+    if (spike_in) {
+        prefix = "${meta.id}_spikein"
+        spike_args = '--no-overlap --no-dovetail'
+    } else {
+        spike_args = ''
+    }
     def unaligned = ""
     def reads_args = ""
     if (meta.single_end) {
@@ -37,8 +43,8 @@ process BOWTIE2_ALIGN {
         unaligned = save_unaligned ? "--un-conc-gz ${prefix}.unmapped.fastq.gz" : ""
         reads_args = "-1 ${reads[0]} -2 ${reads[1]}"
     }
-
-    def samtools_command = sort_bam ? 'sort' : 'view'
+    // I decided to enforce sorting the bam in the bash script block
+    // def samtools_command = sort_bam ? 'sort' : 'view'
 
     """
     set -eu -o pipefail
@@ -56,8 +62,14 @@ process BOWTIE2_ALIGN {
         $args \\
         $spike_args \\
         2> ${prefix}.bowtie2.log \\
-        | samtools $samtools_command $args2 --threads $task.cpus -o ${prefix}.bam -
+        | samtools sort $args2 --threads $task.cpus -o ${prefix}.bam -
 
+    if [[ ${spike_in} ]]; then
+        seq_count=\$(samtools view -F 0x04 ${prefix}.bam | wc -l )
+        seq_depth=\$((\$seq_count/2))
+        echo "The seq_depth for $prefix is \$seq_depth"
+    fi
+    
     if [ -f ${prefix}.unmapped.fastq.1.gz ]; then
         mv ${prefix}.unmapped.fastq.1.gz ${prefix}.unmapped_1.fastq.gz
     fi
