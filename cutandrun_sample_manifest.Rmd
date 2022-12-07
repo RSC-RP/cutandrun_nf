@@ -68,7 +68,7 @@ fastq_manifest <- tibble(fastq_paths=fastq_files) %>%
         TRUE  ~ "read2")) %>% 
     mutate(species="Mus musculus",
            sample_id=gsub("_chr17_R[12].+.fastq.gz", "", filename),
-           sample=str_split_fixed(filename, pattern = "_", n=3)[,1],
+           sample=gsub("^(M[12])_[A-Za-z0-9]+_(NK|IRI)", "\\1_\\2",sample_id),
            antibody=str_split_fixed(filename, pattern = "_", n=3)[,2],
            target_or_control=ifelse(antibody=="IgG", "control", "target")) %>% 
     select(sample_id,sample,species:target_or_control,filename:read)
@@ -79,8 +79,8 @@ sample_manifest <- fastq_manifest %>%
                 values_from=filename)
 
 sample_manifest
-any(duplicated(sample_manifest$sample_id)) #OK
-write.csv(sample_manifest,"test_data/test_dataset_sample_manifest.csv", row.names = F)
+# any(duplicated(sample_manifest$sample_id)) #OK
+# write.csv(sample_manifest,"test_data/test_dataset_sample_manifest.csv", row.names = F)
 ```
 
 # Peak Calling 
@@ -90,6 +90,10 @@ https://childrens-atlassian/bitbucket/projects/RPDEV/repos/cutandrun_nf/browse
 https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5444249/
 
 Histone marks such as H3K9me3 or H3K27me3 are broad while others such as H3K4me3 and proteins such as CTCF are narrow.
+
+## Align adn then call peaks
+
+For entry point using `align_call_peaks`
 
 ```{r}
 sample_sheet <- sample_manifest %>% 
@@ -103,6 +107,30 @@ sample_sheet <- sample_manifest %>%
 
 sample_sheet
 write.csv(sample_sheet,"test_data/test_dataset_sample_sheet.csv", row.names = FALSE, quote = FALSE)
+```
+
+# BAM file sample sheet 
+
+For entry point using `call_peaks`
+
+```{r}
+bams <- data.frame(bam=dir("results/mouse/picard_markduplicates",
+    pattern = "*.bam",
+    full.names = TRUE)) %>% 
+    mutate(sample_id=basename(bam) %>% 
+               gsub("_marked.+","", .))
+
+# bams
+```
+
+```{r}
+bams_sample_sheet <- sample_sheet %>% 
+    select(-read1, -read2) %>% 
+    left_join(., bams, by="sample_id")
+
+bams_sample_sheet
+# write.csv(bams_sample_sheet, "test_data/test_dataset_bams_sample_sheet.csv",
+#           row.names = F, quote = F)
 ```
 
 

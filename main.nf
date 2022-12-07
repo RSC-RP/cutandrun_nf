@@ -27,7 +27,7 @@ log.info """\
          .stripIndent()
 
 // Run the workflow for alignment, to bedgraph, to peak calling for Cut&Run data
-workflow call_peaks {
+workflow align_call_peaks {
         //Empty channel to collect the versions of software used 
         Channel.empty()
             .set { versions }
@@ -99,6 +99,13 @@ workflow call_peaks {
                                     val.constant.div(1)
                                 } }
                 .set { scale_factor }
+            //I need a way to save the scale factors a tab delimited file, like append it to the sample sheet??
+            // SPIKEIN_ALIGN.out.seq_depth
+            //     .collect()
+            //     .set { seq_depth_ch }
+            // Channel.fromPath(file(params.sample_sheet, checkIfExists: true))
+            //     .set { sample_sheet }
+            //SAVE_DEPTHS(seq_depth_ch, sample_sheet)
         } else {
             //If not using the spikeIn normalization, then just need empty list
             Channel.value( [] )
@@ -143,6 +150,39 @@ workflow call_peaks {
         //         .collect()
         //         .collectFile(name: 'versions.txt', newLine: true)
 }
+
+
+workflow call_peaks {
+    //Create the input channel for bams which contains the SAMPLE_ID, whether its single-end, and the file paths. 
+    Channel.fromPath(file(params.sample_sheet, checkIfExists: true))
+        .splitCsv(header: true, sep: ',')
+        .map { row -> [ [ "id":row["sample_id"], "single_end":row["single_end"].toBoolean(), "group":row["target_or_control"], "sample":row["sample"] ], //meta
+                        [ file(row["bam"], checkIfExists: true) ] //reads
+                    ] }
+        .set { bams }
+    //Stage the file for bedgraph generations
+    Channel.fromPath(file(params.chrom_sizes, checkIfExists: true))
+        .collect()
+        .set { chrom_sizes }
+    //I need a scale factor per bam if spikein norm has been run previously. 
+    if ( params.spike_norm ) {
+        //Create a channel for the scale factor for each BAM file in the sample sheet
+        Channel.fromPath(file(params.sample_sheet, checkIfExists:true))
+            .map { row -> row["scale_factor"] }
+            .set { scale_factor }
+    } else {
+        Channel.value( [] )
+            .set { scale_factor }
+    }
+    // SEACR peak calling
+    seacr_peaks(bams, chrom_sizes, scale_factor)
+    // MACS2 peak calling, Optional
+    if ( params.run_macs2 ) {
+        //Run MAC2 peak calling
+        macs2_peaks(bams)
+    }
+}
+
 
 //End with a message to print to standard out on workflow completion. 
 workflow.onComplete {
