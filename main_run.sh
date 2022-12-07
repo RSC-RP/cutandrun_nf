@@ -6,7 +6,7 @@ NFX_CONFIG=./nextflow.config
 #Options: 'local_singularity', 'PBS_singularity', and 'local_docker'
 NFX_PROFILE='PBS_singularity'
 #Options: 'bowtie2_index', 'align_call_peaks', 'call_peaks'
-NFX_ENTRY='call_peaks'
+NFX_ENTRY='align_call_peaks'
 #The output prefix on filenames for reports/logs
 REPORT=${1:-"pipeline_report"}
 

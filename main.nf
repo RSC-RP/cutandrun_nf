@@ -77,6 +77,7 @@ workflow align_call_peaks {
         Channel.fromPath(file(params.chrom_sizes, checkIfExists: true))
             .collect()
             .set { chrom_sizes }
+
         //fastqc of raw sequence
         FASTQC(meta_ch)
         //Adapter and Quality trimming of the fastq files 
@@ -148,6 +149,7 @@ workflow align_call_peaks {
             .collect()
             .set { multiqc_ch }
         MULTIQC(multiqc_ch, sample_sheet_name)
+
         // versions.concat(TRIMGALORE.out.versions, 
         //                 BOWTIE2_ALIGN.out.versions,
         //                 BAMTOBEDGRAPH.out.versions, 
