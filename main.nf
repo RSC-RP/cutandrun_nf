@@ -2,6 +2,7 @@ nextflow.enable.dsl = 2
 
 // Include Modules
 include { TRIMGALORE } from './modules/nf-core/modules/trimgalore/main.nf'
+include { MULTIQC } from './modules/nf-core/modules/multiqc/main.nf'
 include { BOWTIE2_ALIGN; BOWTIE2_ALIGN as SPIKEIN_ALIGN } from './modules/nf-core/modules/bowtie2/align/main.nf'
 include { PICARD_MARKDUPLICATES; PICARD_MARKDUPLICATES as PICARD_RMDUPLICATES } from './modules/nf-core/modules/picard/markduplicates/main.nf'
 
@@ -133,6 +134,15 @@ workflow align_call_peaks {
         }
         //Add Deeptools module to calculate FRIP here
         //Add multiQC module here 
+        sample_sheet_name = file(params.sample_sheet, checkIfExists: true)
+            .simpleName
+        // want to pass in trim_galore.fq.gz, bowtie_align.bam files or directories
+        TRIMGALORE.out.log
+            .concat(BOWTIE2_ALIGN.out.log)
+            .map { row -> row[1]}
+            .collect()
+            .set { multiqc_ch }
+        MULTIQC(multiqc_ch, sample_sheet_name)
         // versions.concat(TRIMGALORE.out.versions, 
         //                 BOWTIE2_ALIGN.out.versions,
         //                 BAMTOBEDGRAPH.out.versions, 
