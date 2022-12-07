@@ -11,6 +11,8 @@ include { bowtie2_index; bowtie2_index as bowtie2_index_spike } from './subworkf
 include { coverage_tracks } from './subworkflows/coverage_tracks.nf'
 include { seacr_peaks } from './subworkflows/seacr_peaks.nf'
 include { macs2_peaks } from './subworkflows/macs2_peaks.nf'
+include { FASTQC } from './modules/nf-core/modules/fastqc/main.nf'
+include { FASTQC as FASTQC_TRIM } from './modules/nf-core/modules/fastqc/main.nf'
 
 // Define stdout message for the command line use
 idx_or_fasta = (params.index == '' ? params.fasta : params.index)
@@ -75,9 +77,13 @@ workflow align_call_peaks {
         Channel.fromPath(file(params.chrom_sizes, checkIfExists: true))
             .collect()
             .set { chrom_sizes }
-        //Add fastqc module here 
+
+        //fastqc of raw sequence
+        FASTQC(meta_ch)
         //Adapter and Quality trimming of the fastq files 
         TRIMGALORE(meta_ch)
+        //fastqc of trimgalore'd sequence
+        FASTQC_TRIM(TRIMGALORE.out.reads)
         //Perform the alignement
         spike_in = false
         //NOTE: should have bowtie2 save unaligned reads to a seperate file. 
@@ -143,6 +149,7 @@ workflow align_call_peaks {
             .collect()
             .set { multiqc_ch }
         MULTIQC(multiqc_ch, sample_sheet_name)
+
         // versions.concat(TRIMGALORE.out.versions, 
         //                 BOWTIE2_ALIGN.out.versions,
         //                 BAMTOBEDGRAPH.out.versions, 

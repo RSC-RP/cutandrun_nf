@@ -11,8 +11,9 @@ process FASTQC {
     tuple val(meta), path(reads)
 
     output:
-    tuple val(meta), path("*.html"), emit: html
-    tuple val(meta), path("*.zip") , emit: zip
+    path "fastqc_${meta.id}", emit: fastqc
+    // tuple val(meta), path("*.html"), emit: html
+    // tuple val(meta), path("*.zip") , emit: zip
     path  "versions.yml"           , emit: versions
 
     when:
@@ -22,10 +23,12 @@ process FASTQC {
     def args = task.ext.args ?: ''
     // Add soft-links to original FastQs for consistent naming in pipeline
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def output_dir = "fastqc_${prefix}"
     if (meta.single_end) {
         """
         [ ! -f  ${prefix}.fastq.gz ] && ln -s $reads ${prefix}.fastq.gz
-        fastqc $args --threads $task.cpus ${prefix}.fastq.gz
+        mkdir ${output_dir}
+        fastqc $args -o ${output_dir} --threads $task.cpus ${prefix}.fastq.gz
 
         cat <<-END_VERSIONS > versions.yml
         "${task.process}":
@@ -36,7 +39,8 @@ process FASTQC {
         """
         [ ! -f  ${prefix}_1.fastq.gz ] && ln -s ${reads[0]} ${prefix}_1.fastq.gz
         [ ! -f  ${prefix}_2.fastq.gz ] && ln -s ${reads[1]} ${prefix}_2.fastq.gz
-        fastqc $args --threads $task.cpus ${prefix}_1.fastq.gz ${prefix}_2.fastq.gz
+        mkdir ${output_dir}
+        fastqc $args -o ${output_dir} --threads $task.cpus ${prefix}_1.fastq.gz ${prefix}_2.fastq.gz
 
         cat <<-END_VERSIONS > versions.yml
         "${task.process}":
