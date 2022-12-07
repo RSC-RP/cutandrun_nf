@@ -127,13 +127,11 @@ workflow call_peaks {
             .simpleName
         // want to pass in trim_galore.fq.gz, bowtie_align.bam files or directories
         TRIMGALORE.out.log
-            .combine(BOWTIE2_ALIGN.out.log)
-            .map {filenames -> [filenames]}
-            // .set {multiqc_ch}
-            .subscribe {println "value: $it"}
-        
-        // println multiqc_ch
-        // MULTIQC(multiqc_ch, sample_sheet_name)
+            .concat(BOWTIE2_ALIGN.out.log)
+            .map { row -> row[1]}
+            .collect()
+            .set { multiqc_ch }
+        MULTIQC(multiqc_ch, sample_sheet_name)
         // versions.concat(TRIMGALORE.out.versions, 
         //                 BOWTIE2_ALIGN.out.versions,
         //                 BAMTOBEDGRAPH.out.versions, 
