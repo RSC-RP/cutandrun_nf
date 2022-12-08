@@ -34,22 +34,6 @@ library(tidyr)
 library(tibble)
 ```
 
-# Define Functions 
-
-```{r echo=FALSE}
-#Function to create symlinks to the original data files on active to the current working directory of the R project. 
-mk_symlinks <- function(linked_dirname,filepaths){
-  dir.create(linked_dirname, recursive = TRUE)
-  lapply(filepaths,function(file){
-    target <- file.path(linked_dirname, basename(file))
-    if(!file.exists(target)){
-      command <- paste("ln -svf",file, target)
-      system(command)
-    }
-  })
-}
-```
-
 # Define Samples 
 
 ```{r}
@@ -80,7 +64,7 @@ sample_manifest <- fastq_manifest %>%
 
 sample_manifest
 # any(duplicated(sample_manifest$sample_id)) #OK
-# write.csv(sample_manifest,"test_data/test_dataset_sample_manifest.csv", row.names = F)
+write.csv(sample_manifest,"test_data/test_dataset_sample_manifest.csv", row.names = F)
 ```
 
 # Peak Calling 
@@ -114,13 +98,13 @@ write.csv(sample_sheet,"test_data/test_dataset_sample_sheet.csv", row.names = FA
 For entry point using `call_peaks`
 
 ```{r}
-bams <- data.frame(bam=dir("results/mouse/picard_markduplicates",
+bams <- data.frame(bam=dir("/gpfs/shared_data/demo_data/mus_musculus/cutandrun/bams",
     pattern = "*.bam",
     full.names = TRUE)) %>% 
     mutate(sample_id=basename(bam) %>% 
                gsub("_marked.+","", .))
 
-# bams
+bams
 ```
 
 ```{r}
@@ -129,8 +113,8 @@ bams_sample_sheet <- sample_sheet %>%
     left_join(., bams, by="sample_id")
 
 bams_sample_sheet
-# write.csv(bams_sample_sheet, "test_data/test_dataset_bams_sample_sheet.csv",
-#           row.names = F, quote = F)
+write.csv(bams_sample_sheet, "test_data/test_dataset_bams_sample_sheet.csv",
+          row.names = F, quote = F)
 ```
 
 

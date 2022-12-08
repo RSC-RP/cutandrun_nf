@@ -139,15 +139,21 @@ workflow align_call_peaks {
             macs2_peaks(bams)
         }
         //Add Deeptools module to calculate FRIP here
-        //Add multiQC module here 
+        //multiQC to collect QC results
         sample_sheet_name = file(params.sample_sheet, checkIfExists: true)
             .simpleName
-        // want to pass in trim_galore.fq.gz, bowtie_align.bam files or directories
-        TRIMGALORE.out.log
-            .concat(BOWTIE2_ALIGN.out.log)
+        
+        FASTQC.out.fastqc
+            .map { row -> [row[0], row[1].getParent()]}
+            // .concat(TRIMGALORE.out.log)
+            .concat(FASTQC_TRIM.out.fastqc)
+            // .concat(BOWTIE2_ALIGN.out.log)
+            // .concat(PICARD_MARKDUPLICATES.out.metrics)
+            // .map { if (params.spike_norm) .concat(SPIKEIN_ALIGN.out.log) }
             .map { row -> row[1]}
             .collect()
             .set { multiqc_ch }
+        
         MULTIQC(multiqc_ch, sample_sheet_name)
 
         // versions.concat(TRIMGALORE.out.versions, 
