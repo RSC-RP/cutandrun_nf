@@ -1,0 +1,33 @@
+report_comment: >
+  For information about how to interpret these results, please see the
+  <a href="https://github.com/nf-core/atacseq/blob/master/docs/output.md" target="_blank">documentation</a>.
+data_format: "yaml"
+run_modules:
+  - fastqc
+  - cutadapt
+  - bowtie2
+  - samtools
+  - picard
+module_order:
+  - fastqc:
+      name: "FastQC (raw)"
+      info: "This section of the report shows FastQC results before adapter trimming for individual libraries."
+      path_filters: "./*_FASTQC/*.zip"
+  - cutadapt:
+      name: "Cutadapt (trimmed)"
+      info: "This section of the report shows the length of trimmed reads by Cutadapt for individual libraries."
+  - fastqc:
+      name: "FastQC (trimmed)"
+      info: "This section of the report shows FastQC results after adapter trimming for individual libraries."
+      path_filters: "./*_TRIM/*.zip"
+  - bowtie2:
+      name: "Bowtie2 Alignement (Target Genome)"
+      info: "This section of the report shows the alignment after adapter trimming for individual libraries."
+      path_filters_exclude: "*_spikein.bowtie2.log"
+  - picard:
+      name: "Picard Mark Duplicates (Target Genome)"
+      info: "This section of the report shows picard mark duplicate results after adapter trimming"
+  - bowtie2:
+      name: "Bowtie2 Alignement (Spikein Genome)"
+      info: "This section of the report shows the alignment after adapter trimming for individual libraries."
+      path_filters: "*_spikein.bowtie2.log"
