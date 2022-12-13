@@ -16,7 +16,6 @@ output:
 # Set-up 
 
 ```{r set-up, echo=FALSE}
-knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 knitr::opts_chunk$set(tidy.opts=list(width.cutoff=80),
                       tidy=TRUE,
                       fig.align='center',
@@ -62,16 +61,15 @@ Library Prep Protocol:
 
   * [Protocols.io](https://www.protocols.io/view/cut-amp-run-targeted-in-situ-genome-wide-profiling-14egnr4ql5dy/v3?step=113)
 
-
 # About the Pipeline 
 
 The pipeline runs the Bowtie2 alignment, quality trimming of reads with trimgalore, SEACR peak calling, and optionally MACS2 peak calling. It will also perform general QC statistics on the fastqs with [fastqc](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/) and the alignment. Finally, the QC reports are collected into a single file using [multiQC](https://multiqc.info/).
 
-```{r echo=FALSE}
-knitr::include_graphics(here::here("../images/"))
+A DAG (directed acyclic graph) of the workflow is show below:
+
+```{r echo=FALSE, eval=TRUE}
+knitr::include_graphics("images/dag.png")
 ```
-
-
 
 
 # Activate the Environment
@@ -102,9 +100,9 @@ A sample sheet in csv (comma separated values) format is used as input to the pi
   * "sample"
   * "sample_id"
   * "target_or_control"
+  * "single_end"
   * "read1"
   * "read2"
-  * "single_end"
 
 ```{r echo=FALSE, eval=TRUE}
 sample_desc <- c("Any alphanumeric string for each biological sample in the dataset. Will have the same sample IDs for each antibody used. For example SAMPLE_1 has both H3K27me3 and IgG control CUT&RUN, and thus SAMPLE_1 has 1 row with the files for H3K27me3, and SAMPLE_1 has 2nd row with the files for IgG data.")
@@ -113,8 +111,8 @@ sample_id_desc <- glue::glue("Any alphanumeric string for each unique sample+con
 
 target_desc <- c("Must contain the values [target or control] case-sensitive. Target is for the antibodies using the immunoprecipitation for the proteins of interest, such as transcription factors or histone modifications like H3K27me3, or the value control for the isotype control (eg IgG).")
 
-read1 <- c("Contain full filepaths to  read 1 in paired-end fastqs.")
-read2 <- c("Contain full filepaths to  read 2 in paired-end fastqs.")
+read1 <- c("Contain absolute filepaths to  read 1 in paired-end fastqs.")
+read2 <- c("Contain absolute filepaths to  read 2 in paired-end fastqs.")
 single_end <- c("For CUT&RUN data it should always be [false] case-sensitive.")
 ```
 
@@ -124,10 +122,10 @@ data.frame(column_name=c("sample","sample_id", "target_or_control","read1", "rea
   DT::datatable()
 ```
  
-Below is an example of a complete sample sheet for use in the pipeline. 
+Below is an example of a complete sample sheet for use in the pipeline, which can be edited for your own samples in `test_data/test_dataset_sample_sheet.csv`.
  
 ```{r eval=TRUE}
-sample_sheet <- read.csv(here::here("test_data/test_sample_sheet.csv")) %>% 
+sample_sheet <- read.csv(here::here("test_data/test_dataset_sample_sheet.csv")) %>% 
   mutate(single_end="false") %>% 
   mutate(sample=str_split_fixed(sample_id, pattern = "_", n=3)[,1]) %>%
   select(sample, everything())
@@ -136,13 +134,10 @@ head(sample_sheet)
 # dim(sample_sheet)
 ```
 
+
 # Run the Example Data
 
 To ensure that the pipeline works, first run the test data set. This example will run using the data found in the `test_sample_sheet.csv`. 
-
-**NOTE**: Glenn, only you or anyone with access to the `nguyen_e` directory will be able to run this test data.
-
-To Do: create VERY small fastq files which can be uploaded to bitbucket and be available when someone clones the git repo.
 
 ```{bash}
 ./main_run.sh "test_dataset"
@@ -158,17 +153,17 @@ Open the configuration file `nextflow.config` and edit the necessary parameters 
 usethis::edit_file(here::here("nextflow.config"))
 ```
 
-Be sure to change the following lines for the queue, project code, alignment refernece files, and whether to run MACS2 calls along with the SEACR peak calling algorithm. 
+Be sure to change the following lines for the queue, project code, alignment reference files, and whether to run MACS2 calls along with the SEACR peak calling algorithm. 
 
 ```
 params {
     // general options
-    sample_sheet                = "./test_data/test_sample_sheet.txt"
-    queue                       = [QUEUE]
-    project                     = [PROJECT CODE]
-    outdir                      = "./results/"
+    sample_sheet                = "./test_data/test_dataset_sample_sheet.csv"
+    queue                       = 'sceaq'
+    project                     = '207f23bf-acb6-4835-8bfe-142436acb58c'
+    outdir                      = "./results/mouse"
+    peaks_outdir                = "${params.outdir}/peak_calls"
     publish_dir_mode            = 'copy'
-    enable_conda                = false
 
     //Bowtie params
     build_index                 = false
@@ -176,29 +171,79 @@ params {
     index                       = '/PATH/TO/mm39_index' [REQUIRED if build_index=false]
     save_unaligned              = false
     sort_bam                    = true
+    
+    //spike-in params
+    build_spike_index           = false
+    spike_fasta                 = '/PATH/TO/ecoli_genome.fasta'
+    spike_index                 = '/PATH/TO/ecoli_index'
 
     //trimgalore module specific parameters
     clip_r1                     = 0
     clip_r2                     = 0
     three_prime_clip_r1         = 0
     three_prime_clip_r2         = 0
+    
+    //Picard module specific parameters
+    remove_dups                 = false
 
     //SEACR params
-    genome_file                 = '/PATH/TO/genome.chrom.sizes'
-    threshold                   = 0
-
+    threshold                   = 0 
+    spike_norm                  = [true or false] //use spike-in normalization factor or not
+    chrom_sizes                 = '/gpfs/shared_data/Bowtie2/mm39.chrom.sizes'
+    scale_factor_constant       = 10000
+    
     //MACS2 and khmer effective genome size params
     //kmer_size is the read-length
     run_macs2                   = [true or false]
     run_khmer                   = [true or false]
     kmer_size                   = [INTEGER of fastq read length] 
-    macs2_gsize                 = [INTEGER of effective genome size, eg 3.0E+9 for mouse. Scientific notation OK.]
+    gsize                       = [INTEGER of effective genome size, eg 3.0E+9 for mouse. Scientific notation OK.]
 }
 ```
 
 ### Advanced Options
 
-TO DO: add details on the `ext.args` process directives configuration. 
+In the `nextflow.config`, you can define additional command line arguments to the scientific software under [process scope](https://www.nextflow.io/docs/latest/process.html#). 
+
+Be aware the default command line parameters for `Bowtie2` processes are already provided, but can be edited. This mostly would be relevant for `SEACR` and `MACS2` parameters that often need to be re-run multiple times when deciding on the appropriate peak-set to use.
+
+Often, you will need to change `SEACR` from "non" to "norm" for different normalization strategies, and the `MACS2` broad and narrow peak calling parameters for different histone modifications. 
+
+Another reason to use these advanced options is to change computational resources requested. The CPUs and memory parameters can updated to request a larger amount of resources like CPUs or memory if files are large. 
+
+
+In the example below, you can provide additional command line arguments to `FastQC` by adding the argument `--quiet` directly to `ext.args` as shown below, which will suppress any messages stdout and only report errors
+
+```
+process {
+    <...>
+    
+    //FASTQC process specific parameters
+    withName: FASTQC {
+        cpus = 1
+        memory = 16.GB
+        ext.args = '--quiet'
+    }
+    
+    <...>
+    
+    //SEACR peak calling resources
+    withName: SEACR_CALLPEAK {
+        cpus = { 1 * task.attempt }
+        memory = { 16.GB * task.attempt }
+        ext.args = 'non stringent'
+        publishDir = [...]
+    }
+
+    //MACS2 peak calling resources
+    withName: MACS2_CALLPEAK {
+        cpus = { 1 * task.attempt }
+        memory = { 16.GB * task.attempt }
+        ext.args = '-q 0.1 --keep-dup all'
+        publishDir = [...]
+    }
+```
+
 
 # Run Script 
 
@@ -215,25 +260,23 @@ Decide on the `NFX_PROFILE`, which allows you to run the processes either locall
   1) `local_singularity`
     * locally on an interactive session Cybertron with singularity 
     * requires appropriate computational resources be requested using `qsub -I -q <queue_name> -P <project_code> -l select=1:ncpus=4:mem=32GB`
-    
-  3) `local_docker`
-    * run it locally on your personal machine with docker (requires docker to be installed). 
-    * Ensure the configs under scope `docker` in `.nextflow.config` are appropriate for your local computer.
 
 Edit the script `main_run.sh` and change the values for the `NFX_PROFILE` variable if desired. 
 
 ```
-#Options: 'local_singularity', 'PBS_singularity', and 'local_docker'
+#Options: 'local_singularity', 'PBS_singularity'
 NFX_PROFILE='PBS_singularity'
 ```
 
 ## Alignment and Peak Calls
 
-Edit the variables in the `main_run.sh` script for entry-point of the workflow. The default option *"call_peaks"* for the `NFX_ENTRY` variable will run the entire pipeline including the building the index if the parameter `build_index=true` and then call peaks for all samples using SEACR and optionally MACS2. 
+Edit the variables in the `main_run.sh` script for entry-point of the workflow. The default option *"align_call_peaks"* for the `NFX_ENTRY` variable will run the entire pipeline including building the index, QC, alignment, and peak calling (SEACR and/or MACS2)  if the parameter `build_index=true`. Otherwise, this entry-point will run QC, alignment, and peak calling (SEACR and/or MACS2).
+
+If you already have aligned BAM files, see `test_data/test_dataset_bams_sample_sheet.csv` for an example to call peaks only using the entry `call_peaks`. 
 
 ```
-#Options: 'bowtie2_index' or 'call_peaks'
-NFX_ENTRY='call_peaks'
+#Options: 'bowtie2_index', 'align_call_peaks', 'call_peaks'
+NFX_ENTRY='align_call_peaks'
 ```
 
 Then, execute the `main_run.sh` script in order to complete the peak calling on the samples. Provide a small descriptive prefix for the pipeline run. 
@@ -242,12 +285,13 @@ Then, execute the `main_run.sh` script in order to complete the peak calling on 
 ./main_run.sh "my_analysis"
 ```
 
+
 ## Optional: Build the Index and Exit Pipeline
 
 You can also change the entry-point of the workflow, which is accomplished by setting the `NFX_ENTRY` variable in the `main_run.sh` script  to be `bowtie2_index`. This will allow the pipeline to run only the Bowtie2 build process and exit upon completion of the index.
 
 ```
-#Options: 'local_singularity', 'PBS_singularity', and 'local_docker'
+#Options: 'local_singularity', 'PBS_singularity'
 NFX_PROFILE='PBS_singularity'
 
 #Options: 'bowtie2_index' or 'call_peaks'
@@ -261,28 +305,55 @@ NFX_ENTRY='bowtie2_index'
 
 # Expected Outputs 
 
-Under the path provided in the nextflow config for params "outdir", you will find directories named for each of the modules. Lets say "params.outdir = ./results". There will be the following file structure:
+Under the path provided in the nextflow config for params "outdir", you will find directories named for each of the modules. Lets say `params.outdir = ./results/mouse`, and `peaks_outdir = "${params.outdir}/peak_calls"`. 
 
-results/
-  
-  * trimgalore/
-    * {sample_id}_1.gz_trimming_report.txt
-    * {sample_id}_2.gz_trimming_report.txt
-    * {sample_id}.M1_H3K27_NK_1_val_1.fq.gz
-    * {sample_id}.M1_H3K27_NK_1_val_2.fq.gz
-    
-  * bowtie2/ 
-    * {sample_id}.bam
-    * {sample_id}.bowtie2.log
-    
-  * seacr/
-    * {sample_id}.[stringent or relaxed].bed
-  
-  * macs2/
-    * {sample_id}_peaks.[narrowPeak or broadPeak]
-    * {sample_id}_peaks.xls 
-    * {sample_id}_summits.bed
+There will be the following file structure:
 
+* results/mouse/
+  
+    * bamtobedgraph/
+
+    * bowtie2_align/
+        * {sample_id}.bam
+        * {sample_id}.bowtie2.log
+        
+    * deeptools_bamcoverage/
+    
+    * fastqc/
+    
+    * fastqc_trim/
+    
+    * multiqc/
+    
+    * peak_calls/
+     
+        * seacr/
+            * {sample_id}.[norm or non].[stringent or relaxed].bed
+        
+        * macs2/
+            * {sample_id}_peaks.[narrowPeak or broadPeak]
+            * {sample_id}_peaks.xls 
+            * {sample_id}_summits.bed
+
+    * picard_markduplicates/
+    
+    * samtools_index/
+    
+    * samtools_nsort/
+    
+    * samtools_sort/
+    
+    * spikein_align/
+        * {sample_id}_spikein.bam
+        * {sample_id}_spikein.bowtie2.log
+        
+    * trimgalore/
+        * {sample_id}_1.gz_trimming_report.txt
+        * {sample_id}_2.gz_trimming_report.txt
+        * {sample_id}.M1_H3K27_NK_1_val_1.fq.gz
+        * {sample_id}.M1_H3K27_NK_1_val_2.fq.gz
+
+## Pipeline Reports 
 
 In addition, there will be an HTML report with information on where the temp data is stored in the `workDir` path, and general run statistics such as resource utilized  versus requested, which helps with optimization. It will also provide information on how much walltime was used per sample, total CPU hours, etc. 
 

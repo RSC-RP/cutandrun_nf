@@ -30,3 +30,4 @@ test_data/e_coli_fastq/
 test_data/*skeleton*
 test_data/test.nf
 test_data/*.sh
+test_data/cutandrun_sample_manifest.Rmd

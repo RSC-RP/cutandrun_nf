@@ -11,7 +11,7 @@ process FASTQC {
     tuple val(meta), path(reads)
 
     output:
-    tuple val(meta), path("fastqc_${meta.id}"), emit: fastqc
+    tuple val(meta), path("${meta.id}_*", type: 'dir'), emit: fastqc
     // tuple val(meta), path("*.html"), emit: html
     // tuple val(meta), path("*.zip") , emit: zip
     path  "versions.yml"           , emit: versions
@@ -23,7 +23,7 @@ process FASTQC {
     def args = task.ext.args ?: ''
     // Add soft-links to original FastQs for consistent naming in pipeline
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def output_dir = "fastqc_${prefix}"
+    def output_dir = "${prefix}_${task.process.tokenize(':')[-1]}"
     if (meta.single_end) {
         """
         [ ! -f  ${prefix}.fastq.gz ] && ln -s $reads ${prefix}.fastq.gz

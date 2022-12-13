@@ -77,6 +77,10 @@ workflow align_call_peaks {
         Channel.fromPath(file(params.chrom_sizes, checkIfExists: true))
             .collect()
             .set { chrom_sizes }
+        //Stage the multiqc configurations
+        Channel.fromPath(file(params.multiqc_config,checkIfExists: true))
+            .collect()
+            .set { multiqc_config }
 
         //fastqc of raw sequence
         FASTQC(meta_ch)
@@ -113,7 +117,7 @@ workflow align_call_peaks {
             //     .set { sample_sheet }
             //SAVE_DEPTHS(seq_depth_ch, sample_sheet)
         } else {
-            //If not using the spikeIn normalization, then just need empty list
+            //If not using the spikeIn normalization, then just need empty lists
             Channel.value( [] )
                 .set { scale_factor }
         }
@@ -143,18 +147,25 @@ workflow align_call_peaks {
         sample_sheet_name = file(params.sample_sheet, checkIfExists: true)
             .simpleName
         
+        if ( params.spike_norm ) { 
+            SPIKEIN_ALIGN.out.log
+                .set { spike_log }
+        } else {
+            Channel.value([])
+                .set { spike_log }
+        }
+
         FASTQC.out.fastqc
-            .map { row -> [row[0], row[1].getParent()]}
-            // .concat(TRIMGALORE.out.log)
+            .concat(TRIMGALORE.out.log)
             .concat(FASTQC_TRIM.out.fastqc)
-            // .concat(BOWTIE2_ALIGN.out.log)
-            // .concat(PICARD_MARKDUPLICATES.out.metrics)
-            // .map { if (params.spike_norm) .concat(SPIKEIN_ALIGN.out.log) }
+            .concat(BOWTIE2_ALIGN.out.log)
+            .concat(PICARD_MARKDUPLICATES.out.metrics)
+            .concat(spike_log)
             .map { row -> row[1]}
             .collect()
             .set { multiqc_ch }
-        
-        MULTIQC(multiqc_ch, sample_sheet_name)
+
+        MULTIQC(multiqc_ch, multiqc_config, sample_sheet_name)
 
         // versions.concat(TRIMGALORE.out.versions, 
         //                 BOWTIE2_ALIGN.out.versions,
