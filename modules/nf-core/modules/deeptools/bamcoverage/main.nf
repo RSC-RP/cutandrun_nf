@@ -37,6 +37,7 @@ process DEEPTOOLS_BAMCOVERAGE {
     if (is_cram){
     """
     export MPLCONFIGDIR="$temp_dir"
+    export TMPDIR="\$PWD"
     
     samtools view -T $fasta $input $fai_reference -@ $task.cpus -o $input_out
     samtools sort -o $sorted_bam $input_out
