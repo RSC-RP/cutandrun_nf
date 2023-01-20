@@ -36,7 +36,7 @@ process DEEPTOOLS_BAMCOVERAGE {
     def file_ext = args.contains('--outFileFormat bedgraph') ? 'bedgraph' : 'bigWig'
     if (is_cram){
     """
-    export MPLCONFIGDIR="$temp_dir"
+    export MPLCONFIGDIR="\$PWD"
     export TMPDIR="\$PWD"
     
     samtools view -T $fasta $input $fai_reference -@ $task.cpus -o $input_out
@@ -57,7 +57,8 @@ process DEEPTOOLS_BAMCOVERAGE {
     """
     } else {
     """
-    export MPLCONFIGDIR="$temp_dir"
+    export MPLCONFIGDIR="\$PWD"
+    export TMPDIR="\$PWD"
 
     bamCoverage \\
         --bam $input_out \\
