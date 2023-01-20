@@ -1,6 +1,6 @@
 include { BAMTOBEDGRAPH } from '../modules/local/bedtools/main.nf'
-include { SEACR_CALLPEAK } from '../modules/nf-core/modules/seacr/callpeak/main.nf'
-include { SAMTOOLS_SORT as SAMTOOLS_NSORT } from '../modules/nf-core/modules/samtools/sort/main.nf'
+include { SEACR_CALLPEAK } from '../modules/nf-core/seacr/callpeak/main.nf'
+include { SAMTOOLS_SORT as SAMTOOLS_NSORT } from '../modules/nf-core/samtools/sort/main.nf'
 
 // Run SEACR peak caller
 workflow seacr_peaks {

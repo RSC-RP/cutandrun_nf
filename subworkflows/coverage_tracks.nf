@@ -1,6 +1,6 @@
-include { SAMTOOLS_SORT } from '../modules/nf-core/modules/samtools/sort/main.nf'
-include { SAMTOOLS_INDEX } from '../modules/nf-core/modules/samtools/index/main.nf'
-include { DEEPTOOLS_BAMCOVERAGE } from '../modules/nf-core/modules/deeptools/bamcoverage/main.nf'
+include { SAMTOOLS_SORT } from '../modules/nf-core/samtools/sort/main.nf'
+include { SAMTOOLS_INDEX } from '../modules/nf-core/samtools/index/main.nf'
+include { DEEPTOOLS_BAMCOVERAGE } from '../modules/nf-core/deeptools/bamcoverage/main.nf'
 
 //Run deeptools bamcoverage to create signal/coverage file
 workflow coverage_tracks {
