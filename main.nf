@@ -1,18 +1,18 @@
 nextflow.enable.dsl = 2
 
 // Include Modules
-include { TRIMGALORE } from './modules/nf-core/modules/trimgalore/main.nf'
-include { MULTIQC } from './modules/nf-core/modules/multiqc/main.nf'
-include { BOWTIE2_ALIGN; BOWTIE2_ALIGN as SPIKEIN_ALIGN } from './modules/nf-core/modules/bowtie2/align/main.nf'
-include { PICARD_MARKDUPLICATES; PICARD_MARKDUPLICATES as PICARD_RMDUPLICATES } from './modules/nf-core/modules/picard/markduplicates/main.nf'
+include { TRIMGALORE } from './modules/nf-core/trimgalore/main.nf'
+include { MULTIQC } from './modules/nf-core/multiqc/main.nf'
+include { BOWTIE2_ALIGN; BOWTIE2_ALIGN as SPIKEIN_ALIGN } from './modules/nf-core/bowtie2/align/main.nf'
+include { PICARD_MARKDUPLICATES; PICARD_MARKDUPLICATES as PICARD_RMDUPLICATES } from './modules/nf-core/picard/markduplicates/main.nf'
 
 // Include subworkflows
 include { bowtie2_index; bowtie2_index as bowtie2_index_spike } from './subworkflows/bowtie_index.nf'
 include { coverage_tracks } from './subworkflows/coverage_tracks.nf'
 include { seacr_peaks } from './subworkflows/seacr_peaks.nf'
 include { macs2_peaks } from './subworkflows/macs2_peaks.nf'
-include { FASTQC } from './modules/nf-core/modules/fastqc/main.nf'
-include { FASTQC as FASTQC_TRIM } from './modules/nf-core/modules/fastqc/main.nf'
+include { FASTQC } from './modules/nf-core/fastqc/main.nf'
+include { FASTQC as FASTQC_TRIM } from './modules/nf-core/fastqc/main.nf'
 
 // Define stdout message for the command line use
 idx_or_fasta = (params.index == '' ? params.fasta : params.index)
