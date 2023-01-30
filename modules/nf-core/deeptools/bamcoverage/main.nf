@@ -9,8 +9,8 @@ process DEEPTOOLS_BAMCOVERAGE {
 
     input:
     tuple val(meta), path(input), path(input_index)
-    path(fasta)
-    path(fasta_fai)
+    tuple val(meta), path(fasta)
+    tuple val(meta), path(fasta_fai)
 
     output:
     tuple val(meta), path("*.bigWig")   , emit: bigwig, optional: true
