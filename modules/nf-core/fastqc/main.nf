@@ -2,7 +2,7 @@ process FASTQC {
     tag "$meta.id"
     label 'process_medium'
 
-    conda (params.enable_conda ? "bioconda::fastqc=0.11.9" : null)
+    conda "bioconda::fastqc=0.11.9"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :
         'quay.io/biocontainers/fastqc:0.11.9--0' }"
@@ -21,33 +21,20 @@ process FASTQC {
 
     script:
     def args = task.ext.args ?: ''
-    // Add soft-links to original FastQs for consistent naming in pipeline
     def prefix = task.ext.prefix ?: "${meta.id}"
     def output_dir = "${prefix}_${task.process.tokenize(':')[-1]}"
-    if (meta.single_end) {
-        """
-        [ ! -f  ${prefix}.fastq.gz ] && ln -s $reads ${prefix}.fastq.gz
-        mkdir ${output_dir}
-        fastqc $args -o ${output_dir} --threads $task.cpus ${prefix}.fastq.gz
+    """
+    printf "%s %s\\n" $rename_to | while read old_name new_name; do
+        [ -f "\${new_name}" ] || ln -s \$old_name \$new_name
+    done
+    mkdir -p ${outdir}
+    fastqc $args -o ${outdir} --threads $task.cpus $renamed_files
 
-        cat <<-END_VERSIONS > versions.yml
-        "${task.process}":
-            fastqc: \$( fastqc --version | sed -e "s/FastQC v//g" )
-        END_VERSIONS
-        """
-    } else {
-        """
-        [ ! -f  ${prefix}_1.fastq.gz ] && ln -s ${reads[0]} ${prefix}_1.fastq.gz
-        [ ! -f  ${prefix}_2.fastq.gz ] && ln -s ${reads[1]} ${prefix}_2.fastq.gz
-        mkdir ${output_dir}
-        fastqc $args -o ${output_dir} --threads $task.cpus ${prefix}_1.fastq.gz ${prefix}_2.fastq.gz
-
-        cat <<-END_VERSIONS > versions.yml
-        "${task.process}":
-            fastqc: \$( fastqc --version | sed -e "s/FastQC v//g" )
-        END_VERSIONS
-        """
-    }
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        fastqc: \$( fastqc --version | sed -e "s/FastQC v//g" )
+    END_VERSIONS
+    """
 
     stub:
     def prefix = task.ext.prefix ?: "${meta.id}"
