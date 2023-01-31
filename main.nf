@@ -138,8 +138,7 @@ workflow align_call_peaks {
                 .set { bams }
         }
         //Create coverage (bigwig or bedgraph) files for IGV/UCSC
-        coverage_tracks(bams, fasta)
-        //Add Samtools stats module here for QC
+        coverage_tracks(bams, fasta, fai)
         //Add [optional] samtools quality score filtering here 
         // SEACR peak calling
         seacr_peaks(bams, chrom_sizes, scale_factor)
@@ -167,10 +166,11 @@ workflow align_call_peaks {
             .concat(BOWTIE2_ALIGN.out.log)
             .concat(PICARD_MARKDUPLICATES.out.metrics)
             .concat(spike_log)
+            .concat(coverage_tracks.out.stats)
             .map { row -> row[1]}
             .collect()
             .set { multiqc_ch }
-        
+
         if (params.extra_multiqc_config){
             Channel.fromPath(file(params.extra_multiqc_config, checkIfExists: true))
                 .collect()

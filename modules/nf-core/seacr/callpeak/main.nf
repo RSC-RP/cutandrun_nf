@@ -1,18 +1,17 @@
-def VERSION = '1.3' // Version information not provided by tool on CLI
-
 process SEACR_CALLPEAK {
     tag "$meta.id"
     label 'process_medium'
 
-    conda (params.enable_conda ? "bioconda::seacr=1.3 conda-forge::r-base=4.0.2 bioconda::bedtools=2.30.0" : null)
+    // WARN: Version information not provided by tool on CLI. Please update version string below when bumping container versions.
+    conda "bioconda::seacr=1.3 conda-forge::r-base=4.0.2 bioconda::bedtools=2.30.0"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/mulled-v2-03bfeb32fe80910c231f630d4262b83677c8c0f4:f4bb19b68e66de27e4c64306f951d5ff11919931-0' :
         'quay.io/biocontainers/mulled-v2-03bfeb32fe80910c231f630d4262b83677c8c0f4:f4bb19b68e66de27e4c64306f951d5ff11919931-0' }"
 
     input:
     tuple val(meta), path(bedgraph), path(ctrlbedgraph)
-    val threshold
-    val spike_norm
+    val (threshold)
+    val (spike_norm)
 
     output:
     tuple val(meta), path("*.bed"), emit: bed
@@ -29,6 +28,7 @@ process SEACR_CALLPEAK {
     def type = "${function_switch.toString().replaceAll("_aligned.+","")}"
     def norm_method = args.contains('norm') ? "norm" : "${spikein}"
     def suffix = ctrlbedgraph ? "vs_${type}_${norm_method}" : "threshold${type}_${norm_method}"
+    def VERSION = '1.3' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
     """
     SEACR_1.3.sh \\
         $bedgraph \\
