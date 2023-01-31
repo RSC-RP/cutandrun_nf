@@ -3,6 +3,7 @@ nextflow.enable.dsl = 2
 // Include Modules
 include { TRIMGALORE } from './modules/nf-core/trimgalore/main.nf'
 include { MULTIQC } from './modules/nf-core/multiqc/main.nf'
+include { SAMTOOLS_FAIDX } from './modules/nf-core/samtools/faidx/main.nf'
 include { BOWTIE2_ALIGN; BOWTIE2_ALIGN as SPIKEIN_ALIGN } from './modules/nf-core/bowtie2/align/main.nf'
 include { PICARD_MARKDUPLICATES; PICARD_MARKDUPLICATES as PICARD_RMDUPLICATES } from './modules/nf-core/picard/markduplicates/main.nf'
 
@@ -33,10 +34,12 @@ workflow align_call_peaks {
         //Empty channel to collect the versions of software used 
         Channel.empty()
             .set { versions }
-        //Stage the fasta file(s)
+        //Stage the and index fasta file(s)
         Channel.fromPath(file(params.fasta, checkIfExists: true))
+            .map { fasta -> [ [], fasta ] }
             .collect()
             .set { fasta }
+        SAMTOOLS_FAIDX(fasta)
         //Optionally, create the index from a fasta file
         if ( params.build_index ) {
             bowtie2_index(fasta)
@@ -122,7 +125,10 @@ workflow align_call_peaks {
                 .set { scale_factor }
         }
         //Run picard markduplicates, optionally remove duplicates
-        PICARD_MARKDUPLICATES(BOWTIE2_ALIGN.out.bam)
+        SAMTOOLS_FAIDX.out.fai
+            .collect()
+            .set { fai }
+        PICARD_MARKDUPLICATES(BOWTIE2_ALIGN.out.bam, fasta , fai)
         if ( params.remove_dups ){
             PICARD_RMDUPLICATES(BOWTIE2_ALIGN.out.bam)
             PICARD_RMDUPLICATES.out.bam
@@ -132,8 +138,7 @@ workflow align_call_peaks {
                 .set { bams }
         }
         //Create coverage (bigwig or bedgraph) files for IGV/UCSC
-        coverage_tracks(bams, fasta)
-        //Add Samtools stats module here for QC
+        coverage_tracks(bams, fasta, fai)
         //Add [optional] samtools quality score filtering here 
         // SEACR peak calling
         seacr_peaks(bams, chrom_sizes, scale_factor)
@@ -161,11 +166,27 @@ workflow align_call_peaks {
             .concat(BOWTIE2_ALIGN.out.log)
             .concat(PICARD_MARKDUPLICATES.out.metrics)
             .concat(spike_log)
+            .concat(coverage_tracks.out.stats)
             .map { row -> row[1]}
             .collect()
             .set { multiqc_ch }
 
-        MULTIQC(multiqc_ch, multiqc_config, sample_sheet_name)
+        if (params.extra_multiqc_config){
+            Channel.fromPath(file(params.extra_multiqc_config, checkIfExists: true))
+                .collect()
+                .set { extra_multiqc_config }
+        }else{
+            Channel.value([])
+                .set{ extra_multiqc_config }
+        }
+        if (params.multiqc_logo){
+            Channel.fromPath(file(params.multiqc_logo, checkIfExists:true))
+                .set { multiqc_logo }
+        }else{
+            Channel.value([])
+                .set { multiqc_logo }
+        }
+        MULTIQC(multiqc_ch, multiqc_config, extra_multiqc_config, multiqc_logo, sample_sheet_name)
 
         // versions.concat(TRIMGALORE.out.versions, 
         //                 BOWTIE2_ALIGN.out.versions,

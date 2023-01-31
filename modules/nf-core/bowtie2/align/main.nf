@@ -2,10 +2,10 @@ process BOWTIE2_ALIGN {
     tag "$meta.id"
     label "process_high"
 
-    conda (params.enable_conda ? "bioconda::bowtie2=2.4.4 bioconda::samtools=1.15.1 conda-forge::pigz=2.6" : null)
-    container "${ workflow.containerEngine == "singularity" && !task.ext.singularity_pull_docker_container ?
-        "https://depot.galaxyproject.org/singularity/mulled-v2-ac74a7f02cebcfcc07d8e8d1d750af9c83b4d45a:1744f68fe955578c63054b55309e05b41c37a80d-0" :
-        "quay.io/biocontainers/mulled-v2-ac74a7f02cebcfcc07d8e8d1d750af9c83b4d45a:1744f68fe955578c63054b55309e05b41c37a80d-0" }"
+    conda "bioconda::bowtie2=2.4.4 bioconda::samtools=1.16.1 conda-forge::pigz=2.6"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/mulled-v2-ac74a7f02cebcfcc07d8e8d1d750af9c83b4d45a:a0ffedb52808e102887f6ce600d092675bf3528a-0' :
+        'quay.io/biocontainers/mulled-v2-ac74a7f02cebcfcc07d8e8d1d750af9c83b4d45a:a0ffedb52808e102887f6ce600d092675bf3528a-0' }"
 
     input:
     tuple val(meta), path(reads)
@@ -47,13 +47,10 @@ process BOWTIE2_ALIGN {
     // def samtools_command = sort_bam ? 'sort' : 'view'
 
     """
-    set -eu -o pipefail
-
-    INDEX=`find -L ./ -name "*.rev.1.bt2" | sed "s/.rev.1.bt2//"`
-    [ -z "\$INDEX" ] && INDEX=`find -L ./ -name "*.rev.1.bt2l" | sed "s/.rev.1.bt2l//"`
+    INDEX=`find -L ./ -name "*.rev.1.bt2" | sed "s/\\.rev.1.bt2\$//"`
+    [ -z "\$INDEX" ] && INDEX=`find -L ./ -name "*.rev.1.bt2l" | sed "s/\\.rev.1.bt2l\$//"`
     [ -z "\$INDEX" ] && echo "Bowtie2 index files not found" 1>&2 && exit 1
     
-    echo "The index is" \$INDEX
     bowtie2 \\
         -x \$INDEX \\
         $reads_args \\
@@ -64,7 +61,7 @@ process BOWTIE2_ALIGN {
         2> ${prefix}.bowtie2.log \\
         | samtools sort $args2 --threads $task.cpus -o ${prefix}.bam -
 
-    if [[ ${spike_in} ]]; then
+    if [[ $spike_in ]]; then
         seq_count=\$(samtools view -F 0x04 ${prefix}.bam | wc -l )
         seq_depth=\$((\$seq_count/2))
         echo "The seq_depth for $prefix is \$seq_depth"
