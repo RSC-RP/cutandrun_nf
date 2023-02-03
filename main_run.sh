@@ -11,13 +11,18 @@ NFX_ENTRY='align_call_peaks'
 REPORT=${1:-"pipeline_report"}
 
 # Load the modules 
-module load singularity
+if [[ $NFX_PROFILE =~ "singularity" ]]
+then
+    module load singularity
+fi
 
 # Nextflow run to execute the workflow 
 # See https://github.com/nextflow-io/nextflow/commit/b3a4bf857cef0a8b16814baf9e13aa9296ca208a
 # export NXF_CONTAINER_ENTRYPOINT_OVERRIDE=true
 PREFIX=${REPORT}_${DATE}
-nextflow -c ${NFX_CONFIG} -log reports/${PREFIX}_nextflow.log run main.nf \
+nextflow -c ${NFX_CONFIG} \
+    -log reports/${PREFIX}_nextflow.log \
+    run main.nf \
     -entry ${NFX_ENTRY} \
     -profile ${NFX_PROFILE} \
     -with-report reports/${PREFIX}.html \
