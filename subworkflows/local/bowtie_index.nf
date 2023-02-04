@@ -1,4 +1,4 @@
-include { BOWTIE2_BUILD } from '../modules/nf-core/bowtie2/build/main.nf'
+include { BOWTIE2_BUILD } from '../../modules/nf-core/bowtie2/build/main.nf'
 
 //Generate the index file (subworkflow)
 workflow bowtie2_index {

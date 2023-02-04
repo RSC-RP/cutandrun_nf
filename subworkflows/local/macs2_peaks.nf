@@ -1,5 +1,5 @@
-include { MACS2_CALLPEAK } from '../modules/nf-core/macs2/callpeak/main.nf'
-include { KHMER_UNIQUEKMERS } from '../modules/nf-core/khmer/uniquekmers/main.nf'
+include { MACS2_CALLPEAK } from '../../modules/nf-core/macs2/callpeak/main.nf'
+include { KHMER_UNIQUEKMERS } from '../../modules/nf-core/khmer/uniquekmers/main.nf'
 
 // Run MAC2 peak calling (subworkflow)
 workflow macs2_peaks {
