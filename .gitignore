@@ -25,5 +25,6 @@ env/create_test_dataset.yml
 notes.txt
 test_data/*.skeleton 
 test_data/*.txt
+notes/
 samk/
 sample_sheet_val/

@@ -1,19 +1,18 @@
 nextflow.enable.dsl = 2
 
 // Include Modules
+include { FASTQC } from './modules/nf-core/fastqc/main.nf'
 include { TRIMGALORE } from './modules/nf-core/trimgalore/main.nf'
+include { FASTQC as FASTQC_TRIM } from './modules/nf-core/fastqc/main.nf'
 include { MULTIQC } from './modules/nf-core/multiqc/main.nf'
 include { SAMTOOLS_FAIDX } from './modules/nf-core/samtools/faidx/main.nf'
 include { BOWTIE2_ALIGN; BOWTIE2_ALIGN as SPIKEIN_ALIGN } from './modules/nf-core/bowtie2/align/main.nf'
-include { PICARD_MARKDUPLICATES; PICARD_MARKDUPLICATES as PICARD_RMDUPLICATES } from './modules/nf-core/picard/markduplicates/main.nf'
 
 // Include subworkflows
-include { bowtie2_index; bowtie2_index as bowtie2_index_spike } from './subworkflows/bowtie_index.nf'
-include { coverage_tracks } from './subworkflows/coverage_tracks.nf'
-include { seacr_peaks } from './subworkflows/seacr_peaks.nf'
-include { macs2_peaks } from './subworkflows/macs2_peaks.nf'
-include { FASTQC } from './modules/nf-core/fastqc/main.nf'
-include { FASTQC as FASTQC_TRIM } from './modules/nf-core/fastqc/main.nf'
+include { bowtie2_index; bowtie2_index as bowtie2_index_spike } from './subworkflows/local/bowtie_index.nf'
+include { markdups_bigwigs } from './subworkflows/local/markdups_samstats_coverage.nf'
+include { seacr_peaks } from './subworkflows/local/seacr_peaks.nf'
+include { macs2_peaks } from './subworkflows/local/macs2_peaks.nf'
 
 // Define stdout message for the command line use
 idx_or_fasta = (params.index == '' ? params.fasta : params.index)
@@ -91,8 +90,8 @@ workflow align_call_peaks {
         //fastqc of trimgalore'd sequence
         FASTQC_TRIM(TRIMGALORE.out.reads)
         //Perform the alignement
-        spike_in = false
         //NOTE: should have bowtie2 save unaligned reads to a seperate file. 
+        spike_in = false
         BOWTIE2_ALIGN(TRIMGALORE.out.reads, index, spike_in,
                       params.save_unaligned)
         if ( params.spike_norm ){
@@ -124,22 +123,15 @@ workflow align_call_peaks {
                 .set { scale_factor }
         }
         //Run picard markduplicates, optionally remove duplicates
+        //And create coverage (bigwig or bedgraph) files for IGV/UCSC
         SAMTOOLS_FAIDX.out.fai
             .collect()
             .set { fai }
-        PICARD_MARKDUPLICATES(BOWTIE2_ALIGN.out.bam, fasta , fai)
-        if ( params.remove_dups ){
-            PICARD_RMDUPLICATES(BOWTIE2_ALIGN.out.bam)
-            PICARD_RMDUPLICATES.out.bam
-                .set { bams }
-        } else {
-            PICARD_MARKDUPLICATES.out.bam
-                .set { bams }
-        }
-        //Create coverage (bigwig or bedgraph) files for IGV/UCSC
-        coverage_tracks(bams, fasta, fai)
+        markdups_bigwigs(BOWTIE2_ALIGN.out.bam, fasta, fai)
         //Add [optional] samtools quality score filtering here 
         // SEACR peak calling
+        markdups_bigwigs.out.bams
+            .set { bams }
         seacr_peaks(bams, chrom_sizes, scale_factor)
         // MACS2 peak calling, Optional
         if ( params.run_macs2 ){
@@ -162,9 +154,9 @@ workflow align_call_peaks {
             .concat(TRIMGALORE.out.log)
             .concat(FASTQC_TRIM.out.fastqc)
             .concat(BOWTIE2_ALIGN.out.log)
-            .concat(PICARD_MARKDUPLICATES.out.metrics)
             .concat(spike_log)
-            .concat(coverage_tracks.out.stats)
+            .concat(markdups_bigwigs.out.metrics)
+            .concat(markdups_bigwigs.out.stats)
             .map { row -> row[1]}
             .collect()
             .set { multiqc_ch }
