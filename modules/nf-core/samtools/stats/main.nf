@@ -9,7 +9,7 @@ process SAMTOOLS_STATS {
 
     input:
     tuple val(meta), path(input), path(input_index)
-    tuple val(meta), path(fasta)
+    tuple val(meta2), path(fasta)
 
     output:
     tuple val(meta), path("*.stats"), emit: stats
@@ -28,7 +28,7 @@ process SAMTOOLS_STATS {
         --threads ${task.cpus} \\
         ${reference} \\
         ${input} \\
-        > ${prefix}.stats
+        > ${input.baseName}.stats
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

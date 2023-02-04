@@ -11,7 +11,7 @@ process SAMTOOLS_SORT {
     tuple val(meta), path(bam)
 
     output:
-    tuple val(meta), path("*.sort.bam"), emit: bam
+    tuple val(meta), path("*sort.bam"), emit: bam
     tuple val(meta), path("*.csi"), emit: csi, optional: true
     path  "versions.yml"          , emit: versions
 
