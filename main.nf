@@ -122,6 +122,7 @@ workflow align_call_peaks {
                 .set { scale_factor }
         }
         //Run picard markduplicates, optionally remove duplicates
+        // note: Bowtie2 modules automatically sorts the input BAMs to picard
         PICARD_MARKDUPLICATES(BOWTIE2_ALIGN.out.bam)
         if ( params.remove_dups ){
             PICARD_RMDUPLICATES(BOWTIE2_ALIGN.out.bam)
