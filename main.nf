@@ -2,12 +2,14 @@ nextflow.enable.dsl = 2
 
 // Include Modules
 include { FASTQC } from './modules/nf-core/fastqc'
+include { FASTQC as FASTQC_TRIM } from './modules/nf-core/fastqc'
+include { TRIMGALORE } from './modules/nf-core/trimgalore'
 // include { MULTIQC } from './modules/nf-core/multiqc'
 // include { SAMTOOLS_FAIDX } from './modules/nf-core/samtools/faidx'
 // include { BOWTIE2_ALIGN; BOWTIE2_ALIGN as SPIKEIN_ALIGN } from './modules/nf-core/bowtie2/align'
+// include { PICARD_MARKDUPLICATES; PICARD_MARKDUPLICATES as PICARD_RMDUPLICATES } from '../../modules/nf-core/picard/markduplicates/main.nf'
 
 // // Include subworkflows
-include { trimgalore } from './subworkflows/local/fastq_trim.nf'
 // include { bowtie2_index; bowtie2_index as bowtie2_index_spike } from './subworkflows/local/bowtie_index.nf'
 // include { markdups_bigwigs } from './subworkflows/local/markdups_samstats_coverage.nf'
 // include { seacr_peaks } from './subworkflows/local/seacr_peaks.nf'
@@ -29,43 +31,51 @@ log.info """\
 
 // Run the workflow for alignment, to bedgraph, to peak calling for Cut&Run data
 workflow align_call_peaks {
-        //Empty channel to collect the versions of software used 
-        Channel.empty()
-            .set { versions }
-        //Stage the and index fasta file(s)
-        Channel.fromPath(file(params.fasta, checkIfExists: true))
-            .map { fasta -> [ [], fasta ] } // fasta files now need meta info
-            .collect()
-            .set { fasta }
-        //Optionally, create the index from a fasta file
-        if ( params.build_index ) {
-            bowtie2_index(fasta)
-            bowtie2_index.out.index
-                .collect() //collect converts this to a value channel and to be used multiple times
-                .set { index }
-            versions = versions.concat(bowtie2_index.out.versions)
-        } else {
-            //Stage the genome index directory
-            Channel.fromPath(file(params.index, checkIfExists: true))
-                .collect()
-                .set { index }
-        }
-        //Optionally, create the spike-in index from a fasta file
-        if ( params.build_spike_index ) {
-            //Stage the fasta files
-            Channel.fromPath(file(params.spike_fasta, checkIfExists: true))
-                .set { spike_fasta }
-            bowtie2_index_spike(spike_fasta)
-            bowtie2_index_spike.out.index
-                .collect()
-                .set { spike_index }
-            versions = versions.concat(bowtie2_index_spike.out.versions)
-        } else {
-            //Stage the genome index directory
-            Channel.fromPath(file(params.spike_index, checkIfExists: true))
-                .collect() //collect converts this to a value channel and used multiple times
-                .set { spike_index }
-        }
+//         //Empty channel to collect the versions of software used 
+//         Channel.empty()
+//             .set { versions }
+//         //Stage the and index fasta file(s)
+//         Channel.fromPath(file(params.fasta, checkIfExists: true))
+//             .map { fasta -> [ [], fasta ] } // fasta files now need meta info
+//             .collect()
+//             .set { fasta }
+//         //Optionally, create the index from a fasta file
+//         if ( params.build_index ) {
+//             bowtie2_index(fasta)
+//             bowtie2_index.out.index
+//                 .collect() //collect converts this to a value channel and to be used multiple times
+//                 .set { index }
+//             versions = versions.concat(bowtie2_index.out.versions)
+//         } else {
+//             //Stage the genome index directory
+//             Channel.fromPath(file(params.index, checkIfExists: true))
+//                 .collect()
+//                 .set { index }
+//         }
+//         //Optionally, create the spike-in index from a fasta file
+//         if ( params.build_spike_index ) {
+//             //Stage the fasta files
+//             Channel.fromPath(file(params.spike_fasta, checkIfExists: true))
+//                 .set { spike_fasta }
+//             bowtie2_index_spike(spike_fasta)
+//             bowtie2_index_spike.out.index
+//                 .collect()
+//                 .set { spike_index }
+//             versions = versions.concat(bowtie2_index_spike.out.versions)
+//         } else {
+//             //Stage the genome index directory
+//             Channel.fromPath(file(params.spike_index, checkIfExists: true))
+//                 .collect() //collect converts this to a value channel and used multiple times
+//                 .set { spike_index }
+//         }
+        // //Stage the file for bedgraph generations
+        // Channel.fromPath(file(params.chrom_sizes, checkIfExists: true))
+        //     .collect()
+        //     .set { chrom_sizes }
+        // //Stage the multiqc configurations
+        // Channel.fromPath(file(params.multiqc_config,checkIfExists: true))
+        //     .collect()
+        //     .set { multiqc_config }
         //Create the input channel which contains the SAMPLE_ID, whether its single-end, and the file paths for the fastqs. 
         Channel.fromPath(file(params.sample_sheet, checkIfExists: true))
             .splitCsv(header: true, sep: ',')
@@ -73,20 +83,10 @@ workflow align_call_peaks {
                              [ file(meta["read1"], checkIfExists: true), file(meta["read2"], checkIfExists: true) ] //reads
                            ] }
             .set { meta_ch }
-        //Stage the file for bedgraph generations
-        Channel.fromPath(file(params.chrom_sizes, checkIfExists: true))
-            .collect()
-            .set { chrom_sizes }
-        //Stage the multiqc configurations
-        Channel.fromPath(file(params.multiqc_config,checkIfExists: true))
-            .collect()
-            .set { multiqc_config }
         //fastqc of raw sequence
         FASTQC(meta_ch)
         //Adapter and Quality trimming of the fastq files 
-        // and fastqc of trimgalore'd sequence
-        trimgalore(meta_ch)
-        // TRIMGALORE(meta_ch)
+        TRIMGALORE(meta_ch)
         // FASTQC_TRIM(TRIMGALORE.out.reads)
         //Perform the alignement
         //NOTE: should have bowtie2 save unaligned reads to a seperate file. 
@@ -123,11 +123,20 @@ workflow align_call_peaks {
         //         .set { scale_factor }
         // }
         // //Run picard markduplicates, optionally remove duplicates
+        // PICARD_MARKDUPLICATES(BOWTIE2_ALIGN.out.bam, fasta , fai)
+        // if ( params.remove_dups ){
+        //     PICARD_RMDUPLICATES()
+        //     PICARD_RMDUPLICATES.out.bam
+        //         .set { bams_sorted }
+        // } else {
+        //     PICARD_MARKDUPLICATES.out.bam
+        //         .set { bams_sorted }
+        // }
         // //And create coverage (bigwig or bedgraph) files for IGV/UCSC
         // SAMTOOLS_FAIDX.out.fai
         //     .collect()
         //     .set { fai }
-        // markdups_bigwigs(BOWTIE2_ALIGN.out.bam, fasta, fai)
+        // coverage_tracks(bams_sorted, fasta, fai)
         // //Add [optional] samtools quality score filtering here 
         // // SEACR peak calling
         // markdups_bigwigs.out.bams

@@ -28,3 +28,4 @@ test_data/*.txt
 notes/
 samk/
 sample_sheet_val/
+*testing*

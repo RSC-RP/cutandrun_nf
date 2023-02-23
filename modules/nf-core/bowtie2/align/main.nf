@@ -12,7 +12,6 @@ process BOWTIE2_ALIGN {
     path  index
     val   spike_in
     val   save_unaligned
-    //val   sort_bam
 
     output:
     tuple val(meta), path("*.bam")    , emit: bam
