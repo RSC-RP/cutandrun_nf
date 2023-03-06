@@ -23,3 +23,5 @@ sample_sheets/
 env/macs.yml
 env/create_test_dataset.yml
 notes.txt
+alias_testing/
+notes/
