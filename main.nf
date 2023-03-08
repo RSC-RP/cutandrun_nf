@@ -208,6 +208,19 @@ workflow call_peaks {
     }
 }
 
+workflow bowtie2_index {
+    //Stage the fasta file(s)
+    Channel.fromPath(file(params.fasta, checkIfExists: true))
+        .collect()
+        .set { fasta }
+
+    // Create the index from a fasta file
+    bowtie2_index(fasta)
+    bowtie2_index.out.index
+        .collect() //collect converts this to a value channel and to be used multiple times
+        .set { index }
+    // versions = versions.concat(bowtie2_index.out.versions)
+}
 
 //End with a message to print to standard out on workflow completion. 
 workflow.onComplete {
