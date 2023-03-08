@@ -147,7 +147,6 @@ workflow align_call_peaks {
         //multiQC to collect QC results
         sample_sheet_name = file(params.sample_sheet, checkIfExists: true)
             .simpleName
-        
         if ( params.spike_norm ) { 
             SPIKEIN_ALIGN.out.log
                 .set { spike_log }
@@ -155,7 +154,7 @@ workflow align_call_peaks {
             Channel.value([])
                 .set { spike_log }
         }
-
+        //Create channel for all the QC metrics to be included in MultiQC
         FASTQC.out.fastqc
             .concat(TRIMGALORE.out.log)
             .concat(FASTQC_TRIM.out.fastqc)

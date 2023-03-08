@@ -24,8 +24,9 @@ workflow macs2_peaks {
         Channel.value(params.kmer_size)
             .set { khmer_size }
         KHMER_UNIQUEKMERS(fasta, khmer_size)
-        KHMER_UNIQUEKMERS.out.kmers
-                .set { gsize }
+        KHMER_UNIQUEKMERS.out.gsize
+            .set { gsize }
+    gsize.view{"The gsize is $it"}
     } else {
         Channel.value(params.gsize)
                 .set { gsize }
