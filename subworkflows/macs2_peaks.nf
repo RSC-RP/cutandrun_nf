@@ -26,7 +26,6 @@ workflow macs2_peaks {
         KHMER_UNIQUEKMERS(fasta, khmer_size)
         KHMER_UNIQUEKMERS.out.gsize
             .set { gsize }
-    gsize.view{"The gsize is $it"}
     } else {
         Channel.value(params.gsize)
                 .set { gsize }

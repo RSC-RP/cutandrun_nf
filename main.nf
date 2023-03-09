@@ -207,7 +207,7 @@ workflow call_peaks {
     }
 }
 
-workflow bowtie2_index {
+workflow bowtie2_index_only {
     //Stage the fasta file(s)
     Channel.fromPath(file(params.fasta, checkIfExists: true))
         .collect()
