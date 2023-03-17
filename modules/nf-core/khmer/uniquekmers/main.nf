@@ -14,6 +14,7 @@ process KHMER_UNIQUEKMERS {
     output:
     path "report.txt"  , emit: report
     path "kmers.txt"   , emit: kmers
+    env gsize          , emit: gsize
     path "versions.yml", emit: versions
 
     when:
@@ -28,7 +29,7 @@ process KHMER_UNIQUEKMERS {
         $args \\
         $fasta
 
-    grep ^number report.txt | sed 's/^.*:.[[:blank:]]//g' > kmers.txt
+    gsize=\$(grep ^number report.txt | sed 's/^.*:.[[:blank:]]//g' | tee -a kmers.txt)
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

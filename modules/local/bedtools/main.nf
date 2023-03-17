@@ -16,7 +16,7 @@ process BAMTOBEDGRAPH {
     val scale_factor
 
     output:
-    tuple val(meta), path("*fragments.bg"),    emit: bedgraph
+    tuple val(meta), path("*fragments.bg"),     emit: bedgraph
     tuple val(meta), path("*.bed"),             emit: bedfiles
     path "versions.yml"           ,             emit: versions
 

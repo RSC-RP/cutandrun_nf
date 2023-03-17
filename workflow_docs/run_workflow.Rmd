@@ -85,6 +85,13 @@ QUEUE="sceaq"
 qsub -I -q $QUEUE -P $(project code $NAME) -l select=1:ncpus=1:mem=8g -l walltime=8:00:00
 ```
 
+Next, for the conda environment to be solved, you will need to set channel_priority to flexible in your conda configs as well. To read more about conda environments and thier configurations, check out the [documentation](https://docs.conda.io/projects/conda/en/latest/commands/config.html#conda-config). 
+
+```{bash, eval=FALSE}
+conda config --describe channel_priority # print your current conda settings
+conda config --set channel_priority flexible # set to flexible if not already done
+```
+
 Then create the conda environment that has the appropriate software, including `nextflow`, `nf-core`, and `graphviz`. The conda environment will need to be built only 1 time, afterwards, simply use `conda activate nextflow`.
 
 ```{bash required, eval=FALSE}
