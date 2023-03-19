@@ -16,6 +16,7 @@ process PICARD_MARKDUPLICATES {
     tuple val(meta), path("*.bam")        , emit: bam
     tuple val(meta), path("*.bai")        , optional:true, emit: bai
     tuple val(meta), path("*.metrics.txt"), emit: metrics
+    tuple val(meta), path("*.md5")        , emit: md5
     path  "versions.yml"                  , emit: versions
 
     when:

@@ -25,5 +25,6 @@ workflow coverage_tracks {
     DEEPTOOLS_BAMCOVERAGE(bam_bai_ch, fasta, fai)
 
     emit:
-    stats = SAMTOOLS_STATS.out.stats
+    stats           = SAMTOOLS_STATS.out.stats
+    bam_bai_ch      = bam_bai_ch
 }

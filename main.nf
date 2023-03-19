@@ -1,8 +1,7 @@
 nextflow.enable.dsl = 2
 
 // Include Modules
-include { FASTQC } from './modules/nf-core/fastqc'
-include { FASTQC as FASTQC_TRIM } from './modules/nf-core/fastqc'
+include { FASTQC; FASTQC as FASTQC_TRIM } from './modules/nf-core/fastqc'
 include { TRIMGALORE } from './modules/nf-core/trimgalore'
 include { MULTIQC } from './modules/nf-core/multiqc'
 include { SAMTOOLS_FAIDX } from './modules/nf-core/samtools/faidx'
@@ -139,7 +138,8 @@ workflow align_call_peaks {
         }
         //And create coverage (bigwig or bedgraph) files for IGV/UCSC
         coverage_tracks(bams_sorted, fasta, fai)
-        //Add [optional] samtools quality score filtering here 
+        //Optional: samtools quality score filtering here 
+        // samtools_filter(coverage_tracks.bam_bai_ch, fasta)
         // SEACR peak calling
         seacr_peaks(bams_sorted, chrom_sizes, scale_factor)
         // MACS2 peak calling, Optional
