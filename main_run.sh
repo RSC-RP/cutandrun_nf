@@ -20,7 +20,7 @@ fi
 # See https://github.com/nextflow-io/nextflow/commit/b3a4bf857cef0a8b16814baf9e13aa9296ca208a
 # export NXF_CONTAINER_ENTRYPOINT_OVERRIDE=true
 PREFIX=${REPORT}_${DATE}
-nextflow -c ${NFX_CONFIG} \
+nextflow -c ${NFX_CONFIG} -q \
     -log reports/${PREFIX}_nextflow.log \
     run main.nf \
     -entry ${NFX_ENTRY} \
