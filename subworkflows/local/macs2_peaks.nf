@@ -5,6 +5,7 @@ include { KHMER_UNIQUEKMERS } from '../../modules/nf-core/khmer/uniquekmers/main
 workflow macs2_peaks {
     take:
     bams
+    fasta
 
     main:
     //Separate the bam files by target or control antibody
@@ -19,8 +20,6 @@ workflow macs2_peaks {
         .set { macs_ch }
     //Either run khmer to determine effective genome size for macs2, or use a value provided as params.gsize
     if ( params.run_khmer ) {
-        Channel.fromPath(file(params.fasta, checkIfExists: true))
-            .set { fasta }
         Channel.value(params.kmer_size)
             .set { khmer_size }
         KHMER_UNIQUEKMERS(fasta, khmer_size)
