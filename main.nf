@@ -136,10 +136,10 @@ workflow align_call_peaks {
             PICARD_MARKDUPLICATES.out.bam
                 .set { bams_sorted }
         }
-        //And create coverage (bigwig or bedgraph) files for IGV/UCSC
-        coverage_tracks(bams_sorted, fasta, fai)
         //Optional: samtools quality score filtering here 
         // samtools_filter(coverage_tracks.bam_bai_ch, fasta)
+        //And create coverage (bigwig or bedgraph) files for IGV/UCSC
+        coverage_tracks(bams_sorted, fasta, fai)
         // SEACR peak calling
         seacr_peaks(bams_sorted, chrom_sizes, scale_factor)
         // MACS2 peak calling, Optional
