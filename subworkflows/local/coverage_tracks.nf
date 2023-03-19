@@ -25,7 +25,5 @@ workflow coverage_tracks {
     DEEPTOOLS_BAMCOVERAGE(bam_bai_ch, fasta, fai)
 
     emit:
-    bams = SAMTOOLS_SORT.out.bam
-    metrics = PICARD_MARKDUPLICATES.out.metrics
     stats = SAMTOOLS_STATS.out.stats
 }
