@@ -2,7 +2,7 @@
 
 set -eu
 DATE=$(date +%F)
-NFX_CONFIG=./nextflow_test.config
+NFX_CONFIG=./nextflow.config
 #Options: 'local_singularity', 'PBS_singularity'
 NFX_PROFILE='PBS_singularity'
 #Options: 'bowtie2_index_only', 'align_call_peaks', 'call_peaks'

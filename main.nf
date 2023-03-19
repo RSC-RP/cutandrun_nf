@@ -7,12 +7,13 @@ include { TRIMGALORE } from './modules/nf-core/trimgalore'
 include { MULTIQC } from './modules/nf-core/multiqc'
 include { SAMTOOLS_FAIDX } from './modules/nf-core/samtools/faidx'
 include { BOWTIE2_ALIGN; BOWTIE2_ALIGN as SPIKEIN_ALIGN } from './modules/nf-core/bowtie2/align'
-include { PICARD_MARKDUPLICATES; PICARD_MARKDUPLICATES as PICARD_RMDUPLICATES } from '../../modules/nf-core/picard/markduplicates/main.nf'
+include { PICARD_MARKDUPLICATES; PICARD_MARKDUPLICATES as PICARD_RMDUPLICATES } from './modules/nf-core/picard/markduplicates/main.nf'
 
 // Include subworkflows
-include { coverage_tracks } from './subworkflows/local/markdups_samstats_coverage.nf'
+include { coverage_tracks } from './subworkflows/local/coverage_tracks.nf'
 include { seacr_peaks } from './subworkflows/local/seacr_peaks.nf'
 include { macs2_peaks } from './subworkflows/local/macs2_peaks.nf'
+include { bowtie2_index; bowtie2_index as bowtie2_index_spike } from './subworkflows/local/bowtie2_index.nf'
 
 // Define stdout message for the command line use
 idx_or_fasta = (params.index == '' ? params.fasta : params.index)
@@ -38,7 +39,15 @@ workflow align_call_peaks {
             .map { fasta -> [ [], fasta ] } // fasta files now need meta info
             .collect()
             .set { fasta }
-        //Optionally, create the index from a fasta file
+        Channel.fromPath(file(params.spike_fasta, checkIfExists: true))
+                .map { fasta -> [ [], fasta ] } // fasta files now need meta info
+                .collect()
+                .set { spike_fasta }
+        SAMTOOLS_FAIDX(fasta)
+        SAMTOOLS_FAIDX.out.fai
+            .collect()
+            .set { fai }
+        //Optionally, create the bowtie2 index from a fasta file
         if ( params.build_index ) {
             bowtie2_index(fasta)
             bowtie2_index.out.index
@@ -53,15 +62,12 @@ workflow align_call_peaks {
         }
         //Optionally, create the spike-in index from a fasta file
         if ( params.build_spike_index ) {
-            //Stage the fasta files
-            Channel.fromPath(file(params.spike_fasta, checkIfExists: true))
-                .set { spike_fasta }
             bowtie2_index_spike(spike_fasta)
             bowtie2_index_spike.out.index
                 .collect()
                 .set { spike_index }
             versions = versions.concat(bowtie2_index_spike.out.versions)
-        } else {
+        } else if ( params.spike_norm ) {
             //Stage the genome index directory
             Channel.fromPath(file(params.spike_index, checkIfExists: true))
                 .collect() //collect converts this to a value channel and used multiple times
@@ -75,7 +81,7 @@ workflow align_call_peaks {
         Channel.fromPath(file(params.multiqc_config,checkIfExists: true))
             .collect()
             .set { multiqc_config }
-        Create the input channel which contains the SAMPLE_ID, whether its single-end, and the file paths for the fastqs. 
+        //Create the input channel which contains the SAMPLE_ID, whether its single-end, and the file paths for the fastqs. 
         Channel.fromPath(file(params.sample_sheet, checkIfExists: true))
             .splitCsv(header: true, sep: ',')
             .map { meta -> [ [ "id":meta["sample_id"], "single_end":meta["single_end"].toBoolean(), "group":meta["target_or_control"], "sample":meta["sample"] ], //meta
@@ -90,7 +96,6 @@ workflow align_call_peaks {
         // Perform the alignement
         // NOTE: should have bowtie2 save unaligned reads to a seperate file. 
         spike_in = false
-        SAMTOOLS_FAIDX(fasta)
         BOWTIE2_ALIGN(TRIMGALORE.out.reads, index, spike_in,
                       params.save_unaligned)
         if ( params.spike_norm ){
@@ -121,11 +126,11 @@ workflow align_call_peaks {
             Channel.value( [] )
                 .set { scale_factor }
         }
-        //Run picard markduplicates, optionally remove duplicates
+        // Run picard markduplicates, optionally remove duplicates
         // note: Bowtie2 modules automatically sorts the input BAMs to picard
-        PICARD_MARKDUPLICATES(BOWTIE2_ALIGN.out.bam)
+        PICARD_MARKDUPLICATES(BOWTIE2_ALIGN.out.bam, fasta, fai)
         if ( params.remove_dups ){
-            PICARD_RMDUPLICATES()
+            PICARD_RMDUPLICATES(BOWTIE2_ALIGN.out.bam, fasta, fai)
             PICARD_RMDUPLICATES.out.bam
                 .set { bams_sorted }
         } else {
@@ -133,19 +138,14 @@ workflow align_call_peaks {
                 .set { bams_sorted }
         }
         //And create coverage (bigwig or bedgraph) files for IGV/UCSC
-        SAMTOOLS_FAIDX.out.fai
-            .collect()
-            .set { fai }
         coverage_tracks(bams_sorted, fasta, fai)
         //Add [optional] samtools quality score filtering here 
         // SEACR peak calling
-        markdups_bigwigs.out.bams
-            .set { bams }
-        seacr_peaks(bams, chrom_sizes, scale_factor)
+        seacr_peaks(bams_sorted, chrom_sizes, scale_factor)
         // MACS2 peak calling, Optional
         if ( params.run_macs2 ){
             //Run MAC2 peak calling
-            macs2_peaks(bams)
+            macs2_peaks(bams_sorted)
         }
         //Add Deeptools module to calculate FRIP here
         //multiQC to collect QC results
@@ -164,8 +164,8 @@ workflow align_call_peaks {
             .concat(FASTQC_TRIM.out.fastqc)
             .concat(BOWTIE2_ALIGN.out.log)
             .concat(spike_log)
-            .concat(markdups_bigwigs.out.metrics)
-            .concat(markdups_bigwigs.out.stats)
+            .concat(PICARD_MARKDUPLICATES.out.metrics)
+            .concat(coverage_tracks.out.stats)
             .map { row -> row[1]}
             .collect()
             .set { multiqc_ch }
@@ -238,6 +238,17 @@ workflow bowtie2_index_only {
     bowtie2_index.out.index
         .collect() //collect converts this to a value channel and to be used multiple times
         .set { index }
+    //Optionally create the spike-in index 
+    if ( params.build_spike_index ) {
+        //Stage the fasta files
+        Channel.fromPath(file(params.spike_fasta, checkIfExists: true))
+            .set { spike_fasta }
+        bowtie2_index_spike(spike_fasta)
+        bowtie2_index_spike.out.index
+            .collect()
+            .set { spike_index }
+    }
+    // versions = versions.concat(bowtie2_index_spike.out.versions)
     // versions = versions.concat(bowtie2_index.out.versions)
 }
 
