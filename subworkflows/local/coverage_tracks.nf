@@ -16,8 +16,8 @@ workflow coverage_tracks {
     // Index the picard marked dups bams
     SAMTOOLS_INDEX(SAMTOOLS_SORT.out.bam)
     SAMTOOLS_SORT.out.bam
-        .cross(SAMTOOLS_INDEX.out.bai){ meta -> meta[0].id } // join by the key name "id"
-        .map { meta -> [ meta[0][0], meta[0][1], meta[1][1] ] }
+        .cross(SAMTOOLS_INDEX.out.bai){ row -> row[0].id } // join by the key name "id"
+        .map { row -> [ row[0][0], row[0][1], row[1][1] ] }
         .set { bam_bai_ch }
     // Calculate alignment QC stats
     SAMTOOLS_STATS(bam_bai_ch, fasta)

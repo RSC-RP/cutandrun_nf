@@ -9,8 +9,8 @@ process DEEPTOOLS_BAMCOVERAGE {
 
     input:
     tuple val(meta), path(input), path(input_index)
-    tuple val(meta), path(fasta)
-    tuple val(meta), path(fasta_fai)
+    tuple val(meta2), path(fasta)
+    tuple val(meta2), path(fasta_fai)
 
     output:
     tuple val(meta), path("*.bigWig")   , emit: bigwig, optional: true
@@ -56,7 +56,10 @@ process DEEPTOOLS_BAMCOVERAGE {
         """
         export MPLCONFIGDIR="\$PWD"
         export TMPDIR="\$PWD"
-
+        echo "meta is $meta"
+        echo "the prefix is $prefix"
+        echo " the meta id value is $meta.id"
+        echo "the input bam is $input_out"
         bamCoverage \\
             --bam $input_out \\
             $args \\
