@@ -1,6 +1,5 @@
 include { SAMTOOLS_SORT } from '../../modules/nf-core/samtools/sort/main.nf'
 include { SAMTOOLS_INDEX } from '../../modules/nf-core/samtools/index/main.nf'
-include { SAMTOOLS_STATS } from '../../modules/nf-core/samtools/stats/main.nf'
 include { SAMTOOLS_VIEW } from '../../modules/nf-core/samtools/view/main.nf'
 
 //Samtools view to filter the mapped reads. 
@@ -10,8 +9,7 @@ workflow samtools_filter {
     fasta
 
     main: 
-    // Calculate alignment QC stats
-    SAMTOOLS_STATS(bam_bai_ch, fasta)
+    // Empty channel for the query name file used as a filter for now
     Channel.value( [] )
         .set{ qname }
     SAMTOOLS_VIEW(bam_bai_ch, fasta, qname)
@@ -25,7 +23,6 @@ workflow samtools_filter {
         .set { bam_bai_ch }
 
     emit:
-    stats           = SAMTOOLS_STATS.out.stats
     bams_sorted     = SAMTOOLS_SORT.out.bam
     bam_bai_ch      = bam_bai_ch
 }

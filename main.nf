@@ -7,6 +7,7 @@ include { MULTIQC } from './modules/nf-core/multiqc'
 include { SAMTOOLS_FAIDX } from './modules/nf-core/samtools/faidx'
 include { BOWTIE2_ALIGN; BOWTIE2_ALIGN as SPIKEIN_ALIGN } from './modules/nf-core/bowtie2/align'
 include { PICARD_MARKDUPLICATES; PICARD_MARKDUPLICATES as PICARD_RMDUPLICATES } from './modules/nf-core/picard/markduplicates/main.nf'
+include { SAMTOOLS_STATS } from './modules/nf-core/samtools/stats/main.nf'
 
 // Include subworkflows
 include { samtools_filter } from './subworkflows/local/samtools_filter.nf'
@@ -149,6 +150,8 @@ workflow align_call_peaks {
             PICARD_MARKDUPLICATES.out.bam
                 .set { bams_sorted }
         }
+        // Calculate alignment QC stats
+        SAMTOOLS_STATS(bam_bai_ch, fasta)
         //Optional: samtools quality score filtering 
         if ( params.filter_bam ){
             samtools_filter(bam_bai_ch, fasta)
@@ -186,8 +189,8 @@ workflow align_call_peaks {
             .concat(BOWTIE2_ALIGN.out.log)
             .concat(spike_log)
             .concat(PICARD_MARKDUPLICATES.out.metrics)
-            // .concat(samtools_filter.out.stats)
-            .map { row -> row[1]}
+            .concat(SAMTOOLS_STATS.out.stats)
+            .map { row -> row[1] }
             .collect()
             .set { multiqc_ch }
 
