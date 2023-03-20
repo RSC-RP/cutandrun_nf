@@ -1,4 +1,7 @@
+include { SAMTOOLS_SORT } from '../../modules/nf-core/samtools/sort/main.nf'
+include { SAMTOOLS_INDEX } from '../../modules/nf-core/samtools/index/main.nf'
 include { SAMTOOLS_STATS } from '../../modules/nf-core/samtools/stats/main.nf'
+include { SAMTOOLS_VIEW } from '../../modules/nf-core/samtools/view/main.nf'
 
 //Samtools view to filter the mapped reads. 
 workflow samtools_filter {
@@ -8,10 +11,21 @@ workflow samtools_filter {
 
     main: 
     // Calculate alignment QC stats
-    // SAMTOOLS_STATS(bam_bai_ch, fasta)
-    // calculate coverage track with Deeptools
-    SAMTOOLS_VIEW(bam_bai_ch)
+    SAMTOOLS_STATS(bam_bai_ch, fasta)
+    Channel.value( [] )
+        .set{ qname }
+    SAMTOOLS_VIEW(bam_bai_ch, fasta, qname)
+    //Sort and index the picard marked dups/ filtered bams 
+    SAMTOOLS_SORT(SAMTOOLS_VIEW.out.bam)
+    // Index the picard marked dups/filtered bams
+    SAMTOOLS_INDEX(SAMTOOLS_SORT.out.bam)
+    SAMTOOLS_SORT.out.bam
+        .cross(SAMTOOLS_INDEX.out.bai){ row -> row[0].id } // join by the key name "id"
+        .map { row -> [ row[0][0], row[0][1], row[1][1] ] }
+        .set { bam_bai_ch }
 
     emit:
-    bam = SAMTOOLS_VIEW.out.bam
+    stats           = SAMTOOLS_STATS.out.stats
+    bams_sorted     = SAMTOOLS_SORT.out.bam
+    bam_bai_ch      = bam_bai_ch
 }

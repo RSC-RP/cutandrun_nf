@@ -9,6 +9,7 @@ include { BOWTIE2_ALIGN; BOWTIE2_ALIGN as SPIKEIN_ALIGN } from './modules/nf-cor
 include { PICARD_MARKDUPLICATES; PICARD_MARKDUPLICATES as PICARD_RMDUPLICATES } from './modules/nf-core/picard/markduplicates/main.nf'
 
 // Include subworkflows
+include { samtools_filter } from './subworkflows/local/samtools_filter.nf'
 include { coverage_tracks } from './subworkflows/local/coverage_tracks.nf'
 include { seacr_peaks } from './subworkflows/local/seacr_peaks.nf'
 include { macs2_peaks } from './subworkflows/local/macs2_peaks.nf'
@@ -130,16 +131,36 @@ workflow align_call_peaks {
         PICARD_MARKDUPLICATES(BOWTIE2_ALIGN.out.bam, fasta, fai)
         if ( params.remove_dups ){
             PICARD_RMDUPLICATES(BOWTIE2_ALIGN.out.bam, fasta, fai)
+            //create bam and bai channel
+            PICARD_RMDUPLICATES.out.bam
+                .cross(PICARD_RMDUPLICATES.out.bai){ row -> row[0].id } // join by the key name "id"
+                .map { row -> [ row[0][0], row[0][1], row[1][1] ] }
+                .set { bam_bai_ch }
+            //create channel with only bams
             PICARD_RMDUPLICATES.out.bam
                 .set { bams_sorted }
         } else {
+            //create bam and bai channel
+            PICARD_MARKDUPLICATES.out.bam
+                .cross(PICARD_MARKDUPLICATES.out.bai){ row -> row[0].id } // join by the key name "id"
+                .map { row -> [ row[0][0], row[0][1], row[1][1] ] }
+                .set { bam_bai_ch }
+            //create channel with only bams
             PICARD_MARKDUPLICATES.out.bam
                 .set { bams_sorted }
         }
-        //Optional: samtools quality score filtering here 
-        // samtools_filter(coverage_tracks.bam_bai_ch, fasta)
+        //Optional: samtools quality score filtering 
+        if ( params.filter_bam ){
+            samtools_filter(bam_bai_ch, fasta)
+            //create bam and bai channel
+            samtools_filter.out.bam_bai_ch
+                .set { bam_bai_ch }
+            //create channel with only bams
+            samtools_filter.out.bams_sorted
+                .set { bams_sorted }
+        }
         //And create coverage (bigwig or bedgraph) files for IGV/UCSC
-        coverage_tracks(bams_sorted, fasta, fai)
+        coverage_tracks(bam_bai_ch, fasta, fai)
         // SEACR peak calling
         seacr_peaks(bams_sorted, chrom_sizes, scale_factor)
         // MACS2 peak calling, Optional
@@ -165,7 +186,7 @@ workflow align_call_peaks {
             .concat(BOWTIE2_ALIGN.out.log)
             .concat(spike_log)
             .concat(PICARD_MARKDUPLICATES.out.metrics)
-            .concat(coverage_tracks.out.stats)
+            // .concat(samtools_filter.out.stats)
             .map { row -> row[1]}
             .collect()
             .set { multiqc_ch }
