@@ -141,7 +141,7 @@ workflow align_call_peaks {
         // MACS2 peak calling, Optional
         if ( params.run_macs2 ){
             //Run MAC2 peak calling
-            macs2_peaks(bams)
+            macs2_peaks(bams, fasta)
         }
         //Add Deeptools module to calculate FRIP here
         //multiQC to collect QC results

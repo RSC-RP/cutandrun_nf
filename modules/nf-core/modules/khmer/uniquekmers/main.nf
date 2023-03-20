@@ -8,7 +8,7 @@ process KHMER_UNIQUEKMERS {
         'quay.io/biocontainers/khmer:3.0.0a3--py37haa7609a_2' }"
 
     input:
-    path fasta
+    tuple val(meta), path(fasta)
     val  kmer_size
 
     output:
