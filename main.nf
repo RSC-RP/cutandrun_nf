@@ -130,6 +130,15 @@ workflow align_call_peaks {
         // Run picard markduplicates, optionally remove duplicates
         // note: Bowtie2 modules automatically sorts the input BAMs to picard
         PICARD_MARKDUPLICATES(BOWTIE2_ALIGN.out.bam, fasta, fai)
+        //create bam and bai channel for samtool stats
+        PICARD_MARKDUPLICATES.out.bam
+            .cross(PICARD_MARKDUPLICATES.out.bai){ row -> row[0].id } // join by the key name "id"
+            .map { row -> [ row[0][0], row[0][1], row[1][1] ] }
+            .set { mkdup_ch }
+        // Calculate alignment QC stats on the markedDup bams 
+        SAMTOOLS_STATS(mkdup_ch, fasta)
+
+        //Optionally, remove duplicates before peak calling
         if ( params.remove_dups ){
             PICARD_RMDUPLICATES(BOWTIE2_ALIGN.out.bam, fasta, fai)
             //create bam and bai channel
@@ -141,18 +150,14 @@ workflow align_call_peaks {
             PICARD_RMDUPLICATES.out.bam
                 .set { bams_sorted }
         } else {
-            //create bam and bai channel
-            PICARD_MARKDUPLICATES.out.bam
-                .cross(PICARD_MARKDUPLICATES.out.bai){ row -> row[0].id } // join by the key name "id"
-                .map { row -> [ row[0][0], row[0][1], row[1][1] ] }
-                .set { bam_bai_ch }
+            mkdup_ch
+                .set {bam_bai_ch }
             //create channel with only bams
             PICARD_MARKDUPLICATES.out.bam
-                .set { bams_sorted }
+            .set { bams_sorted }
         }
-        // Calculate alignment QC stats
-        SAMTOOLS_STATS(bam_bai_ch, fasta)
-        //Optional: samtools quality score filtering 
+
+        //Optionally: samtools quality score and/or alignment flag filtering 
         if ( params.filter_bam ){
             samtools_filter(bam_bai_ch, fasta)
             //create bam and bai channel

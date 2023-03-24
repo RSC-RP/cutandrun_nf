@@ -141,6 +141,12 @@ head(sample_sheet)
 # dim(sample_sheet)
 ```
 
+```{r}
+sample_sheet_noCtrl <- sample_sheet %>% 
+    mutate(target_or_control="target")
+
+write.csv(sample_sheet,"../test_data/test_dataset_noCtrl_sample_sheet.csv")
+```
 
 # Run the Example Data
 
