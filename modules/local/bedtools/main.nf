@@ -13,7 +13,6 @@ process BAMTOBEDGRAPH {
     tuple val(meta), path(bam)
     path chrom_sizes
     val spike_norm
-    val scale_factor
 
     output:
     tuple val(meta), path("*fragments.bg"),     emit: bedgraph
@@ -27,7 +26,7 @@ process BAMTOBEDGRAPH {
     def args = task.ext.args ?: ''
     def args2 = task.ext.args2 ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def scale_arg = spike_norm ? "-scale $scale_factor" : ''
+    def scale_arg = spike_norm ? "-scale ${meta.scale_factor}" : ''
     def suffix = spike_norm ? '_spikein_norm' : ''
     """
     set -eu -o pipefail
@@ -43,7 +42,7 @@ process BAMTOBEDGRAPH {
     
     if [[ $spike_norm ]]
     then
-        echo "The spikein scale factor is: $scale_factor"
+        echo "The spikein scale factor is: ${meta.scale_factor}"
     fi
 
     bedtools genomecov \\

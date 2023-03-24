@@ -89,13 +89,15 @@ workflow align_call_peaks {
                              [ file(meta["read1"], checkIfExists: true), file(meta["read2"], checkIfExists: true) ] //reads
                            ] }
             .set { meta_ch }
+        // variable with the basename of the sample sheet input 
+        def sample_sheet_name = file(params.sample_sheet, checkIfExists: true).simpleName
         //fastqc of raw sequence
         FASTQC(meta_ch)
         //Adapter and Quality trimming of the fastq files 
         TRIMGALORE(meta_ch)
         FASTQC_TRIM(TRIMGALORE.out.reads)
+
         // Perform the alignement
-        // NOTE: should have bowtie2 save unaligned reads to a seperate file. 
         spike_in = false
         BOWTIE2_ALIGN(TRIMGALORE.out.reads, index, spike_in,
                       params.save_unaligned)
@@ -103,33 +105,43 @@ workflow align_call_peaks {
             spike_in = true
             SPIKEIN_ALIGN(TRIMGALORE.out.reads, spike_index, spike_in,
                          params.save_unaligned)
-            //Channel containing tuples of the spikeIn seqdepth and scaling factor constant "C"
+            // Channel for BAMs aligned to target genome, spike-in seq depth, and calculated scale_factor
             Channel.value(params.scale_factor_constant)
                 .set { C }
             SPIKEIN_ALIGN.out.seq_depth
                 .combine( C )
-                .map { val -> [ "seq_depth":val[0].toInteger() , "constant":val[1] ] }
-                .map { val -> if (val.seq_depth > 0 ) {
-                                    val.constant.div(val.seq_depth) 
-                                } else {
-                                    val.constant.div(1)
-                                } }
-                .set { scale_factor }
-            //I need a way to save the scale factors a tab delimited file, like append it to the sample sheet??
-            // SPIKEIN_ALIGN.out.seq_depth
-            //     .collect()
-            //     .set { seq_depth_ch }
-            // Channel.fromPath(file(params.sample_sheet, checkIfExists: true))
-            //     .set { sample_sheet }
-            //SAVE_DEPTHS(seq_depth_ch, sample_sheet)
+                .map { meta, seq_depth, C -> 
+                        depth = seq_depth.toInteger()
+                        if ( depth > 0 ) {
+                           sf = C.div(depth) 
+                        } else {
+                            sf = C.div(1)
+                        }
+                        meta.spike_seq_depth = seq_depth
+                        meta.scale_factor = sf
+                        return [ meta, [] ]
+                    }
+                .cross(BOWTIE2_ALIGN.out.bam) { meta -> meta[0].id }
+                .map { sf_meta, bam -> [ sf_meta[0], bam[1] ]}
+                .set { bams_ch }
+
+            // Save the seq_depth and resulting scale factor to the results directory 
+            bams_ch.map { meta, bam -> 
+                        meta.out_bam = "${bam.getFileName()}"
+                        meta.toMapString().replaceAll("\\[|\\]|\\s", "")
+                    }
+                .collectFile(name: "${sample_sheet_name}_spikeIn_scalefactor.csv", newLine: true, storeDir: "${params.outdir}")
         } else {
+            BOWTIE2_ALIGN.out.bam
+                .set { bams_ch }
             //If not using the spikeIn normalization, then just need empty lists
             Channel.value( [] )
                 .set { scale_factor }
         }
+
         // Run picard markduplicates, optionally remove duplicates
         // note: Bowtie2 modules automatically sorts the input BAMs to picard
-        PICARD_MARKDUPLICATES(BOWTIE2_ALIGN.out.bam, fasta, fai)
+        PICARD_MARKDUPLICATES(bams_ch, fasta, fai)
         //create bam and bai channel for samtool stats
         PICARD_MARKDUPLICATES.out.bam
             .cross(PICARD_MARKDUPLICATES.out.bai){ row -> row[0].id } // join by the key name "id"
@@ -146,40 +158,41 @@ workflow align_call_peaks {
                 .cross(PICARD_RMDUPLICATES.out.bai){ row -> row[0].id } // join by the key name "id"
                 .map { row -> [ row[0][0], row[0][1], row[1][1] ] }
                 .set { bam_bai_ch }
-            //create channel with only bams
+            //create channel with sorted bams (no bai)
             PICARD_RMDUPLICATES.out.bam
                 .set { bams_sorted }
         } else {
+            //rename channel to standardize inputs to peak callers
             mkdup_ch
-                .set {bam_bai_ch }
-            //create channel with only bams
+                .set { bam_bai_ch }
+            //create channel with sorted bams (no bai)
             PICARD_MARKDUPLICATES.out.bam
-            .set { bams_sorted }
+                .set { bams_sorted }
         }
 
         //Optionally: samtools quality score and/or alignment flag filtering 
         if ( params.filter_bam ){
             samtools_filter(bam_bai_ch, fasta)
-            //create bam and bai channel
+            //replace bam and bai channel
             samtools_filter.out.bam_bai_ch
                 .set { bam_bai_ch }
-            //create channel with only bams
+            //replace channel with sorted bams
             samtools_filter.out.bams_sorted
                 .set { bams_sorted }
         }
+
         //And create coverage (bigwig or bedgraph) files for IGV/UCSC
         coverage_tracks(bam_bai_ch, fasta, fai)
-        // SEACR peak calling
-        seacr_peaks(bams_sorted, chrom_sizes, scale_factor)
+        // SEACR peak calling 
+        //scale_factor
+        seacr_peaks(bams_sorted, chrom_sizes)
         // MACS2 peak calling, Optional
         if ( params.run_macs2 ){
             //Run MAC2 peak calling
             macs2_peaks(bams_sorted, fasta)
         }
-        //Add Deeptools module to calculate FRIP here
-        //multiQC to collect QC results
-        sample_sheet_name = file(params.sample_sheet, checkIfExists: true)
-            .simpleName
+
+        //MultiQC to collect QC results
         if ( params.spike_norm ) { 
             SPIKEIN_ALIGN.out.log
                 .set { spike_log }
@@ -267,10 +280,12 @@ workflow bowtie2_index_only {
     bowtie2_index.out.index
         .collect() //collect converts this to a value channel and to be used multiple times
         .set { index }
+
     //Optionally create the spike-in index 
     if ( params.build_spike_index ) {
         //Stage the fasta files
         Channel.fromPath(file(params.spike_fasta, checkIfExists: true))
+            .collect()
             .set { spike_fasta }
         bowtie2_index_spike(spike_fasta)
         bowtie2_index_spike.out.index

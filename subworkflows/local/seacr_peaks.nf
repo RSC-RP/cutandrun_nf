@@ -7,7 +7,7 @@ workflow seacr_peaks {
     take:
     bams
     chrom_sizes
-    scale_factor
+    // scale_factor
 
     main:
     //Sort bam files by read names for bam to bedpe conversion
@@ -15,7 +15,7 @@ workflow seacr_peaks {
     // Convert the bam files to bed format with bedtools 
     Channel.value(params.spike_norm)
         .set { spike_norm }
-    BAMTOBEDGRAPH(SAMTOOLS_NSORT.out.bam, chrom_sizes, spike_norm, scale_factor)
+    BAMTOBEDGRAPH(SAMTOOLS_NSORT.out.bam, chrom_sizes, spike_norm)
     //Split the control and the target channels. should be a custom groovy function really - need to figure this out.
     BAMTOBEDGRAPH.out.bedgraph
         .branch { 
