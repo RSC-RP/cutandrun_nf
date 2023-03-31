@@ -141,11 +141,11 @@ head(sample_sheet)
 # dim(sample_sheet)
 ```
 
-```{r}
+```{r echo=FALSE, eval=FALSE}
 sample_sheet_noCtrl <- sample_sheet %>% 
     mutate(target_or_control="target")
 
-write.csv(sample_sheet,"../test_data/test_dataset_noCtrl_sample_sheet.csv")
+# write.csv(sample_sheet_noCtrl,"../test_data/test_dataset_noCtrl_sample_sheet.csv", row.names = FALSE, quote = F)
 ```
 
 # Run the Example Data

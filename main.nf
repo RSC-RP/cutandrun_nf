@@ -113,7 +113,7 @@ workflow align_call_peaks {
                 .map { meta, seq_depth, C -> 
                         depth = seq_depth.toInteger()
                         if ( depth > 0 ) {
-                           sf = C.div(depth) 
+                            sf = C.div(depth) 
                         } else {
                             sf = C.div(1)
                         }
@@ -126,11 +126,15 @@ workflow align_call_peaks {
                 .set { bams_ch }
 
             // Save the seq_depth and resulting scale factor to the results directory 
-            bams_ch.map { meta, bam -> 
-                        meta.out_bam = "${bam.getFileName()}"
-                        meta.toMapString().replaceAll("\\[|\\]|\\s", "")
-                    }
-                .collectFile(name: "${sample_sheet_name}_spikeIn_scalefactor.csv", newLine: true, storeDir: "${params.outdir}")
+            // cannot use vars "meta" and "bam" in the map -> java.util.concurrentmodificationexception
+            // hmmm - ok so it has something to do with threads/threadsafe with these hashmaps??
+            // also not sure if the same file is being overwitten or appended to?
+            // bams_ch.map { sample_metadata, file -> 
+            //                sample_metadata.out_bam = "${file.getFileName()}"
+            //                 sample_metadata.toMapString().replaceAll("\\[|\\]|\\s", "")
+            //             }
+            //     .collectFile(name: "${sample_sheet_name}_spikeIn_scalefactor.csv", newLine: true, storeDir: "${params.outdir}")
+
         } else {
             BOWTIE2_ALIGN.out.bam
                 .set { bams_ch }
@@ -184,7 +188,6 @@ workflow align_call_peaks {
         //And create coverage (bigwig or bedgraph) files for IGV/UCSC
         coverage_tracks(bam_bai_ch, fasta, fai)
         // SEACR peak calling 
-        //scale_factor
         seacr_peaks(bams_sorted, chrom_sizes)
         // MACS2 peak calling, Optional
         if ( params.run_macs2 ){

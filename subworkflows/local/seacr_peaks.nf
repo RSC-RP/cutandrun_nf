@@ -7,7 +7,6 @@ workflow seacr_peaks {
     take:
     bams
     chrom_sizes
-    // scale_factor
 
     main:
     //Sort bam files by read names for bam to bedpe conversion
