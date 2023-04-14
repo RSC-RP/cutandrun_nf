@@ -8,6 +8,7 @@ include { SAMTOOLS_FAIDX } from './modules/nf-core/samtools/faidx'
 include { BOWTIE2_ALIGN; BOWTIE2_ALIGN as SPIKEIN_ALIGN } from './modules/nf-core/bowtie2/align'
 include { PICARD_MARKDUPLICATES; PICARD_MARKDUPLICATES as PICARD_RMDUPLICATES } from './modules/nf-core/picard/markduplicates/main.nf'
 include { SAMTOOLS_STATS } from './modules/nf-core/samtools/stats/main.nf'
+include { COLLECTFILE } from './modules/local/collectfile/main.nf'
 
 // Include subworkflows
 include { samtools_filter } from './subworkflows/local/samtools_filter.nf'
@@ -125,12 +126,6 @@ workflow align_call_peaks {
                 .map { sf_meta, bam -> [ sf_meta[0], bam[1] ]}
                 .set { bams_ch }
 
-            // Save the seq_depth and resulting scale factor to the results directory 
-            bams_ch.map { meta, bam -> 
-                        meta.out_bam = "${bam.getFileName()}"
-                        meta.toMapString().replaceAll("\\[|\\]|\\s", "")
-                    }
-                .collectFile(name: "${sample_sheet_name}_spikeIn_scalefactor.csv", newLine: true, storeDir: "${params.outdir}")
         } else {
             BOWTIE2_ALIGN.out.bam
                 .set { bams_ch }
@@ -228,6 +223,15 @@ workflow align_call_peaks {
                 .set { multiqc_logo }
         }
         MULTIQC(multiqc_ch, multiqc_config, extra_multiqc_config, multiqc_logo, sample_sheet_name)
+        // Save the seq_depth and resulting scale factor to the results directory 
+        COLLECTFILE(
+            bams_ch.map { meta, bam -> 
+                    meta.out_bam = "${bam.getFileName()}"
+                    meta.toMapString().replaceAll("\\[|\\]|\\s", "")
+                }
+                .collectFile(name: "${sample_sheet_name}_spikeIn_scalefactor.csv", newLine: true)
+        )
+
 
         // versions.concat(TRIMGALORE.out.versions, 
         //                 BOWTIE2_ALIGN.out.versions,
