@@ -114,7 +114,7 @@ workflow align_call_peaks {
                 .map { meta, seq_depth, C -> 
                         depth = seq_depth.toInteger()
                         if ( depth > 0 ) {
-                           sf = C.div(depth) 
+                            sf = C.div(depth) 
                         } else {
                             sf = C.div(1)
                         }
@@ -179,7 +179,6 @@ workflow align_call_peaks {
         //And create coverage (bigwig or bedgraph) files for IGV/UCSC
         coverage_tracks(bam_bai_ch, fasta, fai)
         // SEACR peak calling 
-        //scale_factor
         seacr_peaks(bams_sorted, chrom_sizes)
         // MACS2 peak calling, Optional
         if ( params.run_macs2 ){
