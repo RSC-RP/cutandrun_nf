@@ -156,99 +156,112 @@ To ensure that the pipeline works, first run the test data set. This example wil
 
 Open the configuration file `nextflow.config` and edit the necessary parameters for building the index, and/or running the alignment or peak calling steps. 
 
-```{r eval=TRUE}
-usethis::edit_file(here::here("nextflow.config"))
+```{r warning=FALSE, echo=FALSE, eval=TRUE}
+config_file <- readLines(here::here("nextflow.config")) %>% 
+    noquote() 
+
+
+params_lines <- c(grep("global parameters", config_file), 
+                  grep("multiqc_config", config_file)+1)
 ```
 
-Be sure to change the following lines for the queue, project code, alignment reference files, and whether to run MACS2 calls along with the SEACR peak calling algorithm. 
-
+```{r warning=FALSE, echo=FALSE, eval=TRUE}
+config_file %>% 
+    head(.,n = 20) %>% 
+    c(., "<...>") %>% 
+    cat(.,sep="\n") 
 ```
-params {
-    // general options
-    sample_sheet                = "./test_data/test_dataset_sample_sheet.csv"
-    queue                       = 'sceaq'
-    project                     = '207f23bf-acb6-4835-8bfe-142436acb58c'
-    outdir                      = "./results/mouse"
-    peaks_outdir                = "${params.outdir}/peak_calls"
-    publish_dir_mode            = 'copy'
 
-    //Bowtie params
-    build_index                 = false
-    fasta                       = '/PATH/TO/genome.fasta' [REQUIRED if build_index=true]
-    index                       = '/PATH/TO/mm39_index' [REQUIRED if build_index=false]
-    save_unaligned              = false
-    sort_bam                    = true
-    
-    //spike-in params
-    build_spike_index           = false
-    spike_fasta                 = '/PATH/TO/ecoli_genome.fasta'
-    spike_index                 = '/PATH/TO/ecoli_index'
+## Global Params
 
-    //trimgalore module specific parameters
-    clip_r1                     = 0
-    clip_r2                     = 0
-    three_prime_clip_r1         = 0
-    three_prime_clip_r2         = 0
-    
-    //Picard module specific parameters
-    remove_dups                 = false
+Be sure to change the following lines for the global parameters:
 
-    //SEACR params
-    threshold                   = 0 
-    spike_norm                  = [true or false] //use spike-in normalization factor or not
-    chrom_sizes                 = '/gpfs/shared_data/Bowtie2/mm39.chrom.sizes'
-    scale_factor_constant       = 10000
-    
-    //MACS2 and khmer effective genome size params
-    //kmer_size is the read-length
-    run_macs2                   = [true or false]
-    run_khmer                   = [true or false]
-    kmer_size                   = [INTEGER of fastq read length] 
-    gsize                       = [INTEGER of effective genome size, eg 3.0E+9 for mouse. Scientific notation OK.]
-}
+ * sample_sheet
+ * queue 
+ * project code 
+ * outdir
+ * peak_outdir
+
+```{r echo=FALSE, eval=TRUE}
+end <- grep("Bowtie params",config_file)-1
+config_file[params_lines[1]:end] %>% 
+    cat(.,sep = "\n")
+```
+## Genomic References
+
+Additionally, determine if you require a new bowtie2 index to be build for the target genome and/or the spike-in genome. The pipeline requires either a fasta filepath OR Bowtie2 index filepath. This is also required for the spike-in, with E. Coli provided as a default. 
+
+E. coli is the default since it that is a carry over DNA from the Cut&Run library prep methodology and is expected to be present in all Cut&Run experiments regardless if exogenous spike-in is used like Yeast. Please see [here](https://doi.org/10.7554/eLife.46314) for more information on spike-in normalization. 
+
+Change the following lines for alignment reference files when needed:
+
+ * build_index
+ * fasta
+ * index 
+ * build_spike_index
+ * spike_fasta
+ * spike_index
+
+```{r echo=FALSE, eval=TRUE}
+bowtie2 <- c(grep("Bowtie params", config_file), grep("\\sspike_index.+\\=", config_file))
+config_file[bowtie2[1]:bowtie2[2]] %>% 
+    cat(.,sep = "\n")
+```
+## Optional: MACS2
+
+Finally, decide whether to run MACS2 calls along with the SEACR peak calling algorithm (default = true).  MACS2 will use the effective genome size value provided in `gsize` parameter. 
+
+If you are using a non-model organism or simply don't want to use the effective genome size provided in literature or MACS2 documentation, you can set `run_khmer = true` to calculate an effective genome size using the target genome fasta `fasta` filepath and read-length. 
+
+ * gsize
+ * run_macs2
+ * run_khmer
+ 
+```{r echo=FALSE, eval=TRUE}
+c(config_file[grep("Effective genome size", config_file):grep("gsize.+\\=", config_file)],
+    noquote("    <...>"),
+    config_file[grep("MACS2 and", config_file):grep("kmer_size", config_file)]
+  ) %>% 
+    cat(.,sep = "\n")
 ```
 
 ### Advanced Options
 
-In the `nextflow.config`, you can define additional command line arguments to the scientific software under [process scope](https://www.nextflow.io/docs/latest/process.html#). 
+In the `nextflow.config`, you can define additional command line arguments to the scientific software under [process scope](https://www.nextflow.io/docs/latest/process.html#). You may use the advanced options to change computational resources requested for different processes. The CPUs and memory parameters can updated to request a larger amount of resources like CPUs or memory if files are large. You may also use these process scope to edit the command line paramters for processes in the workflow. Please be aware the **default command line parameters for `Bowtie2` processes are already provided for both target and spike-in alignment**, but can be edited. 
 
-Be aware the default command line parameters for `Bowtie2` processes are already provided, but can be edited. This mostly would be relevant for `SEACR` and `MACS2` parameters that often need to be re-run multiple times when deciding on the appropriate peak-set to use.
+The most commonly modified and important process parameters are listed toward the top of the process scope in the `nextflow.config` file.  
 
-Often, you will need to change `SEACR` from "non" to "norm" for different normalization strategies, and the `MACS2` broad and narrow peak calling parameters for different histone modifications. 
+You can edit the command line parameters for `SEACR` and `MACS2` parameters that often need to be re-run multiple times when deciding on the appropriate peak-set to use. For example, `MACS2` broad and narrow peak calling parameters for different histone modifications which can be modified using the `ext.args` parameter.  
 
-Another reason to use these advanced options is to change computational resources requested. The CPUs and memory parameters can updated to request a larger amount of resources like CPUs or memory if files are large. 
+```{r eval=TRUE, echo=FALSE}
+process_lines <- c(grep("Computational resource", config_file), 
+                  grep("FASTQC process", config_file)-1)
 
-
-In the example below, you can provide additional command line arguments to `FastQC` by adding the argument `--quiet` directly to `ext.args` as shown below, which will suppress any messages stdout and only report errors
-
+config_file[c(process_lines[1]:process_lines[2])] %>% 
+    gsub("^.+(mode:.+|saveAs.+|fail.+).+$","", .) %>% 
+    gsub("\\]$", "", .)  %>% 
+    .[-grep("^$", .)] %>% 
+    gsub("\\[  path.+", "[...]",.)
+    # cat(.,sep = "\n")
 ```
-process {
-    <...>
-    
-    //FASTQC process specific parameters
-    withName: FASTQC {
-        cpus = 1
-        memory = 16.GB
-        ext.args = '--quiet'
-    }
-    
-    <...>
-    
-    //SEACR peak calling resources
-    withName: SEACR_CALLPEAK {
-        cpus = { 1 * task.attempt }
-        memory = { 16.GB * task.attempt }
-        ext.args = 'non stringent'
-        publishDir = [...]
-    }
 
-    //MACS2 peak calling resources
-    withName: MACS2_CALLPEAK {
-        cpus = { 1 * task.attempt }
-        memory = { 16.GB * task.attempt }
-        ext.args = '-q 0.1 --keep-dup all'
-        publishDir = [...]
-    }
+SEACR has the option to be set to SEACR v1.4 or SEACR v1.3 - which have particularly different commandline interfaces, changes in the methods for normalization to IgG, and v1.4 can optionally remove peaks found in IgG. Please see [here](https://github.com/FredHutch/SEACR/releases) for the full changelog. 
+
+For SEACR v1.3, Often, you will need to change `SEACR` from "non" to "norm" for different normalization strategies whether you're using IgG normalization or spike-in normalization. The example below demonstrates how to change the commandline params and version by editing `ext.version` and `ext.args`. 
+
+```{r eval=TRUE, echo=FALSE}
+seacr_lines <- c(grep("SEACR peak calling", config_file), 
+                  grep("MACS2 peak", config_file)-2)
+
+config_file[c(seacr_lines[1]:seacr_lines[2])] %>% 
+    gsub("^.+(mode:.+|saveAs.+|fail.+).+$","", .) %>% 
+    gsub("\\]$", "", .)  %>% 
+    .[-grep("^$", .)] %>% 
+    gsub("\\[  path.+", "[...]",.) %>% 
+    gsub("\\'1.4\\'","'1.3'", .) %>% 
+    gsub("--norm.+", "norm stringent'", .) %>% 
+    cat(.,sep = "\n")
+
 ```
 
 
@@ -256,6 +269,11 @@ process {
 
 ```{r eval=TRUE}
 usethis::edit_file(here::here("main_run.sh"))
+```
+
+```{r eval=TRUE, echo=FALSE}
+main_run <- readLines(here::here("main_run.sh"))
+# main_run
 ```
 
 Decide on the `NFX_PROFILE`, which allows you to run the processes either locally, or using the PBS job scheduler on Cybertron, and determine if you'd like to use singularity containers or docker containers.
@@ -270,20 +288,30 @@ Decide on the `NFX_PROFILE`, which allows you to run the processes either locall
 
 Edit the script `main_run.sh` and change the values for the `NFX_PROFILE` variable if desired. 
 
+```{r eval=TRUE, echo=FALSE}
+idx <- c(grep("#Options", main_run), grep("#Options", main_run)+1) %>% 
+    .[order(.)]
+
+main_run[head(idx,2)] %>% 
+    cat(.,sep = "\n")
 ```
-#Options: 'local_singularity', 'PBS_singularity'
-NFX_PROFILE='PBS_singularity'
-```
+
 
 ## Alignment and Peak Calls
 
-Edit the variables in the `main_run.sh` script for entry-point of the workflow. The default option *"align_call_peaks"* for the `NFX_ENTRY` variable will run the entire pipeline including building the index, QC, alignment, and peak calling (SEACR and/or MACS2)  if the parameter `build_index=true`. Otherwise, this entry-point will run QC, alignment, and peak calling (SEACR and/or MACS2).
+Edit the variables in the `main_run.sh` script for entry-point of the workflow. The default option *"align_call_peaks"* for the `NFX_ENTRY` will run the full pipeline (QC, alignment,  peak calling, coverage tracks). 
+
+```{r eval=TRUE, echo=FALSE}
+main_run[tail(idx, n=2)] %>% 
+    cat(.,sep = "\n") 
+```
 
 If you already have aligned BAM files, see `test_data/test_dataset_bams_sample_sheet.csv` for an example to call peaks only using the entry `call_peaks`. 
 
-```
-#Options: 'bowtie2_index', 'align_call_peaks', 'call_peaks'
-NFX_ENTRY='align_call_peaks'
+```{r eval=TRUE, echo=FALSE}
+main_run[tail(idx, n=2)] %>% 
+    gsub("\\=\\'align_call_peaks\\'", "='call_peaks'", .) %>% 
+    cat(.,sep = "\n") 
 ```
 
 Then, execute the `main_run.sh` script in order to complete the peak calling on the samples. Provide a small descriptive prefix for the pipeline run. 
@@ -295,14 +323,12 @@ Then, execute the `main_run.sh` script in order to complete the peak calling on 
 
 ## Optional: Build the Index and Exit Pipeline
 
-You can also change the entry-point of the workflow, which is accomplished by setting the `NFX_ENTRY` variable in the `main_run.sh` script  to be `bowtie2_index`. This will allow the pipeline to run only the Bowtie2 build process and exit upon completion of the index.
+You can also change the entry-point of the workflow, which is accomplished by setting the `NFX_ENTRY` variable in the `main_run.sh` script  to be `bowtie2_index_only`. This will allow the pipeline to run only the Bowtie2 build process and exit upon completion of the index building step.
 
-```
-#Options: 'local_singularity', 'PBS_singularity'
-NFX_PROFILE='PBS_singularity'
-
-#Options: 'bowtie2_index' or 'call_peaks'
-NFX_ENTRY='bowtie2_index'
+```{r eval=TRUE, echo=FALSE}
+main_run[tail(idx, n=2)] %>% 
+    gsub("\\=\\'align_call_peaks\\'", "='bowtie2_index_only'", .) %>% 
+    cat(.,sep = "\n") 
 ```
 
 ```{bash}
@@ -334,10 +360,10 @@ There will be the following file structure:
     
     * peak_calls/
      
-        * seacr/
+        * seacr_callpeak/
             * {sample_id}.[norm or non].[stringent or relaxed].bed
         
-        * macs2/
+        * macs2_call_peak/
             * {sample_id}_peaks.[narrowPeak or broadPeak]
             * {sample_id}_peaks.xls 
             * {sample_id}_summits.bed
@@ -366,7 +392,15 @@ In addition, there will be an HTML report with information on where the temp dat
 
 The HTML file is found in `reports` directory and will have the prefix defined on the command line when the `./main_run.sh "my_analysis"` was invoked, so in this example it would be named "my_analysis_{DATE}.html". 
 
+```{r echo=FALSE, eval=TRUE}
+knitr::include_graphics("images/html_report.png")
+```
+
 There will also be a detailed nextflow log file that is useful for de-bugging which will also be named in this example, "my_analysis_{DATE}_nextflow.log".
 
 Finally, the pipeline will produce a DAG - Directed acyclic graph,  which describes the workflow channels (inputs) and the modules. The DAG image will be saved under `dag/` directory with the name "my_analysis_{DATE}_dag.pdf". 
+
+```{r echo=FALSE, eval=TRUE}
+knitr::include_graphics("images/dag.png")
+```
 
