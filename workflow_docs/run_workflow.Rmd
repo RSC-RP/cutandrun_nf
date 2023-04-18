@@ -225,7 +225,7 @@ c(config_file[grep("Effective genome size", config_file):grep("gsize.+\\=", conf
     cat(.,sep = "\n")
 ```
 
-### Advanced Options
+## Advanced Options
 
 In the `nextflow.config`, you can define additional command line arguments to the scientific software under [process scope](https://www.nextflow.io/docs/latest/process.html#). You may use the advanced options to change computational resources requested for different processes. The CPUs and memory parameters can updated to request a larger amount of resources like CPUs or memory if files are large. You may also use these process scope to edit the command line paramters for processes in the workflow. Please be aware the **default command line parameters for `Bowtie2` processes are already provided for both target and spike-in alignment**, but can be edited. 
 
