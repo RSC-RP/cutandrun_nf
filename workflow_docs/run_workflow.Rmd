@@ -227,7 +227,7 @@ c(config_file[grep("Effective genome size", config_file):grep("gsize.+\\=", conf
 
 ## Advanced Options
 
-In the `nextflow.config`, you can define additional command line arguments to the scientific software under [process scope](https://www.nextflow.io/docs/latest/process.html#). You may use the advanced options to change computational resources requested for different processes. The CPUs and memory parameters can updated to request a larger amount of resources like CPUs or memory if files are large. You may also use these process scope to edit the command line paramters for processes in the workflow. Please be aware the **default command line parameters for `Bowtie2` processes are already provided for both target and spike-in alignment**, but can be edited. 
+In the `nextflow.config`, you can define additional command line arguments to the scientific software under [process scope](https://www.nextflow.io/docs/latest/process.html#). You may use the advanced options to change computational resources requested for different processes. The CPUs and memory parameters can updated to request a larger amount of resources like CPUs or memory if files are large. You may also edit the commandline parameters for processes in the workflow using the `ext.arg` [directive](https://www.nextflow.io/docs/latest/process.html#directives). Please be aware the **default command line parameters for `Bowtie2` processes are already provided for both target and spike-in alignment**, but can be edited. 
 
 The most commonly modified and important process parameters are listed toward the top of the process scope in the `nextflow.config` file.  
 
@@ -391,10 +391,6 @@ There will be the following file structure:
 In addition, there will be an HTML report with information on where the temp data is stored in the `workDir` path, and general run statistics such as resource utilized  versus requested, which helps with optimization. It will also provide information on how much walltime was used per sample, total CPU hours, etc. 
 
 The HTML file is found in `reports` directory and will have the prefix defined on the command line when the `./main_run.sh "my_analysis"` was invoked, so in this example it would be named "my_analysis_{DATE}.html". 
-
-```{r echo=FALSE, eval=TRUE}
-knitr::include_graphics("images/html_report.png")
-```
 
 There will also be a detailed nextflow log file that is useful for de-bugging which will also be named in this example, "my_analysis_{DATE}_nextflow.log".
 
