@@ -8,10 +8,11 @@ process COLLECTFILE {
         'ubuntu:20.04' }"
 
     input:
+    tuple val(meta), val(outfile)
     path scale_factor
 
     output:
-    tuple path("*scalefactor.csv"),             emit: scale_factors
+    path "*.csv",             emit: scale_factors
 
     when:
     task.ext.when == null || task.ext.when
@@ -21,5 +22,7 @@ process COLLECTFILE {
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     ls -alh
+    echo id,single_end,group,sample,spike_seq_depth,scale_factor > "${outfile}"
+    cat "${scale_factor}" >> "${outfile}"
     """
 }

@@ -223,14 +223,16 @@ workflow align_call_peaks {
         }
         MULTIQC(multiqc_ch, multiqc_config, extra_multiqc_config, multiqc_logo, sample_sheet_name)
         // Save the seq_depth and resulting scale factor to the results directory 
+        Channel.value( [ [ id:sample_sheet_name ], "${sample_sheet_name}_spikeIn_scalefactor.csv" ] )
+            .set { outfile_ch } 
         COLLECTFILE(
+            outfile_ch,
             bams_ch.map { meta, bam -> 
                     meta.out_bam = "${bam.getFileName()}"
                     meta.toMapString().replaceAll("\\[|\\]|\\s", "")
                 }
-                .collectFile(name: "${sample_sheet_name}_spikeIn_scalefactor.csv", newLine: true)
+                .collectFile(name: "scalefactor.csv", newLine: true)
         )
-
 
         // versions.concat(TRIMGALORE.out.versions, 
         //                 BOWTIE2_ALIGN.out.versions,
