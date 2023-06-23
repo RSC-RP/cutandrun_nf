@@ -71,8 +71,72 @@ A DAG (directed acyclic graph) of the workflow is show below:
 knitr::include_graphics("images/dag.png")
 ```
 
-
 # Activate the Environment
+
+## Code Repository
+
+First, fork the [repository](https://childrens-atlassian/bitbucket/projects/RP/repos/cutandrun_nf/browse) from Children’s bitbucket. Do this by clicking the “create fork” symbol from the bitbucket web interface and fork it to your personal bitbucket account, as illustrated below.
+
+The figures are from another pipeline, but the steps are the same for forking the respository and selecting the appropriate version. 
+
+```{r eval=TRUE, echo=FALSE}
+knitr::include_graphics("images/bitbucket_fork1.png")
+knitr::include_graphics("images/bitbucket_fork2.png")
+knitr::include_graphics("images/bitbucket_fork3.png")
+```
+
+Next, you will need to clone your personal repository to your home in Cybertron. See the image below for where you can find the correct URL on your forked bitbucket repo. 
+
+```{r eval=TRUE, echo=FALSE}
+knitr::include_graphics("images/bitbucket_clone.png")
+```
+
+Copy that URL to replace the one below. 
+
+```{bash}
+#on a terminal on the Cybertron login nodes
+cd ~
+
+# your fork should have your own userID (rather than jsmi26)
+git clone https://childrens-atlassian/bitbucket/scm/~jsmi26/cutandrun_nf.git
+
+cd ~/cutandrun_nf
+```
+
+Once inside the code repository, use the latest release branch or make sure you're using the same release as prior analysis by using `git`.
+
+```{bash}
+git fetch
+git branch -a
+```
+
+The git branch command will show all available remote branches, including remote branches, like:
+
+```
+* main
+  remotes/origin/HEAD -> origin/main
+  remotes/origin/dev
+  remotes/origin/feature/sample_sheet_val
+  remotes/origin/main
+  remotes/origin/release/1.0.0
+  remotes/origin/release/1.1.0
+ ```
+
+Checkout the release branch using this command:
+
+```{bash}
+git checkout release/1.1.0
+```
+
+Which will state that you are now on `release/1.1.0` branch and that it is tracking the release branch in your personal repository. 
+
+```
+Checking out files: 100% (55/55), done.
+Branch release/1.1.0 set up to track remote branch release/1.1.0 from origin.
+Switched to a new branch 'release/1.1.0'
+```
+
+## Conda Environment
 
 Optional: use tmux on the cybertron login nodes. Name the session nextflow and then request an interactive session before activating the nextflow conda environment. The project codes can be found with `project info` command. 
 
