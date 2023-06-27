@@ -24,8 +24,8 @@ process DEEPTOOLS_MULTIBIGWIGSUMMARY {
     """
     multiBigwigSummary bins \
         -b ${bigwigs} \
-        -out scores_per_bin.npz \
-        --outRawCounts scores_per_bin.tab
+        -out ${prefix}_scores_per_bin.npz \
+        --outRawCounts ${prefix}_scores_per_bin.tab
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

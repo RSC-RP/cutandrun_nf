@@ -13,6 +13,7 @@ include { COLLECTFILE } from './modules/local/collectfile/main.nf'
 // Include subworkflows
 include { samtools_filter } from './subworkflows/local/samtools_filter.nf'
 include { coverage_tracks } from './subworkflows/local/coverage_tracks.nf'
+include { deeptools_qc } from './subworkflows/local/deeptools_qc.nf'
 include { seacr_peaks } from './subworkflows/local/seacr_peaks.nf'
 include { macs2_peaks } from './subworkflows/local/macs2_peaks.nf'
 include { bowtie2_index; bowtie2_index as bowtie2_index_spike } from './subworkflows/local/bowtie2_index.nf'
@@ -176,8 +177,11 @@ workflow align_call_peaks {
                 .set { bams_sorted }
         }
 
-        //And create coverage (bigwig or bedgraph) files for IGV/UCSC
-        coverage_tracks(bam_bai_ch, fasta, fai)
+        // Create coverage (bigwig or bedgraph) files for IGV/UCSC and look at genomic enrichment stats
+        coverage_tracks(bam_bai_ch, fasta, fai, sample_sheet_name)
+        // PCA and Correlation of bigwigs for samples
+        deeptools_qc(coverage_tracks.out.bigwig, sample_sheet_name)
+
         // SEACR peak calling 
         seacr_peaks(bams_sorted, chrom_sizes)
         // MACS2 peak calling, Optional

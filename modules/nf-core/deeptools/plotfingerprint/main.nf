@@ -22,11 +22,10 @@ process DEEPTOOLS_PLOTFINGERPRINT {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def extend   = (meta.single_end && params.fragment_size > 0) ? "--extendReads ${params.fragment_size}" : ''
+    // def extend   = (meta.single_end && params.fragment_size > 0) ? "--extendReads ${params.fragment_size}" : ''
     """
     plotFingerprint \\
         $args \\
-        $extend \\
         --bamfiles ${bams.join(' ')} \\
         --plotFile ${prefix}.plotFingerprint.pdf \\
         --outRawCounts ${prefix}.plotFingerprint.raw.txt \\
