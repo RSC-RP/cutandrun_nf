@@ -22,6 +22,9 @@ process DEEPTOOLS_MULTIBIGWIGSUMMARY {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
+    export MPLCONFIGDIR="\$PWD"
+    export TMPDIR="\$PWD"
+    
     multiBigwigSummary bins \
         -b ${bigwigs} \
         -out ${prefix}_scores_per_bin.npz \

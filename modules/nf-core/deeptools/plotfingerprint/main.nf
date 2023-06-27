@@ -24,6 +24,9 @@ process DEEPTOOLS_PLOTFINGERPRINT {
     def prefix = task.ext.prefix ?: "${meta.id}"
     // def extend   = (meta.single_end && params.fragment_size > 0) ? "--extendReads ${params.fragment_size}" : ''
     """
+    export MPLCONFIGDIR="\$PWD"
+    export TMPDIR="\$PWD"
+    
     plotFingerprint \\
         $args \\
         --bamfiles ${bams.join(' ')} \\
