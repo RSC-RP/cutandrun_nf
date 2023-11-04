@@ -1,9 +1,9 @@
-name: nextflow_v22.04
+name: nextflow
 channels:
   - bioconda
   - conda-forge
 dependencies:
   - python>=3.7
-  - nextflow=22.04.0
+  - nextflow=22.10.6
   - nf-core=2.7.2
   - graphviz
