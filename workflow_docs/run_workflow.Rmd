@@ -163,6 +163,51 @@ conda env create -f env/nextflow.yaml
 conda activate nextflow
 ```
 
+### Conda/Mamba at SCRI
+
+SCRI uses a TLS and/or SSL Certificate is used to encrypt web traffic and its specific to SCRI. Nextflow itself orchestrates many types of downloads from genomic references to container images from public repositories to conda packages. 
+
+Thus it must be configured to use the SCRI certificates. See this [bitbucket repo](https://childrens-atlassian/bitbucket/projects/EC/repos/entcerts-tmp/browse) for the current certificates.
+
+Known Error - cannot download the container images from quay.io on 11/6/2023
+> java.lang.IllegalStateException: java.lang.IllegalStateException: Failed to pull singularity image  
+  command: apptainer pull  --name quay.io-biocontainers-deeptools-3.5.1--py_0.img.pulling.  1699305035994 docker://quay.io/biocontainers/deeptools:3.5.1--py_0 > /dev/null  
+  status : 255  
+  message:  
+    INFO:    Converting OCI blobs to SIF format  
+    INFO:    Starting build...  
+    Getting image source signatures  
+    Copying blob sha256: [...]  
+    FATAL:   While making image from oci registry: error fetching image to cache: while building SIF  from layers: conveyor failed to get: no descriptor found for reference  "5d16e7a95afb816a455df599646ef25335c624b0a0142f4f159d6275a09aa8dc"  
+
+While this error message does not explicely say SSL errors, its the most likely cause due to: 'While trying to use SSH, you may get a response indicating permission is denied. Or if you get an error with a **code of 255**, it means there's a problem with your SSH connection. The command failed with the exit code: 255.'
+
+1. refresh certs in bitbucket repo
+
+git clone https://childrens-atlassian/bitbucket/projects/EC/repos/entcerts-tmp/browse
+git pull origin main
+
+2. Set env variables in .bashrc 
+
+export REQUESTS_CA_BUNDLE="<your path to entcerts-tmp/*.crt>"
+export CURL_CA_BUNDLE="<your path entcerts-tmp/*.crt>"
+
+3. copy certs to mamba/conda env 
+conda config --set ssl_verify <your path entcerts-tmp/*.crt>
+cp <your path entcerts-tmp/*.crt> ~/mambaforge/ssl/cacert.pem
+
+4. deactivate and remove old conda environment 
+mamba env remove -n nextflow
+
+5. remove old nextflow cache (just in case)
+rm -rf  ~/.nextflow/
+
+6. re-generate the conda/mamba environment
+mamba env create -f env/nextflow.yaml
+
+you will see this warning and its showing that your copy command (step #3) did indeed work OK. 
+'warning  libmamba Invalid package cache, file 'mambaforge/pkgs/ca-certificates-2023.7.22-hbcca054_0/ssl/cacert.pem' has incorrect size'. 
+
 
 # Examine the Sample Sheet
 
