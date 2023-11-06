@@ -40,5 +40,8 @@ workflow seacr_peaks {
         .set { threshold }
     //SEACR peak calling
     SEACR_CALLPEAK(seacr_ch, threshold, spike_norm)
+
+    emit:
+    seacr               =   SEACR_CALLPEAK.out.bed
 }
 
