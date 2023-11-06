@@ -3,8 +3,8 @@
 set -eu
 DATE=$(date +%F)
 NFX_CONFIG=./nextflow.config
-#Options: 'local_singularity', 'PBS_singularity'
-NFX_PROFILE='PBS_singularity'
+#Options: 'PBS_apptainer','local_apptainer','local_singularity', 'PBS_singularity'
+NFX_PROFILE='PBS_apptainer'
 #Options: 'bowtie2_index_only', 'align_call_peaks', 'call_peaks'
 NFX_ENTRY='align_call_peaks'
 #The output prefix on filenames for reports/logs
