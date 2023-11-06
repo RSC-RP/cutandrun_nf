@@ -2,8 +2,8 @@ include { DEEPTOOLS_MULTIBIGWIGSUMMARY } from '../../modules/local/deeptools/mul
 include { DEEPTOOLS_PLOTCORRELATION } from '../../modules/nf-core/deeptools/plotcorrelation/main.nf'
 include { DEEPTOOLS_PLOTPCA } from '../../modules/nf-core/deeptools/plotpca/main.nf'
 include { DEEPTOOLS_PLOTENRICHMENT as SEACR_PLOTENRICHMENT ; DEEPTOOLS_PLOTENRICHMENT as MACS2_PLOTENRICHMENT } from '../../modules/local/deeptools/plotenrichment.nf'
+include { MACSPEAKSTOBED } from '../../modules/local/macspeakstobed.nf'
 
-//Run deeptools bamcoverage to create signal/coverage file
 workflow deeptools_qc {
     take: 
     bam_bai_ch
@@ -24,7 +24,6 @@ workflow deeptools_qc {
         .map { row -> [ row[0][0], [row[0][1]], [row[0][2]], [row[1][1]] ] }
         .set { bam_seacr_ch }
 
-    // bam_peaks_ch.view{"the bam,bai, bed channel is $it"}
     // To compute the average values for all samples' coverage of the genome
     DEEPTOOLS_MULTIBIGWIGSUMMARY(bw_ch)
 
@@ -34,13 +33,16 @@ workflow deeptools_qc {
     DEEPTOOLS_PLOTCORRELATION(DEEPTOOLS_MULTIBIGWIGSUMMARY.out.npz, method, plot_type)
     DEEPTOOLS_PLOTPCA(DEEPTOOLS_MULTIBIGWIGSUMMARY.out.npz)
 
-    // calculate FRiP on all called peaks 
+    // calculate FRiP on called peaks per sample
     SEACR_PLOTENRICHMENT(bam_seacr_ch)
-
     if ( run_macs2 ){
-        bam_bai_ch.cross(macs_peaks){ row -> row[0].id } // join by the key name "id"
-            .map { row -> [ row[0][0], [row[0][1]], [row[0][2]], [row[1][1]] ] }
+        // convert narrow/broad/gapped peaks file to standard 3 column bed file
+        MACSPEAKSTOBED(macs_peaks)
+        // join the bams, bai, and peaks by meta.id
+        bam_bai_ch.cross(MACSPEAKSTOBED.out.bed){ row -> row[0].id } // join by the key name "id"
+            .map { row -> [ row[0][0], row[0][1], row[0][2], row[1][1] ] }
             .set { bam_macs_ch }
+        // generate enrichment/FRiP stats per sample
         MACS2_PLOTENRICHMENT(bam_macs_ch)
     }
 

@@ -212,6 +212,7 @@ workflow align_call_peaks {
             Channel.value([])
                 .set { spike_log }
         }
+
         //Create channel for all the QC metrics to be included in MultiQC
         FASTQC.out.fastqc
             .concat(TRIMGALORE.out.log)
@@ -239,7 +240,12 @@ workflow align_call_peaks {
             Channel.value([])
                 .set { multiqc_logo }
         }
-        MULTIQC(multiqc_ch, multiqc_config, extra_multiqc_config, multiqc_logo, sample_sheet_name)
+        // MultiQC process
+        MULTIQC(multiqc_ch, 
+                multiqc_config,
+                extra_multiqc_config, 
+                multiqc_logo, 
+                sample_sheet_name)
         
         // Save the seq_depth and resulting scale factor to the results directory 
         // Channel.value( [ [ id:sample_sheet_name ], "${sample_sheet_name}_spikeIn_scalefactor.csv" ] )

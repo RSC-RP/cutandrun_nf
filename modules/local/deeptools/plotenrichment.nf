@@ -22,12 +22,19 @@ process DEEPTOOLS_PLOTENRICHMENT {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    plotEnrichment \\
-        $args \\
-        -b $bam \\
-        --BED $bed \\
-        -o ${prefix}.plotEnrichment.pdf \\
-        --outRawCounts ${prefix}.plotEnrichment.txt
+    NUM=\$(wc -l $bed | cut -f 1 -d " ")
+    if [[ \$NUM -ne 0 ]]
+    then
+        plotEnrichment \\
+            $args \\
+            -b $bam \\
+            --BED $bed \\
+            -o ${prefix}.plotEnrichment.pdf \\
+            --outRawCounts ${prefix}.plotEnrichment.txt
+    else
+        touch ${prefix}_noPeaks.pdf
+        touch ${prefix}_noPeaks.txt
+    fi 
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
