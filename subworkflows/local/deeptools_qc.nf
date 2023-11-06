@@ -21,7 +21,7 @@ workflow deeptools_qc {
         .set { bw_ch }
     // channel to join bams and peak beds by meta.id per sample. 
     bam_bai_ch.cross(seacr_peaks){ row -> row[0].id } // join by the key name "id"
-        .map { row -> [ row[0][0], row[0][1], row[0][2], row[1][1] ] }
+        .map { row -> [ row[0][0], [row[0][1]], [row[0][2]], [row[1][1]] ] }
         .set { bam_seacr_ch }
 
     // bam_peaks_ch.view{"the bam,bai, bed channel is $it"}
@@ -39,7 +39,7 @@ workflow deeptools_qc {
 
     if ( run_macs2 ){
         bam_bai_ch.cross(macs_peaks){ row -> row[0].id } // join by the key name "id"
-            .map { row -> [ row[0][0], row[0][1], row[0][2], row[1][1] ] }
+            .map { row -> [ row[0][0], [row[0][1]], [row[0][2]], [row[1][1]] ] }
             .set { bam_macs_ch }
         MACS2_PLOTENRICHMENT(bam_macs_ch)
     }
