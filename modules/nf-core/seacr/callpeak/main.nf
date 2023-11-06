@@ -17,7 +17,7 @@ process SEACR_CALLPEAK {
     tag "$meta.id"
     label 'process_medium'
 
-    conda (params.enable_conda ? "bioconda::seacr=1.4" : null)
+    conda "bioconda::seacr=1.3"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ? select_container(task.ext.version).sif : select_container(task.ext.version).docker }"
 
     input:
