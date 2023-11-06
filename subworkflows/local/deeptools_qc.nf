@@ -9,6 +9,7 @@ workflow deeptools_qc {
     bam_bai_ch
     bigwigs
     seacr_peaks
+    run_macs2
     macs_peaks
     sample_sheet_name
 
@@ -36,7 +37,7 @@ workflow deeptools_qc {
     // calculate FRiP on all called peaks 
     SEACR_PLOTENRICHMENT(bam_seacr_ch)
 
-    if ( macs_peaks ){
+    if ( run_macs2 ){
         bam_bai_ch.cross(macs_peaks){ row -> row[0].id } // join by the key name "id"
             .map { row -> [ row[0][0], row[0][1], row[0][2], row[1][1] ] }
             .set { bam_macs_ch }
