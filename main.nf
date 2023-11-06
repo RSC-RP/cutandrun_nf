@@ -186,10 +186,15 @@ workflow align_call_peaks {
         if ( params.run_macs2 ){
             //Run MAC2 peak calling
             macs2_peaks(bams_sorted, fasta)
+            macs2_peaks.out.macs2 
+                .set { macs_peaks }
+        } else {
+            Channel.value([])
+                .set { macs_peaks }
         }
 
         // PCA, Correlation, and FRiP for samples
-        deeptools_qc(bam_bai_ch, coverage_tracks.out.bigwig, seacr_peaks.out.seacr, sample_sheet_name)
+        deeptools_qc(bam_bai_ch, coverage_tracks.out.bigwig, seacr_peaks.out.seacr, macs_peaks,  sample_sheet_name)
 
         //MultiQC to collect QC results
         if ( params.spike_norm ) { 

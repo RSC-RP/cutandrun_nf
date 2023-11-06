@@ -33,6 +33,7 @@ workflow macs2_peaks {
     MACS2_CALLPEAK(macs_ch, gsize)
 
     emit:
-    macs_ver = MACS2_CALLPEAK.out.versions
-    khmer_ver = params.run_khmer ? KHMER_UNIQUEKMERS.out.versions : ''
+    macs2               =   MACS2_CALLPEAK.out.peak
+    macs_ver            =   MACS2_CALLPEAK.out.versions
+    khmer_ver           =   params.run_khmer ? KHMER_UNIQUEKMERS.out.versions : ''
 }

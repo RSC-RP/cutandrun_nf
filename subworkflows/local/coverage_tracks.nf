@@ -13,7 +13,6 @@ workflow coverage_tracks {
     // calculate coverage track with Deeptools
     DEEPTOOLS_BAMCOVERAGE(bam_bai_ch, fasta, fai)
 
-
     // channel for all samples in a single plot
     bam_bai_ch
         .map { meta, bam, bai ->  [  "bam", bam ,
