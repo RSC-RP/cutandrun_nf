@@ -30,5 +30,7 @@ workflow coverage_tracks {
     DEEPTOOLS_PLOTFINGERPRINT(fingerprint_ch)
 
     emit:
-    bigwig           = DEEPTOOLS_BAMCOVERAGE.out.bigwig
+    bigwig              =   DEEPTOOLS_BAMCOVERAGE.out.bigwig
+    metrics             =   DEEPTOOLS_PLOTFINGERPRINT.out.metrics
+    matrix              =   DEEPTOOLS_PLOTFINGERPRINT.out.matrix
 }

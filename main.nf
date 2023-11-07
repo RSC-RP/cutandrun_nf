@@ -221,6 +221,10 @@ workflow align_call_peaks {
             .concat(spike_log)
             .concat(PICARD_MARKDUPLICATES.out.metrics)
             .concat(SAMTOOLS_STATS.out.stats)
+            .concat(coverage_tracks.out.metrics)
+            .concat(coverage_tracks.out.matrix)
+            .concat(deeptools_qc.out.corr)
+            .concat(deeptools_qc.out.pca)
             .map { row -> row[1] }
             .collect()
             .set { multiqc_ch }

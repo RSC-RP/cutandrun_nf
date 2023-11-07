@@ -47,5 +47,7 @@ workflow deeptools_qc {
     }
 
     emit:
-    npz           = DEEPTOOLS_MULTIBIGWIGSUMMARY.out.npz
+    npz             =   DEEPTOOLS_MULTIBIGWIGSUMMARY.out.npz
+    corr            =   DEEPTOOLS_PLOTCORRELATION.out.matrix
+    pca             =   DEEPTOOLS_PLOTPCA.out.tab
 }

@@ -25,3 +25,5 @@ module_order:
               name: "Bowtie2 Alignement (Spikein Genome)"
               info: "This section of the report shows the alignment after adapter trimming for individual libraries."
               path_filters: "*_spikein.bowtie2.log"
+      - samtools
+      - deeptools
