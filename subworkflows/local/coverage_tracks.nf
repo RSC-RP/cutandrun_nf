@@ -13,7 +13,6 @@ workflow coverage_tracks {
     // calculate coverage track with Deeptools
     DEEPTOOLS_BAMCOVERAGE(bam_bai_ch, fasta, fai)
 
-
     // channel for all samples in a single plot
     bam_bai_ch
         .map { meta, bam, bai ->  [  "bam", bam ,
@@ -31,5 +30,7 @@ workflow coverage_tracks {
     DEEPTOOLS_PLOTFINGERPRINT(fingerprint_ch)
 
     emit:
-    bigwig           = DEEPTOOLS_BAMCOVERAGE.out.bigwig
+    bigwig              =   DEEPTOOLS_BAMCOVERAGE.out.bigwig
+    metrics             =   DEEPTOOLS_PLOTFINGERPRINT.out.metrics
+    matrix              =   DEEPTOOLS_PLOTFINGERPRINT.out.matrix
 }

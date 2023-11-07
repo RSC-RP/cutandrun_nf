@@ -8,7 +8,6 @@ include { SAMTOOLS_FAIDX } from './modules/nf-core/samtools/faidx'
 include { BOWTIE2_ALIGN; BOWTIE2_ALIGN as SPIKEIN_ALIGN } from './modules/nf-core/bowtie2/align'
 include { PICARD_MARKDUPLICATES; PICARD_MARKDUPLICATES as PICARD_RMDUPLICATES } from './modules/nf-core/picard/markduplicates/main.nf'
 include { SAMTOOLS_STATS } from './modules/nf-core/samtools/stats/main.nf'
-include { COLLECTFILE } from './modules/local/collectfile/main.nf'
 
 // Include subworkflows
 include { samtools_filter } from './subworkflows/local/samtools_filter.nf'
@@ -91,8 +90,10 @@ workflow align_call_peaks {
                              [ file(meta["read1"], checkIfExists: true), file(meta["read2"], checkIfExists: true) ] //reads
                            ] }
             .set { meta_ch }
-        // variable with the basename of the sample sheet input 
+        // define static variables 
         def sample_sheet_name = file(params.sample_sheet, checkIfExists: true).simpleName
+        def run_macs2 = params.run_macs2
+
         //fastqc of raw sequence
         FASTQC(meta_ch)
         //Adapter and Quality trimming of the fastq files 
@@ -169,26 +170,38 @@ workflow align_call_peaks {
         //Optionally: samtools quality score and/or alignment flag filtering 
         if ( params.filter_bam ){
             samtools_filter(bam_bai_ch, fasta)
-            //replace bam and bai channel
+            // replace bam and bai channel
             samtools_filter.out.bam_bai_ch
                 .set { bam_bai_ch }
-            //replace channel with sorted bams
+            // replace channel with sorted bams
             samtools_filter.out.bams_sorted
                 .set { bams_sorted }
         }
 
         // Create coverage (bigwig or bedgraph) files for IGV/UCSC and look at genomic enrichment stats
         coverage_tracks(bam_bai_ch, fasta, fai, sample_sheet_name)
-        // PCA and Correlation of bigwigs for samples
-        deeptools_qc(coverage_tracks.out.bigwig, sample_sheet_name)
 
         // SEACR peak calling 
         seacr_peaks(bams_sorted, chrom_sizes)
         // MACS2 peak calling, Optional
-        if ( params.run_macs2 ){
+        if ( run_macs2 ){
             //Run MAC2 peak calling
             macs2_peaks(bams_sorted, fasta)
+            macs2_peaks.out.macs2 
+                .set { macs_peaks }
+        } else {
+            // set a dummy channel if MACS is not run
+            Channel.value([])
+                .set { macs_peaks }
         }
+
+        // PCA, Correlation, and FRiP for samples
+        deeptools_qc(bam_bai_ch, 
+                     coverage_tracks.out.bigwig, 
+                     seacr_peaks.out.seacr, 
+                     run_macs2,
+                     macs_peaks, 
+                     sample_sheet_name)
 
         //MultiQC to collect QC results
         if ( params.spike_norm ) { 
@@ -198,6 +211,7 @@ workflow align_call_peaks {
             Channel.value([])
                 .set { spike_log }
         }
+
         //Create channel for all the QC metrics to be included in MultiQC
         FASTQC.out.fastqc
             .concat(TRIMGALORE.out.log)
@@ -206,6 +220,10 @@ workflow align_call_peaks {
             .concat(spike_log)
             .concat(PICARD_MARKDUPLICATES.out.metrics)
             .concat(SAMTOOLS_STATS.out.stats)
+            .concat(coverage_tracks.out.metrics)
+            .concat(coverage_tracks.out.matrix)
+            .concat(deeptools_qc.out.corr)
+            .concat(deeptools_qc.out.pca)
             .map { row -> row[1] }
             .collect()
             .set { multiqc_ch }
@@ -225,25 +243,12 @@ workflow align_call_peaks {
             Channel.value([])
                 .set { multiqc_logo }
         }
-        MULTIQC(multiqc_ch, multiqc_config, extra_multiqc_config, multiqc_logo, sample_sheet_name)
-        // Save the seq_depth and resulting scale factor to the results directory 
-        Channel.value( [ [ id:sample_sheet_name ], "${sample_sheet_name}_spikeIn_scalefactor.csv" ] )
-            .set { outfile_ch } 
-        COLLECTFILE(
-            outfile_ch,
-            bams_ch.map { meta, bam -> 
-                    meta.out_bam = "${bam.getFileName()}"
-                    meta.toMapString().replaceAll("\\[|\\]|\\s", "")
-                }
-                .collectFile(name: "scalefactor.csv", newLine: true)
-        )
-
-        // versions.concat(TRIMGALORE.out.versions, 
-        //                 BOWTIE2_ALIGN.out.versions,
-        //                 BAMTOBEDGRAPH.out.versions, 
-        //                 SEACR_CALLPEAK.out.versions)
-        //         .collect()
-        //         .collectFile(name: 'versions.txt', newLine: true)
+        // MultiQC process
+        MULTIQC(multiqc_ch, 
+                multiqc_config,
+                extra_multiqc_config, 
+                multiqc_logo, 
+                sample_sheet_name)
 }
 
 
@@ -301,8 +306,6 @@ workflow bowtie2_index_only {
             .collect()
             .set { spike_index }
     }
-    // versions = versions.concat(bowtie2_index_spike.out.versions)
-    // versions = versions.concat(bowtie2_index.out.versions)
 }
 
 //End with a message to print to standard out on workflow completion. 
