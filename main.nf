@@ -8,7 +8,6 @@ include { SAMTOOLS_FAIDX } from './modules/nf-core/samtools/faidx'
 include { BOWTIE2_ALIGN; BOWTIE2_ALIGN as SPIKEIN_ALIGN } from './modules/nf-core/bowtie2/align'
 include { PICARD_MARKDUPLICATES; PICARD_MARKDUPLICATES as PICARD_RMDUPLICATES } from './modules/nf-core/picard/markduplicates/main.nf'
 include { SAMTOOLS_STATS } from './modules/nf-core/samtools/stats/main.nf'
-// include { COLLECTFILE } from './modules/local/collectfile/main.nf'
 
 // Include subworkflows
 include { samtools_filter } from './subworkflows/local/samtools_filter.nf'
@@ -250,25 +249,6 @@ workflow align_call_peaks {
                 extra_multiqc_config, 
                 multiqc_logo, 
                 sample_sheet_name)
-        
-        // Save the seq_depth and resulting scale factor to the results directory 
-        // Channel.value( [ [ id:sample_sheet_name ], "${sample_sheet_name}_spikeIn_scalefactor.csv" ] )
-        //     .set { outfile_ch } 
-        // COLLECTFILE(
-        //     outfile_ch,
-        //     bams_ch.map { meta, bam -> 
-        //             meta.out_bam = "${bam.getFileName()}"
-        //             meta.toMapString().replaceAll("\\[|\\]|\\s", "")
-        //         }
-        //         .collectFile(name: "scalefactor.csv", newLine: true)
-        // )
-
-        // versions.concat(TRIMGALORE.out.versions, 
-        //                 BOWTIE2_ALIGN.out.versions,
-        //                 BAMTOBEDGRAPH.out.versions, 
-        //                 SEACR_CALLPEAK.out.versions)
-        //         .collect()
-        //         .collectFile(name: 'versions.txt', newLine: true)
 }
 
 
@@ -326,8 +306,6 @@ workflow bowtie2_index_only {
             .collect()
             .set { spike_index }
     }
-    // versions = versions.concat(bowtie2_index_spike.out.versions)
-    // versions = versions.concat(bowtie2_index.out.versions)
 }
 
 //End with a message to print to standard out on workflow completion. 
