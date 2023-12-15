@@ -1,0 +1,269 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://raw.githubusercontent.com/./master/nextflow_schema.json",
+    "title": "Cut&Run pipeline parameters",
+    "description": "",
+    "type": "object",
+    "definitions": {
+        "required_options": {
+            "title": "Required Options",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "sample_sheet": {
+                    "type": "string",
+                    "default": "./test_data/test_dataset_sample_sheet.csv"
+                },
+                "queue": {
+                    "type": "string",
+                    "default": "paidq"
+                },
+                "project": {
+                    "type": "string",
+                    "default": "207f23bf-acb6-4835-8bfe-142436acb58c"
+                }
+            },
+            "required": [
+                "sample_sheet",
+                "queue",
+                "project"
+            ]
+        },
+        "input_output_options": {
+            "title": "Input/output options",
+            "type": "object",
+            "fa_icon": "fas fa-terminal",
+            "description": "Define where the pipeline should find input data and save output data.",
+            "required": [
+                "outdir",
+                "peaks_outdir"
+            ],
+            "properties": {
+                "outdir": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
+                    "fa_icon": "fas fa-folder-open"
+                },
+                "peaks_outdir": {
+                    "type": "string",
+                    "default": "./results/mouse/peaks_calls"
+                }
+            }
+        },
+        "reference_genome_options": {
+            "title": "Reference genome options",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "Reference genome related files and options required for the workflow.",
+            "properties": {
+                "fasta": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "mimetype": "text/plain",
+                    "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
+                    "description": "Path to target organism genome FASTA file.",
+                    "help_text": "This parameter is *mandatory* if `--genome` is not specified. If you don't have a BWA index available this will be generated for you automatically. Combine with `--save_reference` to save BWA index for future runs.",
+                    "fa_icon": "far fa-file-code"
+                },
+                "spike_fasta": {
+                    "type": "string",
+                    "default": "/gpfs/shared_data/Bowtie2/GCF_000005845.2_ASM584v2_genomic.fa",
+                    "format": "file-path",
+                    "description": "Path to spike-in organism genome FASTA file."
+                },
+                "build_index": {
+                    "type": "boolean",
+                    "description": "build new bowtie2 index from target organism FASTA."
+                },
+                "build_spike_index": {
+                    "type": "boolean",
+                    "description": "build new bowtie2 index from spike-in organism FASTA."
+                },
+                "index": {
+                    "type": "string",
+                    "default": "/gpfs/shared_data/Bowtie2/mm39_index/",
+                    "description": "Path to pre-built bowtie2 index for target organism.",
+                    "format": "directory-path"
+                },
+                "spike_index": {
+                    "type": "string",
+                    "default": "/gpfs/shared_data/Bowtie2/ecoli_index",
+                    "description": "Path to pre-built bowtie2 index for spike-in organism.",
+                    "format": "directory-path"
+                },
+                "chrom_sizes": {
+                    "type": "string",
+                    "default": "/gpfs/shared_data/Bowtie2/mm39.chrom.sizes",
+                    "format": "file-path",
+                    "description": "Path to target organism chromosome sizes text file."
+                }
+            },
+            "required": [
+                "fasta",
+                "spike_fasta",
+                "build_index",
+                "build_spike_index",
+                "index",
+                "spike_index",
+                "chrom_sizes"
+            ]
+        },
+        "bowtie2_alignment_options": {
+            "title": "Bowtie2 Alignment options",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "remove_dups": {
+                    "type": "boolean",
+                    "hidden": true,
+                    "description": "Whether to remove duplicate reads from target aligned bam before peak calling."
+                },
+                "filter_bam": {
+                    "type": "boolean",
+                    "hidden": true,
+                    "description": "Whether to filtered the target aligned bam file for mapq"
+                },
+                "mapq": {
+                    "type": "integer",
+                    "default": 30,
+                    "hidden": true,
+                    "description": "MAPQ value to retain"
+                },
+                "save_unaligned": {
+                    "type": "boolean",
+                    "hidden": true,
+                    "description": "Output unaligned reads in a separate file."
+                }
+            }
+        },
+        "seacr_options": {
+            "title": "SEACR options",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "scale_factor_constant": {
+                    "type": "integer",
+                    "default": 10000,
+                    "hidden": true
+                },
+                "threshold": {
+                    "type": "integer",
+                    "default": 0,
+                    "hidden": true
+                },
+                "spike_norm": {
+                    "type": "boolean",
+                    "hidden": true,
+                    "description": "Whether to use spike-in aligned reads as normalization method."
+                }
+            }
+        },
+        "macs2_options": {
+            "title": "MACS2 options",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "run_macs2": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether to run MACS2 peak calling.",
+                    "hidden": true
+                },
+                "run_khmer": {
+                    "type": "boolean",
+                    "hidden": true,
+                    "default": true,
+                    "description": "Whether to calculate effective genome size from reads aligned to target genome."
+                },
+                "gsize": {
+                    "type": "integer",
+                    "default": 1870000000,
+                    "hidden": true,
+                    "description": "Effective genome size of target genome."
+                },
+                "kmer_size": {
+                    "type": "integer",
+                    "default": 50,
+                    "hidden": true,
+                    "description": "Read length for calculating effective size of target genome."
+                }
+            },
+            "required": [
+                "run_macs2",
+                "run_khmer"
+            ]
+        },
+        "generic_options": {
+            "title": "Generic options",
+            "type": "object",
+            "fa_icon": "fas fa-file-import",
+            "description": "Less common options for the pipeline, typically set in a config file.",
+            "help_text": "These options are common to all nf-core pipelines and allow you to customise some of the core preferences for how the pipeline runs.\n\nTypically these options would be set in a Nextflow config file loaded for all pipeline runs, such as `~/.nextflow/config`.",
+            "properties": {
+                "publish_dir_mode": {
+                    "type": "string",
+                    "default": "copy",
+                    "description": "Method used to save pipeline results to output directory.",
+                    "help_text": "The Nextflow `publishDir` option specifies which intermediate files should be saved to the output directory. This option tells the pipeline what method should be used to move these files. See [Nextflow docs](https://www.nextflow.io/docs/latest/process.html#publishdir) for details.",
+                    "fa_icon": "fas fa-copy",
+                    "enum": [
+                        "symlink",
+                        "rellink",
+                        "link",
+                        "copy",
+                        "copyNoFollow",
+                        "move"
+                    ],
+                    "hidden": true
+                },
+                "multiqc_config": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Custom config file to supply to MultiQC.",
+                    "fa_icon": "fas fa-cog",
+                    "hidden": true
+                },
+                "extra_multiqc_config": {
+                    "type": "string",
+                    "hidden": true,
+                    "description": "Custom config file to supply to MultiQC."
+                },
+                "multiqc_logo": {
+                    "type": "string",
+                    "description": "Custom logo file to supply to MultiQC. File name must also be set in the MultiQC config file",
+                    "fa_icon": "fas fa-image",
+                    "hidden": true
+                }
+            }
+        }
+    },
+    "allOf": [
+        {
+            "$ref": "#/definitions/required_options"
+        },
+        {
+            "$ref": "#/definitions/input_output_options"
+        },
+        {
+            "$ref": "#/definitions/reference_genome_options"
+        },
+        {
+            "$ref": "#/definitions/bowtie2_alignment_options"
+        },
+        {
+            "$ref": "#/definitions/seacr_options"
+        },
+        {
+            "$ref": "#/definitions/macs2_options"
+        },
+        {
+            "$ref": "#/definitions/generic_options"
+        }
+    ]
+}
