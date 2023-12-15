@@ -29,7 +29,7 @@ echo "svc_pass = $SVC_PASS"
 echo "define artifact dir"
 ART_DIR=./artifacts
 echo $ART_DIR
-DEPLOY_DIR_LOG=$LOG_ROOT/RP/bamboo_template/deploy
+DEPLOY_DIR_LOG=$LOG_ROOT/RPDEV/cutandrun_nf/deploy
 echo $DEPLOY_DIR_LOG
 
 echo "clean out deploy_dir_log"
