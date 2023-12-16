@@ -15,4 +15,17 @@ echo "create artifact dir"
 mkdir -p artifacts
 
 echo "create artifacts"
-echo "bar" > artifacts/foo.txt
+
+# create a copy of run script with the test config 
+sed -E "s/(NFX_CONFIG=).+/\1..\/nextflow_test.config/" main_run.sh > artifacts/bamboo_main_run.sh
+
+# run the pipeline using the default parameters
+./artifacts/bamboo_main_run.sh --outdir './artifacts/results/mouse'
+
+# run the pipeline using the default parameters and building the bowtie indexes
+./artifacts/bamboo_main_run.sh --outdir './artifacts/results/mouse' --build_index 'true' --build_spike_index 'true'
+
+# run with different executors 
+
+# run different entry points
+

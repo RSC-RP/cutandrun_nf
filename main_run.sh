@@ -31,4 +31,5 @@ nextflow -c ${NFX_CONFIG}\
     -with-report reports/${PREFIX}.html \
     -with-dag dag/${PREFIX}_dag.pdf \
     -cache TRUE \
-    -resume
+    -resume \
+    "$@"
