@@ -8,6 +8,8 @@
 #PBS -m a
 #PBS -o /active/taylor_s/build/RPDEV/cutandrun_nf/logs/
 
+set -eou pipefail
+
 # bamboo automation assumes workingdir is environment variable TEMP_DIR passed in from qsub -v
 cd $TEMP_DIR
 
