@@ -11,24 +11,29 @@
 set -eou pipefail
 
 # Set-up conda 
-source ~/.bashrc #configures your shell to use conda activate
+# source ~/.bashrc #configures your shell to use conda activate
+module load apptainer 
+apptainer pull --force docker://mambaorg/micromamba:1.5.5
 
 # bamboo automation assumes workingdir is environment variable TEMP_DIR passed in from qsub -v
 cd $TEMP_DIR
 
-echo "build the conda environment"
-mamba env create -f env/nextflow.yaml --name 'nxf_temp'
-
-echo "activate conda environment"
-conda activate nxf_temp
-
 echo "create artifact dir"
 mkdir -p artifacts
 
-echo "create artifacts"
-# create a copy of run script with the test config 
-sed -E "s/(NFX_CONFIG=).+/\1..\/nextflow_test.config/" main_run.sh > artifacts/bamboo_main_run.sh
-chmod +x artifacts/bamboo_main_run.sh
+# apptainer exec 
+
+# echo "build the conda environment"
+# mamba env create -f env/nextflow.yaml --name 'nxf_temp'
+
+# echo "activate conda environment"
+# conda activate nxf_temp
+
+
+# echo "create artifacts"
+# # create a copy of run script with the test config 
+# sed -E "s/(NFX_CONFIG=).+/\1..\/nextflow_test.config/" main_run.sh > artifacts/bamboo_main_run.sh
+# chmod +x artifacts/bamboo_main_run.sh
 
 # run the pipeline using the default parameters
 # ./artifacts/bamboo_main_run.sh --outdir './artifacts/results/mouse'

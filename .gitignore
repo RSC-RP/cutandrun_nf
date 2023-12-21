@@ -4,6 +4,7 @@
 .RData
 .Ruserdata
 .vscode/
+*.sif
 
 # nextflow pipeline files
 .nextflow/
