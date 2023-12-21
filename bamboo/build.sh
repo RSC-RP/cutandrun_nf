@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -eou pipefail
+
 # start Bamboo agent on rplbam01
 # check on agent status
 #   sudo systemctl status bamboo-agent
