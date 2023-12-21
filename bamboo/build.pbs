@@ -13,6 +13,8 @@ set -eou pipefail
 # Set-up nexflow conda image
 module load apptainer 
 export APPTAINERENV_APPEND_PATH="/opt/conda/bin"
+DATE=$(date +%F)
+IMAGE=nxf_${DATE}.sif
 
 # bamboo automation assumes workingdir is environment variable TEMP_DIR passed in from qsub -v
 cd $TEMP_DIR
@@ -20,14 +22,13 @@ cd $TEMP_DIR
 echo "create artifact dir"
 mkdir -p artifacts
 
-# apptainer exec 
+apptainer exec $IMAGE /bin/bash -c "nextflow -version"
 
 # echo "build the conda environment"
 # mamba env create -f env/nextflow.yaml --name 'nxf_temp'
 
 # echo "activate conda environment"
 # conda activate nxf_temp
-
 
 # echo "create artifacts"
 # # create a copy of run script with the test config 
