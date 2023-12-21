@@ -40,5 +40,6 @@ done
 # if the PBS job failed, the build failed
 if [[ !$SUCCESS ]]
 then
+    echo "Job Failed: $jobid"
     exit 1
 fi
