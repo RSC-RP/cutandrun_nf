@@ -5,8 +5,6 @@ set -eou pipefail
 DATE=$(date +%F)
 
 echo "docker build with tag: nxf:$DATE"
-# change directories up 1 level, since docker build must be executed in parent directory, not bamboo/ dir
-echo "$PWD"
 docker build --tag nxf:$DATE -f Docker/Dockerfile .
 
 echo "apptainer build from local cache"
