@@ -30,8 +30,15 @@ while [ $numDone -lt $numJobs ]; do
     echo "pbs job returned: $jobid"
     echo "PBS Script: $1"
     echo "TEMP_DIR: $2"
+    SUCCESS=$(qstat -xf $jobid | grep 'Exit_status = 0')
   else
     echo "sleeping while waiting on job to finish: $jobid"
     sleep 10
   fi
 done
+
+# if the PBS job failed, the build failed
+if [[ !$SUCCESS ]]
+then
+    exit 1
+fi
