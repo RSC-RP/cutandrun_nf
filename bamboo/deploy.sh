@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -eou pipefail 
+
 echo "run deploy script"
 ls -R
 
