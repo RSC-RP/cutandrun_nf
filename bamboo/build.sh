@@ -30,6 +30,7 @@ TEST_SERVER=$bamboo_test_server
 WEB_SERVER=$bamboo_web_server
 LOG_ROOT=$bamboo_log_root
 BUILD_SERVER=$bamboo_build_server
+DOCKER_SERVER=rdldoc01
 SVC_USER=$bamboo_svc_user
 SVC_PASS=$bamboo_svc_pass
 
@@ -44,8 +45,14 @@ echo "create working dir on build machine"
 TEMP_DIR=$(sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "mktemp -d -p /home/$SVC_USER/bamboo_tmp")
 echo "created $TEMP_DIR"
 
-echo "copy repo to build machine tmp"
-sshpass -f $SVC_PASS scp -r * $SVC_USER@$BUILD_SERVER:$TEMP_DIR
+echo "copy repo to docker build machine"
+sshpass -f $SVC_PASS scp -r * $SVC_USER@$DOCKER_SERVER:$TEMP_DIR
+
+echo "build nextflow docker image on docker build machine" 
+sshpass -f $SVC_PASS ssh $SVC_USER@$DOCKER_SERVER "$TEMP_DIR/bamboo/build_image.sh"
+
+echo "copy repo with nextflow image to build machine tmp"
+sshpass -f $SVC_PASS scp -r $SVC_USER@$DOCKER_SERVER:$TEMP_DIR $SVC_USER@$BUILD_SERVER:$TEMP_DIR
 
 echo "schedule the build remotely"
 sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "$TEMP_DIR/bamboo/pbs_remote.sh $TEMP_DIR/bamboo/build.pbs $TEMP_DIR"

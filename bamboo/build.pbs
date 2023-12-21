@@ -10,10 +10,9 @@
 
 set -eou pipefail
 
-# Set-up conda 
-# source ~/.bashrc #configures your shell to use conda activate
+# Set-up nexflow conda image
 module load apptainer 
-apptainer pull --force docker://mambaorg/micromamba:1.5.5
+export APPTAINERENV_APPEND_PATH="/opt/conda/bin"
 
 # bamboo automation assumes workingdir is environment variable TEMP_DIR passed in from qsub -v
 cd $TEMP_DIR
