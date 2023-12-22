@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -l
 #PBS -N build.pbs
 #PBS -q paidq
 #PBS -P 95b3beda-8f4a-41a6-ac94-0aaad86bfd9d
@@ -14,9 +14,8 @@ set -eou pipefail
 # bamboo automation assumes workingdir is environment variable TEMP_DIR passed in from qsub -v
 cd $TEMP_DIR
 
-# Set-up nexflow and conda executables
+# Set-up nexflow conda image
 module load apptainer
-source $HOME/mambaforge/etc/profile.d/mamba.sh
 DATE=$(date +%F)
 IMAGE=nxf_${DATE}.sif
 CONDA_ENV_NAME="nxf_temp"
@@ -30,7 +29,6 @@ export APPTAINERENV_APPEND_PATH="/opt/conda/bin"
 mamba --version
 apptainer --version
 # apptainer exec $IMAGE /bin/bash -c "nextflow -version"
-
 # apptainer exec $IMAGE -B /opt/pbspro/2020.1 -B /depot/apps/apptainer/1.1.9/ /bin/bash -c "nextflow -version"
 # apptainer shell -B $PWD -B /opt/pbspro/2020.1 -B /depot/apps/apptainer/1.1.9/ $IMAGE
 
@@ -43,16 +41,22 @@ conda activate $CONDA_ENV_NAME
 
 echo "create artifact dir"
 mkdir -p artifacts
+OUTDIR='./artifacts/results/mouse'
 
 echo "create artifacts"
-# run the pipeline using the default parameters
 cp bamboo/bamboo_main_run.sh ./artifacts
-# apptainer exec $IMAGE /bin/bash -c "./bamboo/bamboo_main_run.sh --outdir './artifacts/results/mouse' "
+# run the pipeline using the default parameters
+REPORT1="default"
+bash ./bamboo/bamboo_main_run.sh $REPORT1 --outdir "$OUTDIR/$REPORT1"
 
 # run the pipeline using the default parameters and building the bowtie indexes
-# ./artifacts/bamboo_main_run.sh --outdir './artifacts/results/mouse' --build_index 'true' --build_spike_index 'true'
+REPORT2="build_index"
+# bash ./bamboo/bamboo_main_run.sh $REPORT2 --outdir "$OUTDIR/$REPORT2" --build_index 'true' --build_spike_index 'true'
 
 # run with different executors 
 
 # run different entry points
 
+# Deactivate and delete the environment 
+conda deactivate
+mamba env remove --name $CONDA_ENV_NAME
