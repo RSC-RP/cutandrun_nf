@@ -47,16 +47,16 @@ TEMP_DIR=$(sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "mktemp -d -p /home/
 echo "created $TEMP_DIR on $BUILD_SERVER"
 
 # echo "copy repo to docker build machine"
-# sshpass -f $SVC_PASS ssh $SVC_USER@$DOCKER_SERVER "mkdir -p $TEMP_DIR"
-# sshpass -f $SVC_PASS scp -r * $SVC_USER@$DOCKER_SERVER:$TEMP_DIR
-# echo "created $TEMP_DIR on $DOCKER_SERVER"
+sshpass -f $SVC_PASS ssh $SVC_USER@$DOCKER_SERVER "mkdir -p $TEMP_DIR"
+sshpass -f $SVC_PASS scp -r * $SVC_USER@$DOCKER_SERVER:$TEMP_DIR
+echo "created $TEMP_DIR on $DOCKER_SERVER"
 
 # echo "build nextflow docker image on docker build machine" 
-# sshpass -f $SVC_PASS ssh $SVC_USER@$DOCKER_SERVER "cd $TEMP_DIR; ./bamboo/build_image.sh"
+sshpass -f $SVC_PASS ssh $SVC_USER@$DOCKER_SERVER "cd $TEMP_DIR; ./bamboo/build_image.sh"
 
 echo "copy repo with nextflow image to build machine tmp"
-# sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "cd $(dirname $TEMP_DIR); scp -r $SVC_USER@$DOCKER_SERVER:$TEMP_DIR ."
-sshpass -f $SVC_PASS scp -r * $SVC_USER@$BUILD_SERVER:$TEMP_DIR
+sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "cd $(dirname $TEMP_DIR); scp -r $SVC_USER@$DOCKER_SERVER:$TEMP_DIR ."
+# sshpass -f $SVC_PASS scp -r * $SVC_USER@$BUILD_SERVER:$TEMP_DIR
 
 echo "schedule the build remotely"
 # sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "$TEMP_DIR/bamboo/pbs_remote.sh $TEMP_DIR/bamboo/build.pbs $TEMP_DIR"
