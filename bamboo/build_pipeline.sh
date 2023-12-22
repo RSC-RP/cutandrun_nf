@@ -1,13 +1,4 @@
 #!/bin/bash -l
-#PBS -N build.pbs
-#PBS -q paidq
-#PBS -P 95b3beda-8f4a-41a6-ac94-0aaad86bfd9d
-#PBS -M RSCCoreApp@seattlechildrens.org
-#PBS -l select=1:mem=16gb:ncpus=1
-#PBS -l walltime=08:00:00
-#PBS -j oe
-#PBS -m a
-#PBS -o /active/taylor_s/build/RPDEV/cutandrun_nf/logs/
 
 set -eou pipefail
 
@@ -34,10 +25,10 @@ apptainer --version
 
 echo "create new mamba environment"
 mamba env create --quiet --force -f env/nextflow.yaml --name "$CONDA_ENV_NAME"
-mamba env list
 
 echo "activate nextflow mamba environment"
 conda activate $CONDA_ENV_NAME
+mamba env list
 
 echo "create artifact dir"
 mkdir -p artifacts
