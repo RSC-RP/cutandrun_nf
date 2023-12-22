@@ -21,7 +21,7 @@ LOG_ROOT=$bamboo_log_root
 BUILD_SERVER=$bamboo_build_server
 SVC_USER=$bamboo_svc_user
 SVC_PASS=$bamboo_svc_pass
-# positional arguments defined on the bamboo deploy stage 
+# positional arguments defined in the bamboo deploy stage 
 DEPLOY=$1
 OUTNAME=$2
 
@@ -45,40 +45,33 @@ then
     rm -rf $DEPLOY_DIR_LOG/*
 fi
 
-echo "define the deployment directory"
-#/gpfs/assoc/rsc/nextflow_outs/
-OUTDIR=$DEPLOY_DIR_LOG/$OUTNAME
-echo "clean out deployment directory"
-if [[ -d $OUTDIR ]]
-then
-    rm -rf $OUTDIR/*
-fi
-
 echo "deploy artifacts logs"
 cp -R $ART_DIR/* $DEPLOY_DIR_LOG/ || { echo "artifacts not found"; exit 1; }
 chmod -R 775 $DEPLOY_DIR_LOG/*
 
 echo "Passed argument: $DEPLOY"
-# echo "if something needs to fail, have it exit with non-zero error code and Bamboo will fail the task"
-if [ $DEPLOY == 'main' ] || [ $DEPLOY == 'dev' ]; then
-  echo "create output dir on deploy machine"
-  mkdir -p $OUTDIR
-#   TEMP_DIR=$(sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "mktemp -d -p ~/bamboo_tmp")
-  echo "created $OUTDIR"
-
-  echo "copy artifacts to deploy machine"
-  cp -R $ART_DIR/* $OUTDIR/ || { echo "artifacts not found"; exit 1; }
-  chmod -R 775 $OUTDIR/*
-#   sshpass -f $SVC_PASS scp -r $ART_DIR/* $SVC_USER@$BUILD_SERVER:$OUTDIR
-#   sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "ls -Ra $OUTDIR"
-
-  if [ $DEPLOY == 'main' ]; then
-    echo ""
-  fi
-  
-#   echo "clean up deploy machine"
-#   sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "rm -rf $TEMP_DIR"
+echo "define the deployment directory"
+if [ $DEPLOY == 'main' ] 
+then
+    #/gpfs/assoc/rsc/nextflow_outs/
+    OUTDIR=$DEPLOY_DIR_LOG/$OUTNAME
+elif [ $DEPLOY == 'dev' ]
+then
+    OUTDIR=$DEPLOY_DIR_LOG/$OUTNAME
 fi
+
+echo "clean out deployment directory"
+mkdir -p $OUTDIR
+if [[ -d $OUTDIR ]]
+then
+    rm -rf $OUTDIR/*
+fi
+
+echo "copy artifacts to deploy machine"
+# echo "if something needs to fail, have it exit with non-zero error code and Bamboo will fail the task"
+cp -R $ART_DIR/* $OUTDIR/ || { echo "artifacts not found"; exit 1; }
+chmod -R 775 $OUTDIR/*
+
 
 echo "FINISHED DEPLOYMENT"
 exit

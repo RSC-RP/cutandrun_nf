@@ -15,7 +15,8 @@ set -eou pipefail
 cd $TEMP_DIR
 
 # Set-up nexflow and conda executables
-module load apptainer 
+module load apptainer
+source $HOME/mambaforge/etc/profile.d/mamba.sh
 DATE=$(date +%F)
 IMAGE=nxf_${DATE}.sif
 CONDA_ENV_NAME="nxf_temp"
