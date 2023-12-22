@@ -12,9 +12,13 @@ set -eou pipefail
 
 # Set-up nexflow conda image
 module load apptainer 
-export APPTAINERENV_APPEND_PATH="/opt/conda/bin"
 DATE=$(date +%F)
 IMAGE=nxf_${DATE}.sif
+
+# nextflow is installed in a non-standard directory in the container
+# see https://apptainer.org/docs/user/main/environment_and_metadata.html#manipulating-path
+export APPTAINERENV_APPEND_PATH="/opt/conda/bin"
+
 # print out the nextflow version information 
 apptainer exec $IMAGE /bin/bash -c "nextflow -version"
 

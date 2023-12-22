@@ -38,6 +38,7 @@ echo "test_server = $TEST_SERVER"
 echo "web_server = $WEB_SERVER"
 echo "log_root = $LOG_ROOT"
 echo "build_server = $BUILD_SERVER"
+echo "docker_server = $DOCKER_SERVER"
 echo "svc_user = $SVC_USER"
 echo "svc_pass = $SVC_PASS"
 
