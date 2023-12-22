@@ -23,8 +23,10 @@ IMAGE=nxf_${DATE}.sif
 # export APPTAINERENV_APPEND_PATH="/opt/conda/bin:/depot/apps/apptainer/1.1.9/bin:/opt/pbspro/2020.1/bin"
 export APPTAINERENV_APPEND_PATH="/opt/conda/bin"
 
-# print out the nextflow version information 
+# print out the apptainer and nextflow version information 
+apptainer --version
 apptainer exec $IMAGE /bin/bash -c "nextflow -version"
+
 # apptainer exec $IMAGE -B /opt/pbspro/2020.1 -B /depot/apps/apptainer/1.1.9/ /bin/bash -c "nextflow -version"
 # apptainer shell -B /opt/pbspro/2020.1 -B /depot/apps/apptainer/1.1.9/ $IMAGE
 

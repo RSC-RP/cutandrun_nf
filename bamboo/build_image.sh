@@ -8,7 +8,9 @@ echo "docker build with tag: nxf:$DATE"
 docker build --tag nxf:$DATE -f Docker/Dockerfile .
 
 echo "apptainer build from local cache"
-apptainer build --force nxf_${DATE}.sif docker-daemon:nxf:$DATE
+# Getting warnings after the conversion - warn rootless{opt/conda/share/terminfo/a/altos-2} ignoring (usually) harmless EPERM on setxattr "user.rootlesscontainers"
+# see https://github.com/EESSI/software-layer/issues/12
+apptainer --silent build --force nxf_${DATE}.sif docker-daemon:nxf:$DATE
 
 # echo "remove docker and apptainer images"
 # docker image rm nxf:$DATE
