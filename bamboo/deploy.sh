@@ -33,10 +33,11 @@ echo "svc_user = $SVC_USER"
 echo "svc_pass = $SVC_PASS"
 echo "results directory outname = $OUTNAME"
 
-echo "define artifact dir"
+echo "define artifact dirs"
 ART_DIR=./artifacts
 echo $ART_DIR
 DEPLOY_DIR_LOG=$LOG_ROOT/RPDEV/cutandrun_nf/deploy
+DEPLOY_DIR=/gpfs/assoc/rsc/nextflow_outs/
 echo $DEPLOY_DIR_LOG
 
 echo "clean out deploy_dir_log"
@@ -53,8 +54,7 @@ echo "Passed argument: $DEPLOY"
 echo "define the deployment directory"
 if [ $DEPLOY == 'main' ] 
 then
-    #/gpfs/assoc/rsc/nextflow_outs/
-    OUTDIR=$DEPLOY_DIR_LOG/$OUTNAME
+    OUTDIR=$DEPLOY_DIR/$OUTNAME
 elif [ $DEPLOY == 'dev' ]
 then
     OUTDIR=$DEPLOY_DIR_LOG/$OUTNAME
@@ -71,7 +71,6 @@ echo "copy artifacts to deploy machine"
 # echo "if something needs to fail, have it exit with non-zero error code and Bamboo will fail the task"
 cp -R $ART_DIR/* $OUTDIR/ || { echo "artifacts not found"; exit 1; }
 chmod -R 775 $OUTDIR/*
-
 
 echo "FINISHED DEPLOYMENT"
 exit
