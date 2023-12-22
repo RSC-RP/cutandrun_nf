@@ -54,7 +54,7 @@ echo "build nextflow docker image on docker build machine"
 sshpass -f $SVC_PASS ssh $SVC_USER@$DOCKER_SERVER "cd $TEMP_DIR; ./bamboo/build_image.sh"
 
 echo "copy repo with nextflow image to build machine tmp"
-sshpass -f $SVC_PASS scp -r $SVC_USER@$DOCKER_SERVER:$TEMP_DIR $SVC_USER@$BUILD_SERVER
+sshpass -f $SVC_PASS ssh $SVC_USER@$DOCKER_SERVER "cd $TEMP_DIR; scp -r * $SVC_USER@$BUILD_SERVER:$TEMP_DIR"
 
 echo "schedule the build remotely"
 sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "$TEMP_DIR/bamboo/pbs_remote.sh $TEMP_DIR/bamboo/build.pbs $TEMP_DIR"
@@ -62,7 +62,10 @@ echo "remote job scheduled"
 wait # wait for pbs jobs to finish running
 
 echo "copy build output to bamboo machine"
-rm -rf artifacts
+if [[ -d "artifacts" ]]
+then
+    rm -rf artifacts
+fi
 sshpass -f $SVC_PASS scp -r $SVC_USER@$BUILD_SERVER:$TEMP_DIR/artifacts .
 
 echo "clean up build machine"

@@ -15,28 +15,18 @@ module load apptainer
 export APPTAINERENV_APPEND_PATH="/opt/conda/bin"
 DATE=$(date +%F)
 IMAGE=nxf_${DATE}.sif
+# print out the nextflow version information 
+apptainer exec $IMAGE /bin/bash -c "nextflow -version"
 
 # bamboo automation assumes workingdir is environment variable TEMP_DIR passed in from qsub -v
 cd $TEMP_DIR
-
 echo "create artifact dir"
 mkdir -p artifacts
 
-apptainer exec $IMAGE /bin/bash -c "nextflow -version"
-
-# echo "build the conda environment"
-# mamba env create -f env/nextflow.yaml --name 'nxf_temp'
-
-# echo "activate conda environment"
-# conda activate nxf_temp
-
-# echo "create artifacts"
-# # create a copy of run script with the test config 
-# sed -E "s/(NFX_CONFIG=).+/\1..\/nextflow_test.config/" main_run.sh > artifacts/bamboo_main_run.sh
-# chmod +x artifacts/bamboo_main_run.sh
-
+echo "create artifacts"
 # run the pipeline using the default parameters
-# ./artifacts/bamboo_main_run.sh --outdir './artifacts/results/mouse'
+cp bamboo/bamboo_main_run.sh ./artifacts
+# apptainer exec $IMAGE /bin/bash -c "./bamboo/bamboo_main_run.sh --outdir './artifacts/results/mouse' "
 
 # run the pipeline using the default parameters and building the bowtie indexes
 # ./artifacts/bamboo_main_run.sh --outdir './artifacts/results/mouse' --build_index 'true' --build_spike_index 'true'
