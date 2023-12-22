@@ -21,7 +21,7 @@ LOG_ROOT=$bamboo_log_root
 BUILD_SERVER=$bamboo_build_server
 SVC_USER=$bamboo_svc_user
 SVC_PASS=$bamboo_svc_pass
-
+# positional arguments defined on the bamboo deploy stage 
 DEPLOY=$1
 OUTNAME=$2
 
@@ -46,7 +46,8 @@ then
 fi
 
 echo "define the deployment directory"
-OUTDIR=/gpfs/assoc/rsc/nextflow_outs/$OUTNAME
+#/gpfs/assoc/rsc/nextflow_outs/
+OUTDIR=$DEPLOY_DIR_LOG/$OUTNAME
 echo "clean out deployment directory"
 if [[ -d $OUTDIR ]]
 then
