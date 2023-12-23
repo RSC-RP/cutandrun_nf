@@ -35,5 +35,4 @@ nextflow -c ${NFX_CONFIG}\
     -profile ${NFX_PROFILE} \
     -with-report artifacts/reports/${PREFIX}.html \
     -with-dag artifacts/dag/${PREFIX}_dag.pdf \
-    -cache TRUE \
-    -resume
+    -cache FALSE

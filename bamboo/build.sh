@@ -33,6 +33,9 @@ BUILD_SERVER=$bamboo_build_server
 DOCKER_SERVER=rdldoc01
 SVC_USER=$bamboo_svc_user
 SVC_PASS=$bamboo_svc_pass
+# positional argument from build stage script
+PLAN_NAME=$1
+
 
 echo "test_server = $TEST_SERVER"
 echo "web_server = $WEB_SERVER"
@@ -41,6 +44,7 @@ echo "build_server = $BUILD_SERVER"
 echo "docker_server = $DOCKER_SERVER"
 echo "svc_user = $SVC_USER"
 echo "svc_pass = $SVC_PASS"
+echo "plan_name = $PLAN_NAME"
 
 echo "create working dir on build machine"
 TEMP_DIR=$(sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "mktemp -d -p /home/$SVC_USER/bamboo_tmp")
@@ -60,7 +64,7 @@ sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "cd $(dirname $TEMP_DIR); scp -
 
 echo "schedule the build remotely"
 # sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "$TEMP_DIR/bamboo/pbs_remote.sh $TEMP_DIR/bamboo/build.pbs $TEMP_DIR"
-sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "TEMP_DIR=$TEMP_DIR $TEMP_DIR/bamboo/build_pipeline.sh "
+sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "TEMP_DIR=$TEMP_DIR PLAN_NAME=$PLAN_NAME $TEMP_DIR/bamboo/build_pipeline.sh"
 echo "remote job scheduled"
 wait # wait for pbs jobs to finish running
 

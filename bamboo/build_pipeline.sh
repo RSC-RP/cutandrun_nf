@@ -34,11 +34,16 @@ echo "create artifact dir"
 mkdir -p artifacts
 OUTDIR='./artifacts/results/mouse'
 
+echo "create nextflow work directory"
+BASE_DIR="/gpfs/assoc/rsc/nextflow_temp/$PLAN_NAME"
+WORK_DIR=$BASE_DIR/$(basename $TEMP_DIR)
+echo $WORK_DIR
+
 echo "create artifacts"
 cp bamboo/bamboo_main_run.sh ./artifacts
 # run the pipeline using the default parameters
 REPORT1="default"
-bash ./bamboo/bamboo_main_run.sh $REPORT1 --outdir "$OUTDIR/$REPORT1"
+bash ./bamboo/bamboo_main_run.sh $REPORT1 --outdir "$OUTDIR/$REPORT1" -work-dir "$WORK_DIR"
 
 # run the pipeline using the default parameters and building the bowtie indexes
 REPORT2="build_index"
