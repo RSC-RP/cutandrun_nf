@@ -50,9 +50,13 @@ echo "svc_outdir = $ASSOC_DIR"
 echo "create working dir on build machine"
 PREFIX=$ASSOC_DIR/nextflow_outs/$PLAN_NAME
 sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "mkdir -p $PREFIX"
-TEMP_DIR=$(sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "mktemp -d -p $PREFIX")
-sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "chmod -R 775 $TEMP_DIR"
+TEMP_DIR=$(sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "mktemp -d -p $PREFIX; chmod -R 775 $TEMP_DIR")
 echo "created $TEMP_DIR on $BUILD_SERVER"
+
+echo "create cache dir for singularity/apptainer images"
+IMAGE_CACHE=/home/$SVC_USER/$(basename $TEMP_DIR)
+sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "mkdir -p $IMAGE_CACHE"
+echo "created cache dir $IMAGE_CACHE on $BUILD_SERVER"
 
 # # echo "copy repo to docker build machine"
 # sshpass -f $SVC_PASS ssh $SVC_USER@$DOCKER_SERVER "mkdir -p $TEMP_DIR"
@@ -69,7 +73,7 @@ sshpass -f $SVC_PASS scp -r * $SVC_USER@$BUILD_SERVER:$TEMP_DIR
 echo "schedule the build remotely"
 # sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "$TEMP_DIR/bamboo/pbs_remote.sh $TEMP_DIR/bamboo/build.pbs $TEMP_DIR"
 WORK_DIR="$ASSOC_DIR/nextflow_temp/$PLAN_NAME"
-sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "TEMP_DIR=$TEMP_DIR WORK_DIR=$WORK_DIR $TEMP_DIR/bamboo/build_pipeline.sh"
+sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "TEMP_DIR=$TEMP_DIR IMAGE_CACHE=$IMAGE_CACHE WORK_DIR=$WORK_DIR $TEMP_DIR/bamboo/build_pipeline.sh"
 echo "remote job scheduled"
 wait # wait for pbs jobs to finish running
 

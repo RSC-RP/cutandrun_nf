@@ -2,7 +2,9 @@
 
 set -eou pipefail
 
-# bamboo automation assumes workingdir is environment variable TEMP_DIR passed in from qsub -v
+# bamboo automation assumes these environment variables are passed in from build_pipeline.sh called by build.sh
+export $WORK_DIR
+export $IMAGE_CACHE
 cd $TEMP_DIR
 
 # Set-up nexflow conda image
@@ -33,8 +35,8 @@ mkdir -p artifacts
 OUTDIR='./artifacts/results/mouse'
 
 echo "create nextflow work directory"
-# export WORK_DIR=$WORK_DIR/$(basename $TEMP_DIR)
-
+WORK_DIR=$WORK_DIR/$(basename $TEMP_DIR)
+mkdir -p $WORK_DIR
 echo $WORK_DIR
 
 echo "create artifacts"

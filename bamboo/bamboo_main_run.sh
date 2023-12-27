@@ -15,9 +15,9 @@ then
     module load singularity
     # print out the software version information 
     singularity --version
-    echo "Setting NXF_SINGULARITY_CACHEDIR = $WORK_DIR"
-    export NXF_SINGULARITY_CACHEDIR=$WORK_DIR
-    export SINGULARITY_CACHEDIR=$WORK_DIR
+    echo "Setting NXF_SINGULARITY_CACHEDIR = $IMAGE_CACHE"
+    export NXF_SINGULARITY_CACHEDIR=$IMAGE_CACHE
+    export SINGULARITY_CACHEDIR=$IMAGE_CACHE
     echo "Clean the container image cache"
     singularity cache clean --force
 elif [[ $NFX_PROFILE =~ "apptainer" ]]
@@ -25,9 +25,9 @@ then
     module load apptainer
     # print out the software version information 
     apptainer --version
-    echo "Setting NXF_APPTAINER_CACHEDIR = $WORK_DIR"
-    export NXF_APPTAINER_CACHEDIR=$WORK_DIR
-    export APPTAINER_CACHEDIR=$WORK_DIR
+    echo "Setting NXF_APPTAINER_CACHEDIR = $IMAGE_CACHE"
+    export NXF_APPTAINER_CACHEDIR=$IMAGE_CACHE
+    export APPTAINER_CACHEDIR=$IMAGE_CACHE
     echo "Clean the container image cache"
     apptainer cache clean --force
 fi
