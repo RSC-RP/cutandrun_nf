@@ -27,7 +27,7 @@ fi
 
 # Nextflow run to execute the workflow 
 PREFIX=${REPORT}_${DATE}
-nextflow -c ${NFX_CONFIG}\
+nextflow -C ${NFX_CONFIG}\
     -log artifacts/reports/${PREFIX}_nextflow.log \
     run main.nf \
     $ARGS \
