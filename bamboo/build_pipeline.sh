@@ -6,7 +6,6 @@ set -eou pipefail
 cd $TEMP_DIR
 
 # Set-up nexflow conda image
-module load apptainer
 DATE=$(date +%F)
 IMAGE=nxf_${DATE}.sif
 CONDA_ENV_NAME="nxf_temp"
@@ -35,7 +34,7 @@ mkdir -p artifacts
 OUTDIR='./artifacts/results/mouse'
 
 echo "create nextflow work directory"
-WORK_DIR=$WORK_DIR/$(basename $TEMP_DIR)
+export WORK_DIR=$WORK_DIR/$(basename $TEMP_DIR)
 echo $WORK_DIR
 
 echo "create artifacts"
@@ -56,7 +55,3 @@ REPORT2="build_index"
 echo "Deactivate and delete the environment"
 conda deactivate
 mamba env remove --name $CONDA_ENV_NAME
-
-# Clean the container image cache
-echo "Clean the container image cache"
-apptainer cache clean --force
