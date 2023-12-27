@@ -3,8 +3,8 @@
 set -eou pipefail
 
 # bamboo automation assumes these environment variables are passed in from build_pipeline.sh called by build.sh
-export $WORK_DIR
-export $IMAGE_CACHE
+export WORK_DIR=$WORK_DIR
+export IMAGE_CACHE=$IMAGE_CACHE
 cd $TEMP_DIR
 
 # Set-up nexflow conda image

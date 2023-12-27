@@ -54,7 +54,7 @@ sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "chmod -R 775 $TEMP_DIR"
 echo "created $TEMP_DIR on $BUILD_SERVER"
 
 echo "create cache dir for singularity/apptainer images"
-IMAGE_CACHE=/home/$SVC_USER/$(basename $TEMP_DIR)
+IMAGE_CACHE=/home/$SVC_USER/bamboo_tmp/$(basename $TEMP_DIR)
 sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "mkdir -p $IMAGE_CACHE"
 echo "created cache dir $IMAGE_CACHE on $BUILD_SERVER"
 
