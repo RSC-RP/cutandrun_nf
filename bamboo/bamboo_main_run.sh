@@ -13,25 +13,24 @@ echo "loading HPC modules for $NFX_PROFILE profile"
 if [[ $NFX_PROFILE =~ "singularity" ]]
 then
     module load singularity
-    echo "Setting NXF_SINGULARITY_CACHEDIR = $WORK_DIR"
-    export NXF_SINGULARITY_CACHEDIR=$WORK_DIR
-    echo "Clean the container image cache"
-    singularity cache clean --force
     # print out the software version information 
     singularity --version
+    echo "Setting NXF_SINGULARITY_CACHEDIR = $WORK_DIR"
+    export NXF_SINGULARITY_CACHEDIR=$WORK_DIR
+    export SINGULARITY_CACHEDIR=$WORK_DIR
+    echo "Clean the container image cache"
+    singularity cache clean --force
 elif [[ $NFX_PROFILE =~ "apptainer" ]]
 then
     module load apptainer
-    echo "Setting NXF_APPTAINER_CACHEDIR = $WORK_DIR"
-    export NXF_APPTAINER_CACHEDIR=$WORK_DIR
-    echo "Clean the container image cache"
-    apptainer cache clean --force
     # print out the software version information 
     apptainer --version
+    echo "Setting NXF_APPTAINER_CACHEDIR = $WORK_DIR"
+    export NXF_APPTAINER_CACHEDIR=$WORK_DIR
+    export APPTAINER_CACHEDIR=$WORK_DIR
+    echo "Clean the container image cache"
+    apptainer cache clean --force
 fi
-
-# print out the software version information. Assumes svc account has mamba installed in default location.
-mamba --version
 
 # REPORT is the output prefix on filenames for reports/logs
 # if 1st positional argument is a command line flag for nextflow run, then use the default report name

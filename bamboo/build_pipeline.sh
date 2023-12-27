@@ -19,6 +19,9 @@ export APPTAINERENV_APPEND_PATH="/opt/conda/bin"
 # apptainer shell -B $PWD -B /opt/pbspro/2020.1 -B /depot/apps/apptainer/1.1.9/ $IMAGE
 
 echo "create new mamba environment"
+# print out the software version information. Assumes svc account has mamba installed in default location.
+VER=$(mamba --version)
+echo "mamba version:" $VER
 mamba env create --quiet --force -f env/nextflow.yaml --name "$CONDA_ENV_NAME"
 
 echo "activate nextflow mamba environment"
@@ -30,7 +33,8 @@ mkdir -p artifacts
 OUTDIR='./artifacts/results/mouse'
 
 echo "create nextflow work directory"
-export WORK_DIR=$WORK_DIR/$(basename $TEMP_DIR)
+# export WORK_DIR=$WORK_DIR/$(basename $TEMP_DIR)
+
 echo $WORK_DIR
 
 echo "create artifacts"
