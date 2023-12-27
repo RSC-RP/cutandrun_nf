@@ -17,6 +17,8 @@ then
     export NXF_SINGULARITY_CACHEDIR=$WORK_DIR
     echo "Clean the container image cache"
     singularity cache clean --force
+    # print out the software version information 
+    singularity --version
 elif [[ $NFX_PROFILE =~ "apptainer" ]]
 then
     module load apptainer
@@ -24,7 +26,12 @@ then
     export NXF_APPTAINER_CACHEDIR=$WORK_DIR
     echo "Clean the container image cache"
     apptainer cache clean --force
+    # print out the software version information 
+    apptainer --version
 fi
+
+# print out the software version information. Assumes svc account has mamba installed in default location.
+mamba --version
 
 # REPORT is the output prefix on filenames for reports/logs
 # if 1st positional argument is a command line flag for nextflow run, then use the default report name

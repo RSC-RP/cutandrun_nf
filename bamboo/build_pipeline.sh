@@ -14,10 +14,6 @@ CONDA_ENV_NAME="nxf_temp"
 # see https://apptainer.org/docs/user/main/environment_and_metadata.html#manipulating-path
 # export APPTAINERENV_APPEND_PATH="/opt/conda/bin:/depot/apps/apptainer/1.1.9/bin:/opt/pbspro/2020.1/bin"
 export APPTAINERENV_APPEND_PATH="/opt/conda/bin"
-
-# print out the software version information 
-mamba --version
-apptainer --version
 # apptainer exec $IMAGE /bin/bash -c "nextflow -version"
 # apptainer exec $IMAGE -B /opt/pbspro/2020.1 -B /depot/apps/apptainer/1.1.9/ /bin/bash -c "nextflow -version"
 # apptainer shell -B $PWD -B /opt/pbspro/2020.1 -B /depot/apps/apptainer/1.1.9/ $IMAGE
