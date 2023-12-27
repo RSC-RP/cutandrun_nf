@@ -49,8 +49,8 @@ echo "svc_outdir = $ASSOC_DIR"
 
 echo "create working dir on build machine"
 PREFIX=$ASSOC_DIR/nextflow_outs/$PLAN_NAME
-sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "mkdir -p $PREFIX"
-TEMP_DIR=$(sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "mktemp -d -p $PREFIX; chmod -R 775 $TEMP_DIR")
+TEMP_DIR=$(sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "mkdir -p $PREFIX; mktemp -d -p $PREFIX")
+sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "chmod -R 775 $TEMP_DIR"
 echo "created $TEMP_DIR on $BUILD_SERVER"
 
 echo "create cache dir for singularity/apptainer images"
