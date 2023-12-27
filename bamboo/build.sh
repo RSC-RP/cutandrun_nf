@@ -51,6 +51,7 @@ echo "create working dir on build machine"
 PREFIX=$ASSOC_DIR/nextflow_outs/$PLAN_NAME
 sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "mkdir -p $PREFIX"
 TEMP_DIR=$(sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "mktemp -d -p $PREFIX")
+sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "chmod -R 775 $TEMP_DIR"
 echo "created $TEMP_DIR on $BUILD_SERVER"
 
 # # echo "copy repo to docker build machine"
@@ -80,7 +81,7 @@ fi
 sshpass -f $SVC_PASS scp -r $SVC_USER@$BUILD_SERVER:$TEMP_DIR/artifacts .
 
 echo "clean up build machine"
-sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "rm -rf $TEMP_DIR"
+# sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "rm -rf $TEMP_DIR"
 
 echo "FINISHED BUILD"
 exit

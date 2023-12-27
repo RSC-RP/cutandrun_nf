@@ -53,5 +53,10 @@ REPORT2="build_index"
 # run different entry points
 
 # Deactivate and delete the environment 
+echo "Deactivate and delete the environment"
 conda deactivate
 mamba env remove --name $CONDA_ENV_NAME
+
+# Clean the container image cache
+echo "Clean the container image cache"
+apptainer cache clean --force

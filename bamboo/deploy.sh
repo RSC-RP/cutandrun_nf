@@ -36,8 +36,8 @@ echo "results directory outname = $OUTNAME"
 echo "define artifact dirs"
 ART_DIR=./artifacts
 echo $ART_DIR
-DEPLOY_DIR_LOG=$LOG_ROOT/RPDEV/cutandrun_nf/deploy
-DEPLOY_DIR=/gpfs/assoc/rsc/nextflow_outs/
+DEPLOY_DIR_LOG=$LOG_ROOT/RPDEV/cutandrun_nf/deploy/$OUTNAME
+DEPLOY_DIR=/gpfs/assoc/rsc/nextflow_outs/$OUTNAME
 echo $DEPLOY_DIR_LOG
 
 echo "clean out deploy_dir_log"
@@ -47,6 +47,7 @@ then
 fi
 
 echo "deploy artifacts logs"
+mkdir -p $DEPLOY_DIR_LOG
 cp -R $ART_DIR/* $DEPLOY_DIR_LOG/ || { echo "artifacts not found"; exit 1; }
 chmod -R 775 $DEPLOY_DIR_LOG/*
 
@@ -54,14 +55,13 @@ echo "Passed argument: $DEPLOY"
 echo "define the deployment directory"
 if [ $DEPLOY == 'main' ] 
 then
-    OUTDIR=$DEPLOY_DIR/$OUTNAME
+    OUTDIR=$DEPLOY_DIR
 elif [ $DEPLOY == 'dev' ]
 then
-    OUTDIR=$DEPLOY_DIR_LOG/$OUTNAME
+    OUTDIR=$DEPLOY_DIR_LOG
 fi
 
 echo "clean out deployment directory"
-mkdir -p $OUTDIR
 if [[ -d $OUTDIR ]]
 then
     rm -rf $OUTDIR/*
@@ -69,6 +69,7 @@ fi
 
 echo "copy artifacts to deploy machine"
 # echo "if something needs to fail, have it exit with non-zero error code and Bamboo will fail the task"
+mkdir -p $OUTDIR
 cp -R $ART_DIR/* $OUTDIR/ || { echo "artifacts not found"; exit 1; }
 chmod -R 775 $OUTDIR/*
 
