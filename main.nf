@@ -183,6 +183,7 @@ workflow align_call_peaks {
 
         // SEACR peak calling 
         seacr_peaks(bams_sorted, chrom_sizes)
+
         // MACS2 peak calling, Optional
         if ( run_macs2 ){
             //Run MAC2 peak calling

@@ -35,8 +35,7 @@ mkdir -p artifacts
 OUTDIR='./artifacts/results/mouse'
 
 echo "create nextflow work directory"
-BASE_DIR="/gpfs/assoc/rsc/nextflow_temp/$PLAN_NAME"
-WORK_DIR=$BASE_DIR/$(basename $TEMP_DIR)
+WORK_DIR=$WORK_DIR/$(basename $TEMP_DIR)
 echo $WORK_DIR
 
 echo "create artifacts"

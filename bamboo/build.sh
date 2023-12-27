@@ -35,7 +35,7 @@ SVC_USER=$bamboo_svc_user
 SVC_PASS=$bamboo_svc_pass
 # positional argument from build stage script
 PLAN_NAME=$1
-
+ASSOC_DIR=/gpfs/assoc/rsc
 
 echo "test_server = $TEST_SERVER"
 echo "web_server = $WEB_SERVER"
@@ -45,26 +45,29 @@ echo "docker_server = $DOCKER_SERVER"
 echo "svc_user = $SVC_USER"
 echo "svc_pass = $SVC_PASS"
 echo "plan_name = $PLAN_NAME"
+echo "svc_outdir = $ASSOC_DIR"
 
 echo "create working dir on build machine"
-TEMP_DIR=$(sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "mktemp -d -p /home/$SVC_USER/bamboo_tmp")
+PREFIX=$ASSOC_DIR/nextflow_outs/$PLAN_NAME
+TEMP_DIR=$(sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "mktemp -d -p $PREFIX")
 echo "created $TEMP_DIR on $BUILD_SERVER"
 
-# echo "copy repo to docker build machine"
-sshpass -f $SVC_PASS ssh $SVC_USER@$DOCKER_SERVER "mkdir -p $TEMP_DIR"
-sshpass -f $SVC_PASS scp -r * $SVC_USER@$DOCKER_SERVER:$TEMP_DIR
-echo "created $TEMP_DIR on $DOCKER_SERVER"
+# # echo "copy repo to docker build machine"
+# sshpass -f $SVC_PASS ssh $SVC_USER@$DOCKER_SERVER "mkdir -p $TEMP_DIR"
+# sshpass -f $SVC_PASS scp -r * $SVC_USER@$DOCKER_SERVER:$TEMP_DIR
+# echo "created $TEMP_DIR on $DOCKER_SERVER"
 
-# echo "build nextflow docker image on docker build machine" 
-sshpass -f $SVC_PASS ssh $SVC_USER@$DOCKER_SERVER "cd $TEMP_DIR; ./bamboo/build_image.sh"
+# # echo "build nextflow docker image on docker build machine" 
+# sshpass -f $SVC_PASS ssh $SVC_USER@$DOCKER_SERVER "cd $TEMP_DIR; ./bamboo/build_image.sh"
 
 echo "copy repo with nextflow image to build machine tmp"
-sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "cd $(dirname $TEMP_DIR); scp -r $SVC_USER@$DOCKER_SERVER:$TEMP_DIR ."
-# sshpass -f $SVC_PASS scp -r * $SVC_USER@$BUILD_SERVER:$TEMP_DIR
+# sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "cd $(dirname $TEMP_DIR); scp -r $SVC_USER@$DOCKER_SERVER:$TEMP_DIR ."
+sshpass -f $SVC_PASS scp -r * $SVC_USER@$BUILD_SERVER:$TEMP_DIR
 
 echo "schedule the build remotely"
 # sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "$TEMP_DIR/bamboo/pbs_remote.sh $TEMP_DIR/bamboo/build.pbs $TEMP_DIR"
-sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "TEMP_DIR=$TEMP_DIR PLAN_NAME=$PLAN_NAME $TEMP_DIR/bamboo/build_pipeline.sh"
+WORKDIR="$ASSOC_DIR/nextflow_temp/$PLAN_NAME"
+sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "TEMP_DIR=$TEMP_DIR WORKDIR=$WORKDIR $TEMP_DIR/bamboo/build_pipeline.sh"
 echo "remote job scheduled"
 wait # wait for pbs jobs to finish running
 
