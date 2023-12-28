@@ -7,6 +7,15 @@ export WORK_DIR=$WORK_DIR
 export IMAGE_CACHE=$IMAGE_CACHE
 cd $TEMP_DIR
 
+# export WORK_DIR=$HOME/temp/bamboo
+# CACHE=$(mktemp -d -p $HOME/cache_temp)
+# export IMAGE_CACHE=$CACHE
+# TEMP_DIR=$PWD
+# if [[ -d $IMAGE_CACHE ]]
+# then
+#     rm -rf $IMAGE_CACHE
+# fi 
+
 # Set-up nexflow conda image
 DATE=$(date +%F)
 IMAGE=nxf_${DATE}.sif
