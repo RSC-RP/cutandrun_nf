@@ -37,3 +37,4 @@ test_*
 alias_testing/
 notes/
 artifacts/
+nextflow_dev.yaml
