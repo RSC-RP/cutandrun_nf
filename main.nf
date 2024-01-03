@@ -310,11 +310,11 @@ workflow bowtie2_index_only {
 }
 
 //End with a message to print to standard out on workflow completion. 
-workflow.onComplete {
-    println "Pipeline completed at: $workflow.complete"
-    if ( $workflow.success ){
-        println "Execution status: OK "
-    } else {
-        println "Execution status: ${workflow.errorMessage}"
-    }
-}
+// workflow.onComplete {
+//     println "Pipeline completed at: $workflow.complete"
+//     if ( $workflow.success ){
+//         println "Execution status: OK "
+//     } else {
+//         println "Execution status: ${workflow.errorMessage}"
+//     }
+// }
