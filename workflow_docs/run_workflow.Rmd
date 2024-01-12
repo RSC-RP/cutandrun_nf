@@ -121,13 +121,13 @@ data.frame(column_name=c("sample","sample_id", "target_or_control","read1", "rea
   knitr::kable()
 ```
  
-### Example Sample Sheets
+### Examples
 
 **1)** Below is an example of a complete sample sheet for use in the pipeline, which can be edited for your own samples in `test_data/test_dataset_sample_sheet.csv`.
 
   * It contains IgG control samples for peak calling. 
   * This sample sheets OK to use even if you elect to skip IgG normalization in SEACR or use IgG background in MACS2. The pipeline will simply not use the controls. 
-  * Use `threshold`, and `no_control_macs2` parameters in `nextflow.config` to change this. 
+  * Use `threshold`, and `no_control_macs2` parameters in `nextflow.config` to change this. Details found in [Configure Pipeline for Your Data](#configure-pipeline-for-your-data)
  
 ```{r eval=TRUE, echo=FALSE}
 sample_sheet <- read.csv(here::here("test_data/test_dataset_sample_sheet.csv")) %>% 
@@ -144,7 +144,7 @@ head(sample_sheet) %>%
 
   * It lacks IgG control samples for peak calling.
   * This sample sheets OK to use only if you modify the parameters to skip using IgG controls. 
-  * Use `threshold`, and `no_control_macs2` parameters in `nextflow.config` to modify this. 
+  * Use `threshold`, and `no_control_macs2` parameters in `nextflow.config` to modify this. Details found in [Configure Pipeline for Your Data](#configure-pipeline-for-your-data).
 
 ```{r echo=FALSE, eval=TRUE}
 sample_sheet_noCtrl <- sample_sheet %>% 
@@ -370,53 +370,76 @@ main_run[tail(idx, n=2)] %>%
 
 # Expected Outputs 
 
-Under the path provided in the nextflow config for params "outdir", you will find directories named for each of the modules. Lets say `params.outdir = ./results/mouse`, and `peaks_outdir = "${params.outdir}/peak_calls"`. 
+Under the path provided in the nextflow config for params "outdir", you will find directories named for each of the modules.
+
+The **final** outputs are located in the following directories:
+
+`results/{params.outdir}`
+-   `samtools_view/`
+    -   aligned, coordinate sorted, marked duplicates, and optionally
+        quality filtered bam file
+
+    -   {sample_id}.markedDup.filter.bam
+
+-   `samtools_index/`
+    -   {sample_id}.markedDup.filter.sort.bam.bai
+
+-   `deeptools_bamcoverage/`
+    -   Counts per million normalized coverage track (bigwig) file.
+    -   {sample_id}_CPM.bigWig
+
+-   `{params.peaks_outdir}/seacr_callpeak/`
+    -   If using IgG normalization, the {sample_id} of the IgG control
+        used is appended to the target
+    -   {sample_id}_[norm,non].[stringent,relaxed].bed
+
+-   `{params.peaks_outdir}/macs2_callpeak/`
+    -   Optional output if `run_macs2 = true`
+    -   {sample_id}_peaks.[narrowPeak,broadPeak]
 
 There will be the following file structure:
 
-* results/mouse/
-  
-    * bamtobedgraph/
+```{r eval=TRUE, echo = FALSE}
+fs::dir_tree("results", recurse = 1)
+```
 
-    * bowtie2_align/
-        * {sample_id}.bam
-        * {sample_id}.bowtie2.log
-        
-    * deeptools_bamcoverage/
-    
-    * fastqc/
-    
-    * fastqc_trim/
-    
-    * multiqc/
-    
-    * peak_calls/
-     
-        * seacr_callpeak/
-            * {sample_id}.[norm or non].[stringent or relaxed].bed
-        
-        * macs2_call_peak/
-            * {sample_id}_peaks.[narrowPeak or broadPeak]
-            * {sample_id}_peaks.xls 
-            * {sample_id}_summits.bed
+Within each directory you will find the following files (top 5 files per directory are shown):
 
-    * picard_markduplicates/
-    
-    * samtools_index/
-    
-    * samtools_nsort/
-    
-    * samtools_sort/
-    
-    * spikein_align/
-        * {sample_id}_spikein.bam
-        * {sample_id}_spikein.bowtie2.log
-        
-    * trimgalore/
-        * {sample_id}_1.gz_trimming_report.txt
-        * {sample_id}_2.gz_trimming_report.txt
-        * {sample_id}.M1_H3K27_NK_1_val_1.fq.gz
-        * {sample_id}.M1_H3K27_NK_1_val_2.fq.gz
+```{r eval=TRUE, echo = FALSE}
+results_dirs <- fs::dir_info("results/GRCh38", recurse = TRUE)
+# head(results_dirs)
+
+results_dirs %>% 
+    select(path, type) %>% 
+    mutate(process = gsub("results/GRCh38/","", path), 
+           filename = ifelse(type == 'file', basename(path), "")) %>%
+    filter(!grepl("multiqc_report|params[2-9]", process)) %>% 
+    mutate_at(vars(process), ~ case_when(
+                   type == 'file' & grepl("fastqc", .) ~ dirname(dirname(.)),
+                   grepl("FASTQC", .) ~ dirname(.),
+                   type == 'file' ~ dirname(.),
+                   TRUE ~ .)) %>%
+    group_by(process) %>%
+    dplyr::slice(1:5) %>% 
+    ungroup() %>% 
+    DT::datatable()
+
+# grps <- results_dirs_clean %>% 
+#     filter(type == "directory") %>% 
+#     select(group, path) %>% 
+#     distinct() %>% 
+#     pull(group, name = path)
+# 
+# top_dirs <- purrr::map(grps, function(grp){
+#     subset <- results_dirs_clean %>% 
+#         filter(group == grp) %>% 
+#         select(-group) %>% 
+#         as.data.frame() %>% 
+#         
+#     
+#     print(noquote(subset))
+# })
+```
 
 ## Pipeline Reports 
 
