@@ -129,13 +129,14 @@ sample_sheet <- read.csv(here::here("test_data/test_dataset_sample_sheet.csv")) 
   mutate(sample=str_split_fixed(sample_id, pattern = "_", n=3)[,1]) %>%
   select(sample, everything())
 
-head(sample_sheet)
+head(sample_sheet) %>% 
+    knitr::kable()
 # dim(sample_sheet)
 ```
 
 ```{r echo=FALSE, eval=FALSE}
 sample_sheet_noCtrl <- sample_sheet %>% 
-    mutate(target_or_control="target")
+    mutate(target_or_control="target") 
 
 # write.csv(sample_sheet_noCtrl,"../test_data/test_dataset_noCtrl_sample_sheet.csv", row.names = FALSE, quote = F)
 ```

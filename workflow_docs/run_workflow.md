@@ -120,27 +120,14 @@ Below is an example of a complete sample sheet for use in the pipeline,
 which can be edited for your own samples in
 `test_data/test_dataset_sample_sheet.csv`.
 
-    ##   sample   sample_id single_end target_or_control
-    ## 1     M1 M1_H3K27_NK      false            target
-    ## 2     M1  M1_H3K4_NK      false            target
-    ## 3     M1   M1_IgG_NK      false           control
-    ## 4     M2 M2_H3K27_NK      false            target
-    ## 5     M2  M2_H3K4_NK      false            target
-    ## 6     M2   M2_IgG_NK      false           control
-    ##                                                                                           read1
-    ## 1 /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M1_H3K27_NK_chr17_R1_ecoli.fastq.gz
-    ## 2  /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M1_H3K4_NK_chr17_R1_ecoli.fastq.gz
-    ## 3   /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M1_IgG_NK_chr17_R1_ecoli.fastq.gz
-    ## 4 /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_H3K27_NK_chr17_R1_ecoli.fastq.gz
-    ## 5  /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_H3K4_NK_chr17_R1_ecoli.fastq.gz
-    ## 6   /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_IgG_NK_chr17_R1_ecoli.fastq.gz
-    ##                                                                                           read2
-    ## 1 /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M1_H3K27_NK_chr17_R2_ecoli.fastq.gz
-    ## 2  /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M1_H3K4_NK_chr17_R2_ecoli.fastq.gz
-    ## 3   /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M1_IgG_NK_chr17_R2_ecoli.fastq.gz
-    ## 4 /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_H3K27_NK_chr17_R2_ecoli.fastq.gz
-    ## 5  /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_H3K4_NK_chr17_R2_ecoli.fastq.gz
-    ## 6   /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_IgG_NK_chr17_R2_ecoli.fastq.gz
+| sample | sample_id   | single_end | target_or_control | read1                                                                                         | read2                                                                                         |
+|:-------|:------------|:-----------|:------------------|:----------------------------------------------------------------------------------------------|:----------------------------------------------------------------------------------------------|
+| M1     | M1_H3K27_NK | false      | target            | /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M1_H3K27_NK_chr17_R1_ecoli.fastq.gz | /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M1_H3K27_NK_chr17_R2_ecoli.fastq.gz |
+| M1     | M1_H3K4_NK  | false      | target            | /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M1_H3K4_NK_chr17_R1_ecoli.fastq.gz  | /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M1_H3K4_NK_chr17_R2_ecoli.fastq.gz  |
+| M1     | M1_IgG_NK   | false      | control           | /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M1_IgG_NK_chr17_R1_ecoli.fastq.gz   | /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M1_IgG_NK_chr17_R2_ecoli.fastq.gz   |
+| M2     | M2_H3K27_NK | false      | target            | /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_H3K27_NK_chr17_R1_ecoli.fastq.gz | /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_H3K27_NK_chr17_R2_ecoli.fastq.gz |
+| M2     | M2_H3K4_NK  | false      | target            | /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_H3K4_NK_chr17_R1_ecoli.fastq.gz  | /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_H3K4_NK_chr17_R2_ecoli.fastq.gz  |
+| M2     | M2_IgG_NK   | false      | control           | /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_IgG_NK_chr17_R1_ecoli.fastq.gz   | /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_IgG_NK_chr17_R2_ecoli.fastq.gz   |
 
 # Run the Example Data
 
