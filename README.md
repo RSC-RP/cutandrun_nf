@@ -2,7 +2,7 @@
 
 This pipeline uses publically available modules from [nf-core](https://nf-co.re/) with some locally created modules. The primary functionality is to run a workflow on 10s - 1000s of samples in parallel on the Seattle Children's Cybertron HPC using the PBS job scheduler and containerized scientific software.
 
-The **step-by-step instructions to run the workflow: [`workflow_docs/workflow_run.html`](workflow_docs/run_workflow.html)**
+First, follow the steps on this page to make a personal copy of this repository. Then, the **step-by-step instructions to run the workflow: [`workflow_docs/workflow_run.html`](workflow_docs/run_workflow.md)** can be used. 
 
 # Background Information 
 
@@ -17,7 +17,7 @@ Library Prep Protocol:
 
 # About the Pipeline 
 
-The pipeline runs the Bowtie2 alignment, quality trimming of reads with trimgalore, [SEACR](https://github.com/FredHutch/SEACR) peak calling, and optionally [MACS2](https://github.com/macs3-project/MACS) peak calling. Coverage tracks are produced for visualization in [IGV](https://igv.org/doc/desktop/). 
+The pipeline runs the Bowtie2 alignment, quality trimming of reads with trimgalore, [SEACR](https://github.com/FredHutch/SEACR) peak calling, and optionally [MACS2](https://github.com/macs3-project/MACS) peak calling. MACS2 requires an effective genome size to call peaks, which you can provide directly or call [`unique-kmers.py`](https://deeptools.readthedocs.io/en/develop/content/feature/effectiveGenomeSize.html) to calculate the effective genome size on the fly. Coverage tracks are produced for visualization in [IGV](https://igv.org/doc/desktop/). 
 
 It will also perform general QC statistics on the fastqs with [fastqc](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/), the alignment, peak calling, and sample similarity using [deeptools](https://deeptools.readthedocs.io/en/develop/). Finally, the QC reports are collected into a single file using [multiQC](https://multiqc.info/).
 
