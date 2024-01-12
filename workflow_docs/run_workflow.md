@@ -107,21 +107,19 @@ names in any order:
 - “read1”
 - “read2”
 
-<div class="datatables html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-bc5ea8fbd61f17c3622a" style="width:100%;height:auto;"></div>
-<script type="application/json" data-for="htmlwidget-bc5ea8fbd61f17c3622a">{"x":{"filter":"none","vertical":false,"data":[["1","2","3","4","5","6"],["sample","sample_id","target_or_control","read1","read2","single_end"],["Any alphanumeric string for each biological sample in the dataset. Will have the same sample IDs for each antibody used. For example SAMPLE_1 has both H3K27me3 and IgG control CUT&amp;RUN, and thus SAMPLE_1 has 1 row with the files for H3K27me3, and SAMPLE_1 has 2nd row with the files for IgG data.","Any alphanumeric string for each unique sample+condition. No duplicates allowed.  For example SAMPLE_1 has both H3K27me3 and IgG control CUT&amp;RUN. Thus, SAMPLE_1 is the value in `sample`, and   \"SAMPLE_1_H3K27me3\" is the value in `sample_id`. Again, SAMPLE_1 has 2nd row with the files for IgG data, where SAMPLE_1 is the value in `sample`, and   \"SAMPLE_1_IgG\" is the value in `sample_id`","Must contain the values [target or control] case-sensitive. Target is for the antibodies using the immunoprecipitation for the proteins of interest, such as transcription factors or histone modifications like H3K27me3, or the value control for the isotype control (eg IgG).","Contain absolute filepaths to  read 1 in paired-end fastqs.","Contain absolute filepaths to  read 2 in paired-end fastqs.","For CUT&amp;RUN data it should always be [false] case-sensitive."]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>column_name<\/th>\n      <th>column_description<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"columnDefs":[{"orderable":false,"targets":0}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+``` r
+data.frame(column_name = c("sample", "sample_id", "target_or_control", "read1", "read2",
+    "single_end"), column_description = c(sample_desc, sample_id_desc, target_desc,
+    read1, read2, single_end)) %>%
+    DT::datatable()
+```
+
+<div class="datatables html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-cb483e63634cf480aaf2" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-cb483e63634cf480aaf2">{"x":{"filter":"none","vertical":false,"data":[["1","2","3","4","5","6"],["sample","sample_id","target_or_control","read1","read2","single_end"],["Any alphanumeric string for each biological sample in the dataset. Will have the same sample IDs for each antibody used. For example SAMPLE_1 has both H3K27me3 and IgG control CUT&amp;RUN, and thus SAMPLE_1 has 1 row with the files for H3K27me3, and SAMPLE_1 has 2nd row with the files for IgG data.","Any alphanumeric string for each unique sample+condition. No duplicates allowed.  For example SAMPLE_1 has both H3K27me3 and IgG control CUT&amp;RUN. Thus, SAMPLE_1 is the value in `sample`, and   \"SAMPLE_1_H3K27me3\" is the value in `sample_id`. Again, SAMPLE_1 has 2nd row with the files for IgG data, where SAMPLE_1 is the value in `sample`, and   \"SAMPLE_1_IgG\" is the value in `sample_id`","Must contain the values [target or control] case-sensitive. Target is for the antibodies using the immunoprecipitation for the proteins of interest, such as transcription factors or histone modifications like H3K27me3, or the value control for the isotype control (eg IgG).","Contain absolute filepaths to  read 1 in paired-end fastqs.","Contain absolute filepaths to  read 2 in paired-end fastqs.","For CUT&amp;RUN data it should always be [false] case-sensitive."]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>column_name<\/th>\n      <th>column_description<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"columnDefs":[{"orderable":false,"targets":0}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
 
 Below is an example of a complete sample sheet for use in the pipeline,
 which can be edited for your own samples in
 `test_data/test_dataset_sample_sheet.csv`.
-
-``` r
-sample_sheet <- read.csv(here::here("test_data/test_dataset_sample_sheet.csv")) %>%
-    mutate(single_end = "false") %>%
-    mutate(sample = str_split_fixed(sample_id, pattern = "_", n = 3)[, 1]) %>%
-    select(sample, everything())
-
-head(sample_sheet)
-```
 
     ##   sample   sample_id single_end target_or_control
     ## 1     M1 M1_H3K27_NK      false            target
@@ -144,10 +142,6 @@ head(sample_sheet)
     ## 4 /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_H3K27_NK_chr17_R2_ecoli.fastq.gz
     ## 5  /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_H3K4_NK_chr17_R2_ecoli.fastq.gz
     ## 6   /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_IgG_NK_chr17_R2_ecoli.fastq.gz
-
-``` r
-# dim(sample_sheet)
-```
 
 # Run the Example Data
 

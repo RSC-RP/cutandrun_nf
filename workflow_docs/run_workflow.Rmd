@@ -115,7 +115,7 @@ read2 <- c("Contain absolute filepaths to  read 2 in paired-end fastqs.")
 single_end <- c("For CUT&RUN data it should always be [false] case-sensitive.")
 ```
 
-```{r eval=TRUE, echo=FALSE}
+```{r eval=TRUE, echo=TRUE}
 data.frame(column_name=c("sample","sample_id", "target_or_control","read1", "read2","single_end"),
        column_description=c(sample_desc,sample_id_desc,target_desc,read1, read2, single_end)) %>% 
   DT::datatable()
@@ -123,7 +123,7 @@ data.frame(column_name=c("sample","sample_id", "target_or_control","read1", "rea
  
 Below is an example of a complete sample sheet for use in the pipeline, which can be edited for your own samples in `test_data/test_dataset_sample_sheet.csv`.
  
-```{r eval=TRUE}
+```{r eval=TRUE, echo=FALSE}
 sample_sheet <- read.csv(here::here("test_data/test_dataset_sample_sheet.csv")) %>% 
   mutate(single_end="false") %>% 
   mutate(sample=str_split_fixed(sample_id, pattern = "_", n=3)[,1]) %>%
