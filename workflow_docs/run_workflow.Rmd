@@ -46,7 +46,7 @@ The pipeline runs the [Bowtie2](https://bowtie-bio.sourceforge.net/bowtie2/manua
 
 It will also perform general QC statistics on the fastqs with [fastqc](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/), the alignment, peak calling, and sample similarity using [deeptools](https://deeptools.readthedocs.io/en/develop/). Finally, the QC reports are collected into a single file using [multiQC](https://multiqc.info/).
 
-A DAG (directed acyclic graph) of the workflow is show below:
+A DAG (directed acyclic graph) of the default workflow is show below:
 
 ```{r echo=FALSE, eval=TRUE}
 knitr::include_graphics("images/dag.png")
@@ -121,7 +121,13 @@ data.frame(column_name=c("sample","sample_id", "target_or_control","read1", "rea
   knitr::kable()
 ```
  
-Below is an example of a complete sample sheet for use in the pipeline, which can be edited for your own samples in `test_data/test_dataset_sample_sheet.csv`.
+### Example Sample Sheets
+
+**1)** Below is an example of a complete sample sheet for use in the pipeline, which can be edited for your own samples in `test_data/test_dataset_sample_sheet.csv`.
+
+  * It contains IgG control samples for peak calling. 
+  * This sample sheets OK to use even if you elect to skip IgG normalization in SEACR or use IgG background in MACS2. The pipeline will simply not use the controls. 
+  * Use `threshold`, and `no_control_macs2` parameters in `nextflow.config` to change this. 
  
 ```{r eval=TRUE, echo=FALSE}
 sample_sheet <- read.csv(here::here("test_data/test_dataset_sample_sheet.csv")) %>% 
@@ -134,11 +140,18 @@ head(sample_sheet) %>%
 # dim(sample_sheet)
 ```
 
-```{r echo=FALSE, eval=FALSE}
+**2)** Below is another example of a complete sample sheet for use in the pipeline. 
+
+  * It lacks IgG control samples for peak calling.
+  * This sample sheets OK to use only if you modify the parameters to skip using IgG controls. 
+  * Use `threshold`, and `no_control_macs2` parameters in `nextflow.config` to modify this. 
+
+```{r echo=FALSE, eval=TRUE}
 sample_sheet_noCtrl <- sample_sheet %>% 
     mutate(target_or_control="target") 
 
-# write.csv(sample_sheet_noCtrl,"../test_data/test_dataset_noCtrl_sample_sheet.csv", row.names = FALSE, quote = F)
+head(sample_sheet_noCtrl) %>% 
+    knitr::kable()
 ```
 
 # Run the Example Data
@@ -186,6 +199,7 @@ end <- grep("Bowtie params",config_file)-1
 config_file[params_lines[1]:end] %>% 
     cat(.,sep = "\n")
 ```
+
 ## Genomic References
 
 Additionally, determine if you require a new bowtie2 index to be build for the target genome and/or the spike-in genome. The pipeline requires either a fasta filepath OR Bowtie2 index filepath. This is also required for the spike-in, with E. Coli provided as a default. 
@@ -207,22 +221,40 @@ config_file[bowtie2[1]:bowtie2[2]] %>%
     cat(.,sep = "\n")
 ```
 
+## SEACR 
+
+SEACR defaults to using IgG control normalization and stringent peak calling, eg `SEACR_1.3.sh target_bedgraph igg_bedgraph norm stringent`.
+
+If skipping the use of IgG control all together, set `threshold` to any value > 0. 
+
+If you would like to use a spike-in normalization, either E. Coli or an exongenous spike-in like Drosophila, set `spike_norm` to true. You must see [Advanced Options](#advanced-options) for details on turning off igg normalization. 
+
+* threshold
+* spike_norm
+* chrom_sizes
+* scale_factor_constant
+
+```{r}
+c( config_file[grep("SEACR params", config_file):(grep("scale_factor_constant", config_file)+1)]) %>% 
+  cat(.,sep = "\n") 
+```
+
 ## Optional: MACS2
 
 Finally, decide whether to run MACS2 calls along with the SEACR peak calling algorithm (default = true).  MACS2 will use the effective genome size value provided in `gsize` parameter. 
 
-If you are using a non-model organism or simply don't want to use the effective genome size provided in literature or MACS2 documentation, you can set `run_khmer = true` to calculate an effective genome size using the target genome fasta `fasta` filepath and read-length. 
+If you are using a non-model organism or simply don't want to use the effective genome size provided in literature or MACS2 documentation, you can set `calc_effective_gsize = true` to calculate an effective genome size using the target genome fasta `fasta` filepath and read-length. 
 
- * gsize
  * run_macs2
- * run_khmer
+ * no_control_macs2
+ * gsize
+ * calc_effective_gsize
+ * read_length
  
 ```{r echo=FALSE, eval=TRUE}
-c(config_file[grep("Effective genome size", config_file):grep("gsize.+\\=", config_file)],
-    noquote("    <...>"),
-    config_file[grep("MACS2 and", config_file):grep("kmer_size", config_file)]
-  ) %>% 
-    cat(.,sep = "\n")
+c( config_file[grep("MACS2 params", config_file):(grep("no_control", config_file)+1)], 
+   config_file[grep("\\sgsize.+\\=", config_file):grep("read_length", config_file)]) %>% 
+  cat(.,sep = "\n")
 ```
 
 ## Advanced Options

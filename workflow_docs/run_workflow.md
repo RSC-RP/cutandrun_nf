@@ -8,11 +8,13 @@ Run Cut&Run Peak Calling
     folder](#2-open-cutandrun-workflow-folder)
   - [3) Activate conda environement](#3-activate-conda-environement)
 - [Examine the Sample Sheet](#examine-the-sample-sheet)
+  - [Example Sample Sheets](#example-sample-sheets)
 - [Run the Example Data](#run-the-example-data)
 - [Configure Pipeline for Your Data](#configure-pipeline-for-your-data)
   - [Configuration file](#configuration-file)
   - [Global Params](#global-params)
   - [Genomic References](#genomic-references)
+  - [SEACR](#seacr)
   - [Optional: MACS2](#optional-macs2)
   - [Advanced Options](#advanced-options)
 - [Run Script](#run-script)
@@ -42,7 +44,7 @@ the alignment, peak calling, and sample similarity using
 QC reports are collected into a single file using
 [multiQC](https://multiqc.info/).
 
-A DAG (directed acyclic graph) of the workflow is show below:
+A DAG (directed acyclic graph) of the default workflow is show below:
 
 <img src="images/dag.png" width="4120" style="display: block; margin: auto;" />
 
@@ -116,9 +118,18 @@ names in any order:
 | read2             | Contain absolute filepaths to read 2 in paired-end fastqs.                                                                                                                                                                                                                                                                                                                                      |
 | single_end        | For CUT&RUN data it should always be \[false\] case-sensitive.                                                                                                                                                                                                                                                                                                                                  |
 
-Below is an example of a complete sample sheet for use in the pipeline,
-which can be edited for your own samples in
+### Example Sample Sheets
+
+**1)** Below is an example of a complete sample sheet for use in the
+pipeline, which can be edited for your own samples in
 `test_data/test_dataset_sample_sheet.csv`.
+
+- It contains IgG control samples for peak calling.
+- This sample sheets OK to use even if you elect to skip IgG
+  normalization in SEACR or use IgG background in MACS2. The pipeline
+  will simply not use the controls.
+- Use `threshold`, and `no_control_macs2` parameters in
+  `nextflow.config` to change this.
 
 | sample | sample_id   | single_end | target_or_control | read1                                                                                         | read2                                                                                         |
 |:-------|:------------|:-----------|:------------------|:----------------------------------------------------------------------------------------------|:----------------------------------------------------------------------------------------------|
@@ -128,6 +139,24 @@ which can be edited for your own samples in
 | M2     | M2_H3K27_NK | false      | target            | /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_H3K27_NK_chr17_R1_ecoli.fastq.gz | /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_H3K27_NK_chr17_R2_ecoli.fastq.gz |
 | M2     | M2_H3K4_NK  | false      | target            | /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_H3K4_NK_chr17_R1_ecoli.fastq.gz  | /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_H3K4_NK_chr17_R2_ecoli.fastq.gz  |
 | M2     | M2_IgG_NK   | false      | control           | /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_IgG_NK_chr17_R1_ecoli.fastq.gz   | /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_IgG_NK_chr17_R2_ecoli.fastq.gz   |
+
+**2)** Below is another example of a complete sample sheet for use in
+the pipeline.
+
+- It lacks IgG control samples for peak calling.
+- This sample sheets OK to use only if you modify the parameters to skip
+  using IgG controls.
+- Use `threshold`, and `no_control_macs2` parameters in
+  `nextflow.config` to modify this.
+
+| sample | sample_id   | single_end | target_or_control | read1                                                                                         | read2                                                                                         |
+|:-------|:------------|:-----------|:------------------|:----------------------------------------------------------------------------------------------|:----------------------------------------------------------------------------------------------|
+| M1     | M1_H3K27_NK | false      | target            | /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M1_H3K27_NK_chr17_R1_ecoli.fastq.gz | /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M1_H3K27_NK_chr17_R2_ecoli.fastq.gz |
+| M1     | M1_H3K4_NK  | false      | target            | /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M1_H3K4_NK_chr17_R1_ecoli.fastq.gz  | /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M1_H3K4_NK_chr17_R2_ecoli.fastq.gz  |
+| M1     | M1_IgG_NK   | false      | target            | /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M1_IgG_NK_chr17_R1_ecoli.fastq.gz   | /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M1_IgG_NK_chr17_R2_ecoli.fastq.gz   |
+| M2     | M2_H3K27_NK | false      | target            | /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_H3K27_NK_chr17_R1_ecoli.fastq.gz | /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_H3K27_NK_chr17_R2_ecoli.fastq.gz |
+| M2     | M2_H3K4_NK  | false      | target            | /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_H3K4_NK_chr17_R1_ecoli.fastq.gz  | /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_H3K4_NK_chr17_R2_ecoli.fastq.gz  |
+| M2     | M2_IgG_NK   | false      | target            | /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_IgG_NK_chr17_R1_ecoli.fastq.gz   | /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_IgG_NK_chr17_R2_ecoli.fastq.gz   |
 
 # Run the Example Data
 
@@ -156,7 +185,7 @@ calling steps.
     ##     queue                       = 'paidq'
     ##     project                     = '207f23bf-acb6-4835-8bfe-142436acb58c'
     ##     outdir                      = "./results/mouse"
-    ##     peaks_outdir                = "${params.outdir}/peaks_calls"
+    ##     peaks_outdir                = "${params.outdir}/macs_igg"
     ##     publish_dir_mode            = 'copy'
     ## 
     ##     //Bowtie params for target genome
@@ -190,7 +219,7 @@ Be sure to change the following lines for the global parameters:
     ##     queue                       = 'paidq'
     ##     project                     = '207f23bf-acb6-4835-8bfe-142436acb58c'
     ##     outdir                      = "./results/mouse"
-    ##     peaks_outdir                = "${params.outdir}/peaks_calls"
+    ##     peaks_outdir                = "${params.outdir}/macs_igg"
     ##     publish_dir_mode            = 'copy'
 
 ## Genomic References
@@ -225,6 +254,30 @@ Change the following lines for alignment reference files when needed:
     ## 
     ##     // Bowtie params for spike-in genome
 
+## SEACR
+
+SEACR defaults to using IgG control normalization and stringent peak
+calling, eg `SEACR_1.3.sh target_bedgraph igg_bedgraph norm stringent`.
+
+If skipping the use of IgG control all together, set `threshold` to any
+value \> 0.
+
+If you would like to use a spike-in normalization, either E. Coli or an
+exongenous spike-in like Drosophila, set `spike_norm` to true. You must
+see [Advanced Options](#advanced-options) for details on turning off igg
+normalization.
+
+- threshold
+- spike_norm
+- chrom_sizes
+- scale_factor_constant
+
+``` r
+c(config_file[grep("SEACR params", config_file):(grep("scale_factor_constant", config_file) +
+    1)]) %>%
+    cat(., sep = "\n")
+```
+
 ## Optional: MACS2
 
 Finally, decide whether to run MACS2 calls along with the SEACR peak
@@ -233,22 +286,24 @@ size value provided in `gsize` parameter.
 
 If you are using a non-model organism or simply don’t want to use the
 effective genome size provided in literature or MACS2 documentation, you
-can set `run_khmer = true` to calculate an effective genome size using
-the target genome fasta `fasta` filepath and read-length.
+can set `calc_effective_gsize = true` to calculate an effective genome
+size using the target genome fasta `fasta` filepath and read-length.
 
-- gsize
 - run_macs2
-- run_khmer
+- no_control_macs2
+- gsize
+- calc_effective_gsize
+- read_length
 
 <!-- -->
 
-    ##     //Effective genome size for target genome
-    ##     gsize                       = 1.87e9 //default genome size from MACS2 
-    ##     <...>
-    ##     //MACS2 and khmer params
+    ##     //MACS2 params
     ##     run_macs2                   = true
-    ##     run_khmer                   = false //if true, will override the value in gsize parameter
-    ##     kmer_size                   = 150 //kmer_size is the read-length
+    ##     no_control_macs2            = false   // if true, do not perform IgG normalization
+    ## 
+    ##     gsize                       = 1.87e9 //default effective genome size for mouse from MACS2 
+    ##     calc_effective_gsize        = false  //if true, will override the value in gsize parameter
+    ##     read_length                 = 150    //if calc_effective_gsize, provide illumina read-length in base pairs
 
 ## Advanced Options
 
@@ -297,7 +352,7 @@ modified using the `ext.args` parameter.
     ##  [21]     withName: MACS2_CALLPEAK {                                                                                 
     ##  [22]         cpus = { 1 * task.attempt }                                                                            
     ##  [23]         memory = { 16.GB * task.attempt }                                                                      
-    ##  [24]         ext.args = '-q 0.01 --keep-dup all'                                                                    
+    ##  [24]         ext.args = '-q 0.01 --keep-dup all --bdg'                                                              
     ##  [25]         publishDir = [...]                                                                                     
     ##  [26]                                                                                                                
     ##  [27]     }                                                                                                          
