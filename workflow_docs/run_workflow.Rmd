@@ -19,7 +19,6 @@ output:
     df_print: paged
 ---
 
-# Set-up 
 
 ```{r set-up, echo=FALSE}
 knitr::opts_chunk$set(tidy.opts=list(width.cutoff=80),
