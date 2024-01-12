@@ -18,11 +18,20 @@ workflow macs2_peaks {
             targets: it[0].group =~ /target/
         }
         .set { bam_groups }
-    bam_groups.control
-        .cross(bam_groups.targets){ meta -> meta[0].sample }
-        .map { meta -> [ meta[1][0], meta[1][1], meta[0][1] ] }
-        .set { macs_ch }
-    //Either run khmer to determine effective genome size for macs2, or use a value provided as params.gsize
+
+    // Determine if IgG control bam will be used in the peak calling
+    if ( no_control ) {
+        bam_groups.target
+            .map { meta, target_bam -> [ meta, target_bam, [] ] } // empty list for control bam 
+            .set { macs_ch }
+    } else {
+        bam_groups.control
+            .cross(bam_groups.targets){ meta -> meta[0].sample }
+            .map { row -> [ row[1][0], row[1][1], row[0][1] ] } // [ meta, target_bam path, contro_bam path ]
+            .set { macs_ch }
+    }
+
+    // Use params.gsize for effective genome size or Run khmer to determine effective genome size
     if ( calc_effective_gsize ) {
         Channel.value(read_length)
             .set { khmer_size }
