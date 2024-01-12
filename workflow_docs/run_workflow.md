@@ -107,15 +107,22 @@ names in any order:
 - “read1”
 - “read2”
 
-``` r
-data.frame(column_name = c("sample", "sample_id", "target_or_control", "read1", "read2",
-    "single_end"), column_description = c(sample_desc, sample_id_desc, target_desc,
-    read1, read2, single_end)) %>%
-    DT::datatable()
-```
+<!-- -->
 
-<div class="datatables html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-cb483e63634cf480aaf2" style="width:100%;height:auto;"></div>
-<script type="application/json" data-for="htmlwidget-cb483e63634cf480aaf2">{"x":{"filter":"none","vertical":false,"data":[["1","2","3","4","5","6"],["sample","sample_id","target_or_control","read1","read2","single_end"],["Any alphanumeric string for each biological sample in the dataset. Will have the same sample IDs for each antibody used. For example SAMPLE_1 has both H3K27me3 and IgG control CUT&amp;RUN, and thus SAMPLE_1 has 1 row with the files for H3K27me3, and SAMPLE_1 has 2nd row with the files for IgG data.","Any alphanumeric string for each unique sample+condition. No duplicates allowed.  For example SAMPLE_1 has both H3K27me3 and IgG control CUT&amp;RUN. Thus, SAMPLE_1 is the value in `sample`, and   \"SAMPLE_1_H3K27me3\" is the value in `sample_id`. Again, SAMPLE_1 has 2nd row with the files for IgG data, where SAMPLE_1 is the value in `sample`, and   \"SAMPLE_1_IgG\" is the value in `sample_id`","Must contain the values [target or control] case-sensitive. Target is for the antibodies using the immunoprecipitation for the proteins of interest, such as transcription factors or histone modifications like H3K27me3, or the value control for the isotype control (eg IgG).","Contain absolute filepaths to  read 1 in paired-end fastqs.","Contain absolute filepaths to  read 2 in paired-end fastqs.","For CUT&amp;RUN data it should always be [false] case-sensitive."]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>column_name<\/th>\n      <th>column_description<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"columnDefs":[{"orderable":false,"targets":0}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+    ##         column_name
+    ## 1            sample
+    ## 2         sample_id
+    ## 3 target_or_control
+    ## 4             read1
+    ## 5             read2
+    ## 6        single_end
+    ##                                                                                                                                                                                                                                                                                                                                                                                     column_description
+    ## 1                                                                                              Any alphanumeric string for each biological sample in the dataset. Will have the same sample IDs for each antibody used. For example SAMPLE_1 has both H3K27me3 and IgG control CUT&RUN, and thus SAMPLE_1 has 1 row with the files for H3K27me3, and SAMPLE_1 has 2nd row with the files for IgG data.
+    ## 2 Any alphanumeric string for each unique sample+condition. No duplicates allowed.  For example SAMPLE_1 has both H3K27me3 and IgG control CUT&RUN. Thus, SAMPLE_1 is the value in `sample`, and   "SAMPLE_1_H3K27me3" is the value in `sample_id`. Again, SAMPLE_1 has 2nd row with the files for IgG data, where SAMPLE_1 is the value in `sample`, and   "SAMPLE_1_IgG" is the value in `sample_id`
+    ## 3                                                                                                                    Must contain the values [target or control] case-sensitive. Target is for the antibodies using the immunoprecipitation for the proteins of interest, such as transcription factors or histone modifications like H3K27me3, or the value control for the isotype control (eg IgG).
+    ## 4                                                                                                                                                                                                                                                                                                                                          Contain absolute filepaths to  read 1 in paired-end fastqs.
+    ## 5                                                                                                                                                                                                                                                                                                                                          Contain absolute filepaths to  read 2 in paired-end fastqs.
+    ## 6                                                                                                                                                                                                                                                                                                                                         For CUT&RUN data it should always be [false] case-sensitive.
 
 Below is an example of a complete sample sheet for use in the pipeline,
 which can be edited for your own samples in
