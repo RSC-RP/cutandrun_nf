@@ -55,7 +55,7 @@ knitr::include_graphics("images/dag.png")
 
 # Activate the Environment on HPC
 
-The directions to set-up the Nextflow workflow requirements are found in the [README.md](file://../README.md). Ensure that you have followed the steps to fork and clone the repository and created the conda nextflow environment before starting with this document. 
+The directions to set-up the Nextflow workflow requirements are found in the [README.md](../README.md). Ensure that you have followed the steps to fork and clone the repository and created the conda nextflow environment before starting with this document. 
 
 Optional but recommended: use `tmux` on the cybertron login nodes. Name the session nextflow and then request an interactive session, then activate the nextflow conda environment. The project codes can be found with `project info` command. Change the `$QUEUE` and `$NAME` variables in the code chunk below to be accurate for your Cybertron projects. 
 
