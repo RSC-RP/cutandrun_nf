@@ -190,8 +190,7 @@ workflow align_call_peaks {
         // MACS2 peak calling, Optional
         if ( run_macs2 ){
             //Run MAC2 peak calling
-            macs2_peaks(bams_sorted, fasta, no_control,
-                        effective_gsize, calc_effective_gsize, read_length)
+            macs2_peaks(bams_sorted, fasta, no_control, effective_gsize, calc_effective_gsize, read_length)
             macs2_peaks.out.macs2 
                 .set { macs_peaks }
         } else {
