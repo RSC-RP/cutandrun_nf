@@ -1,7 +1,6 @@
 Run Cut&Run Peak Calling
 ================
 
-- [Set-up](#set-up)
 - [About the Pipeline](#about-the-pipeline)
 - [Activate the Environment on HPC](#activate-the-environment-on-hpc)
 - [Examine the Sample Sheet](#examine-the-sample-sheet)
@@ -19,16 +18,25 @@ Run Cut&Run Peak Calling
 - [Expected Outputs](#expected-outputs)
   - [Pipeline Reports](#pipeline-reports)
 
-# Set-up
-
 # About the Pipeline
 
-The pipeline runs the Bowtie2 alignment, quality trimming of reads with
-trimgalore, SEACR peak calling, and optionally MACS2 peak calling. It
-will also perform general QC statistics on the fastqs with
-[fastqc](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/) and
-the alignment. Finally, the QC reports are collected into a single file
-using [multiQC](https://multiqc.info/).
+The pipeline runs the
+[Bowtie2](https://bowtie-bio.sourceforge.net/bowtie2/manual.shtml)
+alignment, quality trimming of reads with trimgalore,
+[SEACR](https://github.com/FredHutch/SEACR) peak calling, and optionally
+[MACS2](https://github.com/macs3-project/MACS) peak calling. MACS2
+requires an effective genome size to call peaks, which you can provide
+directly or call
+[`unique-kmers.py`](https://deeptools.readthedocs.io/en/develop/content/feature/effectiveGenomeSize.html)
+to calculate the effective genome size on the fly. Coverage tracks are
+produced for visualization in [IGV](https://igv.org/doc/desktop/).
+
+It will also perform general QC statistics on the fastqs with
+[fastqc](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/),
+the alignment, peak calling, and sample similarity using
+[deeptools](https://deeptools.readthedocs.io/en/develop/). Finally, the
+QC reports are collected into a single file using
+[multiQC](https://multiqc.info/).
 
 A DAG (directed acyclic graph) of the workflow is show below:
 
@@ -65,8 +73,8 @@ names in any order:
 - “read1”
 - “read2”
 
-<div class="datatables html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-144620b0208bbdaccbaa" style="width:100%;height:auto;"></div>
-<script type="application/json" data-for="htmlwidget-144620b0208bbdaccbaa">{"x":{"filter":"none","vertical":false,"data":[["1","2","3","4","5","6"],["sample","sample_id","target_or_control","read1","read2","single_end"],["Any alphanumeric string for each biological sample in the dataset. Will have the same sample IDs for each antibody used. For example SAMPLE_1 has both H3K27me3 and IgG control CUT&amp;RUN, and thus SAMPLE_1 has 1 row with the files for H3K27me3, and SAMPLE_1 has 2nd row with the files for IgG data.","Any alphanumeric string for each unique sample+condition. No duplicates allowed.  For example SAMPLE_1 has both H3K27me3 and IgG control CUT&amp;RUN. Thus, SAMPLE_1 is the value in `sample`, and   \"SAMPLE_1_H3K27me3\" is the value in `sample_id`. Again, SAMPLE_1 has 2nd row with the files for IgG data, where SAMPLE_1 is the value in `sample`, and   \"SAMPLE_1_IgG\" is the value in `sample_id`","Must contain the values [target or control] case-sensitive. Target is for the antibodies using the immunoprecipitation for the proteins of interest, such as transcription factors or histone modifications like H3K27me3, or the value control for the isotype control (eg IgG).","Contain absolute filepaths to  read 1 in paired-end fastqs.","Contain absolute filepaths to  read 2 in paired-end fastqs.","For CUT&amp;RUN data it should always be [false] case-sensitive."]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>column_name<\/th>\n      <th>column_description<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"columnDefs":[{"orderable":false,"targets":0}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+<div class="datatables html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-4462ff46cbcfa086f113" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-4462ff46cbcfa086f113">{"x":{"filter":"none","vertical":false,"data":[["1","2","3","4","5","6"],["sample","sample_id","target_or_control","read1","read2","single_end"],["Any alphanumeric string for each biological sample in the dataset. Will have the same sample IDs for each antibody used. For example SAMPLE_1 has both H3K27me3 and IgG control CUT&amp;RUN, and thus SAMPLE_1 has 1 row with the files for H3K27me3, and SAMPLE_1 has 2nd row with the files for IgG data.","Any alphanumeric string for each unique sample+condition. No duplicates allowed.  For example SAMPLE_1 has both H3K27me3 and IgG control CUT&amp;RUN. Thus, SAMPLE_1 is the value in `sample`, and   \"SAMPLE_1_H3K27me3\" is the value in `sample_id`. Again, SAMPLE_1 has 2nd row with the files for IgG data, where SAMPLE_1 is the value in `sample`, and   \"SAMPLE_1_IgG\" is the value in `sample_id`","Must contain the values [target or control] case-sensitive. Target is for the antibodies using the immunoprecipitation for the proteins of interest, such as transcription factors or histone modifications like H3K27me3, or the value control for the isotype control (eg IgG).","Contain absolute filepaths to  read 1 in paired-end fastqs.","Contain absolute filepaths to  read 2 in paired-end fastqs.","For CUT&amp;RUN data it should always be [false] case-sensitive."]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>column_name<\/th>\n      <th>column_description<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"columnDefs":[{"orderable":false,"targets":0}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
 
 Below is an example of a complete sample sheet for use in the pipeline,
 which can be edited for your own samples in
