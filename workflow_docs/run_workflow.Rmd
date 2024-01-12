@@ -76,8 +76,10 @@ cd /path/to/my/cutandrun_nf
 git fetch
 # this will list all branches of the repository. Find the release branch with the latest version in red text, which means you don't yet have a local copy of that branch. 
 git branch -a
-# then select the latest version, for example
+# then select the latest version, for example 2.0.0. This downloads the stable version of pipeline locally. 
 git checkout release/2.0.0
+# Now the * indicates that you're on the release branch and its no longer red text. 
+git branch
 ```
 
 ### 3) Activate conda environement 
