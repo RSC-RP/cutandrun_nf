@@ -3,6 +3,10 @@ Run Cut&Run Peak Calling
 
 - [About the Pipeline](#about-the-pipeline)
 - [Activate the Environment on HPC](#activate-the-environment-on-hpc)
+  - [1) Interactive Session](#1-interactive-session)
+  - [2) Open CutandRun workflow
+    folder](#2-open-cutandrun-workflow-folder)
+  - [3) Activate conda environement](#3-activate-conda-environement)
 - [Examine the Sample Sheet](#examine-the-sample-sheet)
 - [Run the Example Data](#run-the-example-data)
 - [Configure Pipeline for Your Data](#configure-pipeline-for-your-data)
@@ -49,16 +53,44 @@ the [README.md](../README.md). Ensure that you have followed the steps
 to fork and clone the repository and created the conda nextflow
 environment before starting with this document.
 
+### 1) Interactive Session
+
 Optional but recommended: use `tmux` on the cybertron login nodes. Name
 the session nextflow and then request an interactive session, then
 activate the nextflow conda environment. The project codes can be found
 with `project info` command. Change the `$QUEUE` and `$NAME` variables
 in the code chunk below to be accurate for your Cybertron projects.
 
+``` bash
+tmux new-session -s nextflow
+project info
+NAME="RSC_adhoc"
+QUEUE="sceaq"
+qsub -I -q $QUEUE -P $(project code $NAME) -l select=1:ncpus=1:mem=8g -l walltime=8:00:00
+```
+
+### 2) Open CutandRun workflow folder
+
 Navigate to where you place the cloned (copied) cutandrun_nf directory,
 and then checkout the latest release branch.
 
+``` bash
+cd /path/to/my/cutandrun_nf
+git fetch
+# this will list all branches of the repository. Find the release branch with the latest version in red text, which means you don't yet have a local copy of that branch. 
+git branch -a
+# then select the latest version, for example
+git checkout release/2.0.0
+```
+
+### 3) Activate conda environement
+
 Activate the Nextflow conda environment.
+
+``` bash
+conda env create -f env/nextflow.yaml
+conda activate nextflow
+```
 
 # Examine the Sample Sheet
 
@@ -73,12 +105,21 @@ names in any order:
 - “read1”
 - “read2”
 
-<div class="datatables html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-5930323838d9bd64edd3" style="width:100%;height:auto;"></div>
-<script type="application/json" data-for="htmlwidget-5930323838d9bd64edd3">{"x":{"filter":"none","vertical":false,"data":[["1","2","3","4","5","6"],["sample","sample_id","target_or_control","read1","read2","single_end"],["Any alphanumeric string for each biological sample in the dataset. Will have the same sample IDs for each antibody used. For example SAMPLE_1 has both H3K27me3 and IgG control CUT&amp;RUN, and thus SAMPLE_1 has 1 row with the files for H3K27me3, and SAMPLE_1 has 2nd row with the files for IgG data.","Any alphanumeric string for each unique sample+condition. No duplicates allowed.  For example SAMPLE_1 has both H3K27me3 and IgG control CUT&amp;RUN. Thus, SAMPLE_1 is the value in `sample`, and   \"SAMPLE_1_H3K27me3\" is the value in `sample_id`. Again, SAMPLE_1 has 2nd row with the files for IgG data, where SAMPLE_1 is the value in `sample`, and   \"SAMPLE_1_IgG\" is the value in `sample_id`","Must contain the values [target or control] case-sensitive. Target is for the antibodies using the immunoprecipitation for the proteins of interest, such as transcription factors or histone modifications like H3K27me3, or the value control for the isotype control (eg IgG).","Contain absolute filepaths to  read 1 in paired-end fastqs.","Contain absolute filepaths to  read 2 in paired-end fastqs.","For CUT&amp;RUN data it should always be [false] case-sensitive."]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>column_name<\/th>\n      <th>column_description<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"columnDefs":[{"orderable":false,"targets":0}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+<div class="datatables html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-23d5a18dab2eda194d67" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-23d5a18dab2eda194d67">{"x":{"filter":"none","vertical":false,"data":[["1","2","3","4","5","6"],["sample","sample_id","target_or_control","read1","read2","single_end"],["Any alphanumeric string for each biological sample in the dataset. Will have the same sample IDs for each antibody used. For example SAMPLE_1 has both H3K27me3 and IgG control CUT&amp;RUN, and thus SAMPLE_1 has 1 row with the files for H3K27me3, and SAMPLE_1 has 2nd row with the files for IgG data.","Any alphanumeric string for each unique sample+condition. No duplicates allowed.  For example SAMPLE_1 has both H3K27me3 and IgG control CUT&amp;RUN. Thus, SAMPLE_1 is the value in `sample`, and   \"SAMPLE_1_H3K27me3\" is the value in `sample_id`. Again, SAMPLE_1 has 2nd row with the files for IgG data, where SAMPLE_1 is the value in `sample`, and   \"SAMPLE_1_IgG\" is the value in `sample_id`","Must contain the values [target or control] case-sensitive. Target is for the antibodies using the immunoprecipitation for the proteins of interest, such as transcription factors or histone modifications like H3K27me3, or the value control for the isotype control (eg IgG).","Contain absolute filepaths to  read 1 in paired-end fastqs.","Contain absolute filepaths to  read 2 in paired-end fastqs.","For CUT&amp;RUN data it should always be [false] case-sensitive."]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>column_name<\/th>\n      <th>column_description<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"columnDefs":[{"orderable":false,"targets":0}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
 
 Below is an example of a complete sample sheet for use in the pipeline,
 which can be edited for your own samples in
 `test_data/test_dataset_sample_sheet.csv`.
+
+``` r
+sample_sheet <- read.csv(here::here("test_data/test_dataset_sample_sheet.csv")) %>%
+    mutate(single_end = "false") %>%
+    mutate(sample = str_split_fixed(sample_id, pattern = "_", n = 3)[, 1]) %>%
+    select(sample, everything())
+
+head(sample_sheet)
+```
 
     ##   sample   sample_id single_end target_or_control
     ## 1     M1 M1_H3K27_NK      false            target
@@ -102,10 +143,18 @@ which can be edited for your own samples in
     ## 5  /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_H3K4_NK_chr17_R2_ecoli.fastq.gz
     ## 6   /gpfs/shared_data/demo_data/mus_musculus/cutandrun/fastqs/M2_IgG_NK_chr17_R2_ecoli.fastq.gz
 
+``` r
+# dim(sample_sheet)
+```
+
 # Run the Example Data
 
 To ensure that the pipeline works, first run the test data set. This
 example will run using the data found in the `test_sample_sheet.csv`.
+
+``` bash
+./main_run.sh "test_dataset"
+```
 
 # Configure Pipeline for Your Data
 
@@ -369,6 +418,10 @@ how to change the commandline params and version by editing
 
 # Run Script
 
+``` r
+usethis::edit_file(here::here("main_run.sh"))
+```
+
     ## • Edit '/Users/jsmi26/local_repos/cutandrun_nf/main_run.sh'
 
 Decide on the `NFX_PROFILE`, which allows you to run the processes
@@ -412,6 +465,10 @@ Then, execute the `main_run.sh` script in order to complete the peak
 calling on the samples. Provide a small descriptive prefix for the
 pipeline run.
 
+``` bash
+./main_run.sh "my_analysis"
+```
+
 ## Optional: Build the Index and Exit Pipeline
 
 You can also change the entry-point of the workflow, which is
@@ -422,6 +479,10 @@ building step.
 
     ## #Options: 'bowtie2_index_only', 'align_call_peaks', 'call_peaks'
     ## NFX_ENTRY='bowtie2_index_only'
+
+``` bash
+./main_run.sh "bowtie2_index"
+```
 
 # Expected Outputs
 

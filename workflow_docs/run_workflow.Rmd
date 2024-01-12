@@ -25,7 +25,6 @@ knitr::opts_chunk$set(tidy.opts=list(width.cutoff=80),
                       tidy=TRUE,
                       fig.align='center',
                       fig.width = 10, fig.height = 10,
-                      echo = FALSE,
                       eval = FALSE)
 
 options(stringsAsFactors = FALSE, max.print = 100)
@@ -57,6 +56,7 @@ knitr::include_graphics("images/dag.png")
 
 The directions to set-up the Nextflow workflow requirements are found in the [README.md](../README.md). Ensure that you have followed the steps to fork and clone the repository and created the conda nextflow environment before starting with this document. 
 
+### 1) Interactive Session
 Optional but recommended: use `tmux` on the cybertron login nodes. Name the session nextflow and then request an interactive session, then activate the nextflow conda environment. The project codes can be found with `project info` command. Change the `$QUEUE` and `$NAME` variables in the code chunk below to be accurate for your Cybertron projects. 
 
 ```{bash optional, eval=FALSE}
@@ -66,6 +66,8 @@ NAME="RSC_adhoc"
 QUEUE="sceaq"
 qsub -I -q $QUEUE -P $(project code $NAME) -l select=1:ncpus=1:mem=8g -l walltime=8:00:00
 ```
+
+### 2) Open CutandRun workflow folder
 
 Navigate to where you place the cloned (copied) cutandrun_nf directory, and then checkout the latest release branch. 
 
@@ -77,6 +79,8 @@ git branch -a
 # then select the latest version, for example
 git checkout release/2.0.0
 ```
+
+### 3) Activate conda environement 
 
 Activate the Nextflow conda environment. 
 
