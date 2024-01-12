@@ -30,7 +30,7 @@ workflow macs2_peaks {
             .map { row -> [ row[1][0], row[1][1], row[0][1] ] } // [ meta, target_bam path, contro_bam path ]
             .set { macs_ch }
     }
-
+    macs_ch.view { "the macs2 bam channel is $it"}
     // Use params.gsize for effective genome size or Run khmer to determine effective genome size
     if ( calc_effective_gsize ) {
         Channel.value(read_length)
@@ -48,5 +48,5 @@ workflow macs2_peaks {
     emit:
     macs2               =   MACS2_CALLPEAK.out.peak
     macs_ver            =   MACS2_CALLPEAK.out.versions
-    khmer_ver           =   params.run_khmer ? KHMER_UNIQUEKMERS.out.versions : ''
+    khmer_ver           =   calc_effective_gsize ? KHMER_UNIQUEKMERS.out.versions : ''
 }
