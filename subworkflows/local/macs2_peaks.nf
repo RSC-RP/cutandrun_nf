@@ -6,6 +6,10 @@ workflow macs2_peaks {
     take:
     bams
     fasta
+    no_control
+    effective_gsize
+    calc_effective_gsize
+    read_length
 
     main:
     //Separate the bam files by target or control antibody
@@ -19,14 +23,14 @@ workflow macs2_peaks {
         .map { meta -> [ meta[1][0], meta[1][1], meta[0][1] ] }
         .set { macs_ch }
     //Either run khmer to determine effective genome size for macs2, or use a value provided as params.gsize
-    if ( params.run_khmer ) {
-        Channel.value(params.kmer_size)
+    if ( calc_effective_gsize ) {
+        Channel.value(read_length)
             .set { khmer_size }
         KHMER_UNIQUEKMERS(fasta, khmer_size)
         KHMER_UNIQUEKMERS.out.gsize
             .set { gsize }
     } else {
-        Channel.value(params.gsize)
+        Channel.value(effective_gsize)
                 .set { gsize }
     }
     // Run Macs2 peak calling

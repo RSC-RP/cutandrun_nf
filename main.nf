@@ -93,6 +93,10 @@ workflow align_call_peaks {
         // define static variables 
         def sample_sheet_name = file(params.sample_sheet, checkIfExists: true).simpleName
         def run_macs2 = params.run_macs2
+        def effective_gsize = params.gsize
+        def no_control = params.no_control_macs2
+        def calc_effective_gsize = params.calc_effective_gsize
+        def read_length = params.read_length
 
         //fastqc of raw sequence
         FASTQC(meta_ch)
@@ -186,7 +190,7 @@ workflow align_call_peaks {
         // MACS2 peak calling, Optional
         if ( run_macs2 ){
             //Run MAC2 peak calling
-            macs2_peaks(bams_sorted, fasta)
+            macs2_peaks(bams_sorted, fasta, no_control, effective_gsize, calc_effective_gsize, read_length)
             macs2_peaks.out.macs2 
                 .set { macs_peaks }
         } else {
