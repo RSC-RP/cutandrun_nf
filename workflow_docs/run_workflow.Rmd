@@ -26,6 +26,7 @@ knitr::opts_chunk$set(tidy.opts=list(width.cutoff=80),
                       tidy=TRUE,
                       fig.align='center',
                       fig.width = 10, fig.height = 10,
+                      echo = FALSE,
                       eval = FALSE)
 
 options(stringsAsFactors = FALSE, max.print = 100)
@@ -40,21 +41,6 @@ library(tidyr)
 library(tibble)
 ```
 
-# Define functions
-
-```{r}
-#Function to create symlinks to the original data files on active to the current working directory of the R project. 
-mk_symlinks <- function(linked_dirname,filepaths){
-  dir.create(linked_dirname, recursive = TRUE)
-  lapply(filepaths,function(file){
-    target <- file.path(linked_dirname, basename(file))
-    if(!file.exists(target)){
-      command <- glue::glue("ln -svf '{file}' '{target}'")
-      system(command)
-    }
-  })
-}
-```
 
 # About the Pipeline 
 
