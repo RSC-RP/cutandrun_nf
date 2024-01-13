@@ -372,7 +372,7 @@ main_run[tail(idx, n=2)] %>%
 
 Under the path provided in the nextflow config for params "outdir", you will find directories named for each of the modules.
 
-The **final** outputs are located in the following directories:
+### Final Outputs 
 
 `results/{params.outdir}`
 -   `samtools_view/`
@@ -397,21 +397,30 @@ The **final** outputs are located in the following directories:
     -   Optional output if `run_macs2 = true`
     -   {sample_id}_peaks.[narrowPeak,broadPeak]
 
+### File Structure 
+
 There will be the following file structure:
 
 ```{r eval=TRUE, echo = FALSE}
-fs::dir_tree("results", recurse = 1)
+outdir <- config_file[grep("\\soutdir.+\ = (.+)$", config_file)] %>% 
+    str_split_fixed(., pattern = ' = ', n = 2) %>% 
+    .[,2] %>% 
+    gsub('\\"', "", . ) %>% 
+    gsub("\\.", "..", .)
+
+fs::dir_tree(outdir, recurse = 1)
 ```
+
+### Detailed File Structure
 
 Within each directory you will find the following files (top 5 files per directory are shown):
 
 ```{r eval=TRUE, echo = FALSE}
-results_dirs <- fs::dir_info("results/GRCh38", recurse = TRUE)
-# head(results_dirs)
+results_dirs <- fs::dir_info(outdir, recurse = TRUE)
 
 results_dirs %>% 
     select(path, type) %>% 
-    mutate(process = gsub("results/GRCh38/","", path), 
+    mutate(process = gsub(outdir,"", path), 
            filename = ifelse(type == 'file', basename(path), "")) %>%
     filter(!grepl("multiqc_report|params[2-9]", process)) %>% 
     mutate_at(vars(process), ~ case_when(
@@ -422,23 +431,7 @@ results_dirs %>%
     group_by(process) %>%
     dplyr::slice(1:5) %>% 
     ungroup() %>% 
-    DT::datatable()
-
-# grps <- results_dirs_clean %>% 
-#     filter(type == "directory") %>% 
-#     select(group, path) %>% 
-#     distinct() %>% 
-#     pull(group, name = path)
-# 
-# top_dirs <- purrr::map(grps, function(grp){
-#     subset <- results_dirs_clean %>% 
-#         filter(group == grp) %>% 
-#         select(-group) %>% 
-#         as.data.frame() %>% 
-#         
-#     
-#     print(noquote(subset))
-# })
+    knitr::kable()
 ```
 
 ## Pipeline Reports 
