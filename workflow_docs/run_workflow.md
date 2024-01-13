@@ -40,11 +40,12 @@ Run Cut&Run Peak Calling
 -   <a href="#expected-outputs" id="toc-expected-outputs">Expected
     Outputs</a>
     -   <a href="#final-outputs" id="toc-final-outputs">Final Outputs</a>
-    -   <a href="#file-structure" id="toc-file-structure">File Structure</a>
-    -   <a href="#detailed-file-structure"
-        id="toc-detailed-file-structure">Detailed File Structure</a>
     -   <a href="#pipeline-reports" id="toc-pipeline-reports">Pipeline
         Reports</a>
+        -   <a href="#complete-file-structure"
+            id="toc-complete-file-structure">Complete File Structure</a>
+        -   <a href="#detailed-file-structure"
+            id="toc-detailed-file-structure">Detailed File Structure</a>
 
 # About the Pipeline
 
@@ -505,7 +506,31 @@ will find directories named for each of the modules.
     -   Optional output if `run_macs2 = true`
     -   {sample_id}\_peaks.\[narrowPeak,broadPeak\]
 
-### File Structure
+## Pipeline Reports
+
+In addition, there will be an HTML report with information on where the
+temp data is stored in the `workDir` path, and general run statistics
+such as resource utilized versus requested, which helps with
+optimization. It will also provide information on how much walltime was
+used per sample, total CPU hours, etc.
+
+The HTML file is found in `reports` directory and will have the prefix
+defined on the command line when the `./main_run.sh "my_analysis"` was
+invoked, so in this example it would be named
+“my_analysis\_{DATE}.html”.
+
+There will also be a detailed nextflow log file that is useful for
+de-bugging which will also be named in this example,
+“my_analysis\_{DATE}\_nextflow.log”.
+
+Finally, the pipeline will produce a DAG - Directed acyclic graph, which
+describes the workflow channels (inputs) and the modules. The DAG image
+will be saved under `dag/` directory with the name
+“my_analysis\_{DATE}\_dag.pdf”.
+
+<img src="images/dag.png" width="4120" style="display: block; margin: auto;" />
+
+### Complete File Structure
 
 There will be the following file structure:
 
@@ -837,27 +862,3 @@ directory are shown):
 | ../results/mouse/trimgalore/M1_H3K27_NK_1\_val_1.fq.gz                                       | file      | /trimgalore                       | M1_H3K27_NK_1\_val_1.fq.gz                        |
 | ../results/mouse/trimgalore/M1_H3K27_NK_2.fastq.gz_trimming_report.txt                       | file      | /trimgalore                       | M1_H3K27_NK_2.fastq.gz_trimming_report.txt        |
 | ../results/mouse/trimgalore/M1_H3K27_NK_2\_val_2.fq.gz                                       | file      | /trimgalore                       | M1_H3K27_NK_2\_val_2.fq.gz                        |
-
-## Pipeline Reports
-
-In addition, there will be an HTML report with information on where the
-temp data is stored in the `workDir` path, and general run statistics
-such as resource utilized versus requested, which helps with
-optimization. It will also provide information on how much walltime was
-used per sample, total CPU hours, etc.
-
-The HTML file is found in `reports` directory and will have the prefix
-defined on the command line when the `./main_run.sh "my_analysis"` was
-invoked, so in this example it would be named
-“my_analysis\_{DATE}.html”.
-
-There will also be a detailed nextflow log file that is useful for
-de-bugging which will also be named in this example,
-“my_analysis\_{DATE}\_nextflow.log”.
-
-Finally, the pipeline will produce a DAG - Directed acyclic graph, which
-describes the workflow channels (inputs) and the modules. The DAG image
-will be saved under `dag/` directory with the name
-“my_analysis\_{DATE}\_dag.pdf”.
-
-<img src="images/dag.png" width="4120" style="display: block; margin: auto;" />

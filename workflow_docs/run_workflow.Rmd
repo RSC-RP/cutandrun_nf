@@ -484,7 +484,35 @@ will find directories named for each of the modules.
     -   Optional output if `run_macs2 = true`
     -   {sample_id}\_peaks.[narrowPeak,broadPeak]
 
-### File Structure
+
+## Pipeline Reports
+
+In addition, there will be an HTML report with information on where the
+temp data is stored in the `workDir` path, and general run statistics
+such as resource utilized versus requested, which helps with
+optimization. It will also provide information on how much walltime was
+used per sample, total CPU hours, etc.
+
+The HTML file is found in `reports` directory and will have the prefix
+defined on the command line when the `./main_run.sh "my_analysis"` was
+invoked, so in this example it would be named
+"my_analysis\_{DATE}.html".
+
+There will also be a detailed nextflow log file that is useful for
+de-bugging which will also be named in this example,
+"my_analysis\_{DATE}\_nextflow.log".
+
+Finally, the pipeline will produce a DAG - Directed acyclic graph, which
+describes the workflow channels (inputs) and the modules. The DAG image
+will be saved under `dag/` directory with the name
+"my_analysis\_{DATE}\_dag.pdf".
+
+```{r echo=FALSE, eval=TRUE}
+knitr::include_graphics("images/dag.png")
+```
+
+
+### Complete File Structure
 
 There will be the following file structure:
 
@@ -520,30 +548,4 @@ results_dirs %>%
     dplyr::slice(1:5) %>% 
     ungroup() %>% 
     knitr::kable()
-```
-
-## Pipeline Reports
-
-In addition, there will be an HTML report with information on where the
-temp data is stored in the `workDir` path, and general run statistics
-such as resource utilized versus requested, which helps with
-optimization. It will also provide information on how much walltime was
-used per sample, total CPU hours, etc.
-
-The HTML file is found in `reports` directory and will have the prefix
-defined on the command line when the `./main_run.sh "my_analysis"` was
-invoked, so in this example it would be named
-"my_analysis\_{DATE}.html".
-
-There will also be a detailed nextflow log file that is useful for
-de-bugging which will also be named in this example,
-"my_analysis\_{DATE}\_nextflow.log".
-
-Finally, the pipeline will produce a DAG - Directed acyclic graph, which
-describes the workflow channels (inputs) and the modules. The DAG image
-will be saved under `dag/` directory with the name
-"my_analysis\_{DATE}\_dag.pdf".
-
-```{r echo=FALSE, eval=TRUE}
-knitr::include_graphics("images/dag.png")
 ```
