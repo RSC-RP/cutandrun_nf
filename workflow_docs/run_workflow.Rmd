@@ -234,7 +234,7 @@ If you would like to use a spike-in normalization, either E. Coli or an exongeno
 * chrom_sizes
 * scale_factor_constant
 
-```{r}
+```{r echo=FALSE, eval=TRUE}
 c( config_file[grep("SEACR params", config_file):(grep("scale_factor_constant", config_file)+1)]) %>% 
   cat(.,sep = "\n") 
 ```

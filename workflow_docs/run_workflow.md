@@ -296,11 +296,13 @@ normalization.
 -   chrom_sizes
 -   scale_factor_constant
 
-``` r
-c(config_file[grep("SEACR params", config_file):(grep("scale_factor_constant", config_file) +
-    1)]) %>%
-    cat(., sep = "\n")
-```
+<!-- -->
+
+    ##     //SEACR params
+    ##     threshold                   = 0 //any value > 0 will use threshold, even if IgG is available in sample sheet
+    ##     spike_norm                  = false
+    ##     chrom_sizes                 = '/gpfs/shared_data/Bowtie2/mm39.chrom.sizes'
+    ##     scale_factor_constant       = 10000 //scientific notation NOT allowed
 
 ## Optional: MACS2
 
