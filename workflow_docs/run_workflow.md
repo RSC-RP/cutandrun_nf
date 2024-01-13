@@ -210,7 +210,7 @@ calling steps.
     ##     queue                       = 'paidq'
     ##     project                     = '207f23bf-acb6-4835-8bfe-142436acb58c'
     ##     outdir                      = "./results/mouse"
-    ##     peaks_outdir                = "${params.outdir}/macs_no_igg"
+    ##     peaks_outdir                = "${params.outdir}/peak_calls"
     ##     publish_dir_mode            = 'copy'
     ## 
     ##     //Bowtie params for target genome
@@ -244,7 +244,7 @@ Be sure to change the following lines for the global parameters:
     ##     queue                       = 'paidq'
     ##     project                     = '207f23bf-acb6-4835-8bfe-142436acb58c'
     ##     outdir                      = "./results/mouse"
-    ##     peaks_outdir                = "${params.outdir}/macs_no_igg"
+    ##     peaks_outdir                = "${params.outdir}/peak_calls"
     ##     publish_dir_mode            = 'copy'
 
 ## Genomic References
@@ -624,21 +624,15 @@ There will be the following file structure:
     ## │   ├── M2_H3K27_NK_FASTQC_TRIM
     ## │   ├── M2_H3K4_NK_FASTQC_TRIM
     ## │   └── M2_IgG_NK_FASTQC_TRIM
-    ## ├── macs_igg
-    ## │   ├── macs2_callpeak
-    ## │   ├── macs2_plotenrichment
-    ## │   ├── macspeakstobed
-    ## │   ├── seacr_callpeak
-    ## │   └── seacr_plotenrichment
-    ## ├── macs_no_igg
-    ## │   ├── macs2_callpeak
-    ## │   ├── macs2_plotenrichment
-    ## │   ├── macspeakstobed
-    ## │   ├── seacr_callpeak
-    ## │   └── seacr_plotenrichment
     ## ├── multiqc
     ## │   ├── test_dataset_sample_sheet_multiqc_report.html
     ## │   └── test_dataset_sample_sheet_multiqc_report_data
+    ## ├── peak_calls
+    ## │   ├── macs2_callpeak
+    ## │   ├── macs2_plotenrichment
+    ## │   ├── macspeakstobed
+    ## │   ├── seacr_callpeak
+    ## │   └── seacr_plotenrichment
     ## ├── picard_markduplicates
     ## │   ├── M1_H3K27_NK.markedDup.MarkDuplicates.metrics.txt
     ## │   ├── M1_H3K27_NK.markedDup.bai
@@ -732,133 +726,107 @@ There will be the following file structure:
 Within each directory you will find the following files (top 5 files per
 directory are shown):
 
-| path                                                                                         | type      | process                           | filename                                          |
-|:---------------------------------------------------------------------------------------------|:----------|:----------------------------------|:--------------------------------------------------|
-| ../results/mouse/bamtobedgraph                                                               | directory | /bamtobedgraph                    |                                                   |
-| ../results/mouse/bamtobedgraph/M1_H3K27_NK_aligned.bed                                       | file      | /bamtobedgraph                    | M1_H3K27_NK_aligned.bed                           |
-| ../results/mouse/bamtobedgraph/M1_H3K27_NK_aligned.clean.bed                                 | file      | /bamtobedgraph                    | M1_H3K27_NK_aligned.clean.bed                     |
-| ../results/mouse/bamtobedgraph/M1_H3K27_NK_aligned.fragments.bed                             | file      | /bamtobedgraph                    | M1_H3K27_NK_aligned.fragments.bed                 |
-| ../results/mouse/bamtobedgraph/M1_H3K27_NK_aligned_fragments.bg                              | file      | /bamtobedgraph                    | M1_H3K27_NK_aligned_fragments.bg                  |
-| ../results/mouse/bowtie2_align                                                               | directory | /bowtie2_align                    |                                                   |
-| ../results/mouse/bowtie2_align/M1_H3K27_NK.sort.bam                                          | file      | /bowtie2_align                    | M1_H3K27_NK.sort.bam                              |
-| ../results/mouse/bowtie2_align/M1_H3K27_NK.sort.bowtie2.log                                  | file      | /bowtie2_align                    | M1_H3K27_NK.sort.bowtie2.log                      |
-| ../results/mouse/bowtie2_align/M1_H3K4_NK.sort.bam                                           | file      | /bowtie2_align                    | M1_H3K4_NK.sort.bam                               |
-| ../results/mouse/bowtie2_align/M1_H3K4_NK.sort.bowtie2.log                                   | file      | /bowtie2_align                    | M1_H3K4_NK.sort.bowtie2.log                       |
-| ../results/mouse/deeptools_bamcoverage                                                       | directory | /deeptools_bamcoverage            |                                                   |
-| ../results/mouse/deeptools_bamcoverage/M1_H3K27_NK_CPM.bigWig                                | file      | /deeptools_bamcoverage            | M1_H3K27_NK_CPM.bigWig                            |
-| ../results/mouse/deeptools_bamcoverage/M1_H3K4_NK_CPM.bigWig                                 | file      | /deeptools_bamcoverage            | M1_H3K4_NK_CPM.bigWig                             |
-| ../results/mouse/deeptools_bamcoverage/M1_IgG_NK_CPM.bigWig                                  | file      | /deeptools_bamcoverage            | M1_IgG_NK_CPM.bigWig                              |
-| ../results/mouse/deeptools_bamcoverage/M2_H3K27_NK_CPM.bigWig                                | file      | /deeptools_bamcoverage            | M2_H3K27_NK_CPM.bigWig                            |
-| ../results/mouse/deeptools_multibigwigsummary                                                | directory | /deeptools_multibigwigsummary     |                                                   |
-| ../results/mouse/deeptools_multibigwigsummary/test_dataset_sample_sheet_scores_per_bin.npz   | file      | /deeptools_multibigwigsummary     | test_dataset_sample_sheet_scores_per_bin.npz      |
-| ../results/mouse/deeptools_plotcorrelation                                                   | directory | /deeptools_plotcorrelation        |                                                   |
-| ../results/mouse/deeptools_plotcorrelation/test_dataset_sample_sheet.plotCorrelation.mat.tab | file      | /deeptools_plotcorrelation        | test_dataset_sample_sheet.plotCorrelation.mat.tab |
-| ../results/mouse/deeptools_plotcorrelation/test_dataset_sample_sheet.plotCorrelation.pdf     | file      | /deeptools_plotcorrelation        | test_dataset_sample_sheet.plotCorrelation.pdf     |
-| ../results/mouse/deeptools_plotfingerprint                                                   | directory | /deeptools_plotfingerprint        |                                                   |
-| ../results/mouse/deeptools_plotfingerprint/M1_H3K27_NK.plotFingerprint.pdf                   | file      | /deeptools_plotfingerprint        | M1_H3K27_NK.plotFingerprint.pdf                   |
-| ../results/mouse/deeptools_plotfingerprint/M1_H3K27_NK.plotFingerprint.qcmetrics.txt         | file      | /deeptools_plotfingerprint        | M1_H3K27_NK.plotFingerprint.qcmetrics.txt         |
-| ../results/mouse/deeptools_plotfingerprint/M1_H3K27_NK.plotFingerprint.raw.txt               | file      | /deeptools_plotfingerprint        | M1_H3K27_NK.plotFingerprint.raw.txt               |
-| ../results/mouse/deeptools_plotfingerprint/M1_H3K4_NK.plotFingerprint.pdf                    | file      | /deeptools_plotfingerprint        | M1_H3K4_NK.plotFingerprint.pdf                    |
-| ../results/mouse/deeptools_plotpca                                                           | directory | /deeptools_plotpca                |                                                   |
-| ../results/mouse/deeptools_plotpca/test_dataset_sample_sheet.plotPCA.pdf                     | file      | /deeptools_plotpca                | test_dataset_sample_sheet.plotPCA.pdf             |
-| ../results/mouse/deeptools_plotpca/test_dataset_sample_sheet.plotPCA.tab                     | file      | /deeptools_plotpca                | test_dataset_sample_sheet.plotPCA.tab             |
-| ../results/mouse/fastqc                                                                      | directory | /fastqc                           |                                                   |
-| ../results/mouse/fastqc/M1_H3K27_NK_FASTQC                                                   | directory | /fastqc                           |                                                   |
-| ../results/mouse/fastqc/M1_H3K27_NK_FASTQC/M1_H3K27_NK_1\_fastqc.html                        | file      | /fastqc                           | M1_H3K27_NK_1\_fastqc.html                        |
-| ../results/mouse/fastqc/M1_H3K27_NK_FASTQC/M1_H3K27_NK_1\_fastqc.zip                         | file      | /fastqc                           | M1_H3K27_NK_1\_fastqc.zip                         |
-| ../results/mouse/fastqc/M1_H3K27_NK_FASTQC/M1_H3K27_NK_2\_fastqc.html                        | file      | /fastqc                           | M1_H3K27_NK_2\_fastqc.html                        |
-| ../results/mouse/fastqc_trim                                                                 | directory | /fastqc_trim                      |                                                   |
-| ../results/mouse/fastqc_trim/M1_H3K27_NK_FASTQC_TRIM                                         | directory | /fastqc_trim                      |                                                   |
-| ../results/mouse/fastqc_trim/M1_H3K27_NK_FASTQC_TRIM/M1_H3K27_NK_1\_fastqc.html              | file      | /fastqc_trim                      | M1_H3K27_NK_1\_fastqc.html                        |
-| ../results/mouse/fastqc_trim/M1_H3K27_NK_FASTQC_TRIM/M1_H3K27_NK_1\_fastqc.zip               | file      | /fastqc_trim                      | M1_H3K27_NK_1\_fastqc.zip                         |
-| ../results/mouse/fastqc_trim/M1_H3K27_NK_FASTQC_TRIM/M1_H3K27_NK_2\_fastqc.html              | file      | /fastqc_trim                      | M1_H3K27_NK_2\_fastqc.html                        |
-| ../results/mouse/macs_igg                                                                    | directory | /macs_igg                         |                                                   |
-| ../results/mouse/macs_igg/macs2_callpeak                                                     | directory | /macs_igg/macs2_callpeak          |                                                   |
-| ../results/mouse/macs_igg/macs2_callpeak/M1_H3K27_NK_control_lambda.bdg                      | file      | /macs_igg/macs2_callpeak          | M1_H3K27_NK_control_lambda.bdg                    |
-| ../results/mouse/macs_igg/macs2_callpeak/M1_H3K27_NK_peaks.narrowPeak                        | file      | /macs_igg/macs2_callpeak          | M1_H3K27_NK_peaks.narrowPeak                      |
-| ../results/mouse/macs_igg/macs2_callpeak/M1_H3K27_NK_peaks.xls                               | file      | /macs_igg/macs2_callpeak          | M1_H3K27_NK_peaks.xls                             |
-| ../results/mouse/macs_igg/macs2_callpeak/M1_H3K27_NK_summits.bed                             | file      | /macs_igg/macs2_callpeak          | M1_H3K27_NK_summits.bed                           |
-| ../results/mouse/macs_igg/macs2_plotenrichment                                               | directory | /macs_igg/macs2_plotenrichment    |                                                   |
-| ../results/mouse/macs_igg/macs2_plotenrichment/M1_H3K27_NK.plotEnrichment.pdf                | file      | /macs_igg/macs2_plotenrichment    | M1_H3K27_NK.plotEnrichment.pdf                    |
-| ../results/mouse/macs_igg/macs2_plotenrichment/M1_H3K27_NK.plotEnrichment.txt                | file      | /macs_igg/macs2_plotenrichment    | M1_H3K27_NK.plotEnrichment.txt                    |
-| ../results/mouse/macs_igg/macs2_plotenrichment/M1_H3K4_NK.plotEnrichment.pdf                 | file      | /macs_igg/macs2_plotenrichment    | M1_H3K4_NK.plotEnrichment.pdf                     |
-| ../results/mouse/macs_igg/macs2_plotenrichment/M1_H3K4_NK.plotEnrichment.txt                 | file      | /macs_igg/macs2_plotenrichment    | M1_H3K4_NK.plotEnrichment.txt                     |
-| ../results/mouse/macs_igg/macspeakstobed                                                     | directory | /macs_igg/macspeakstobed          |                                                   |
-| ../results/mouse/macs_igg/macspeakstobed/M1_H3K27_NK_peaks.bed                               | file      | /macs_igg/macspeakstobed          | M1_H3K27_NK_peaks.bed                             |
-| ../results/mouse/macs_igg/macspeakstobed/M1_H3K4_NK_peaks.bed                                | file      | /macs_igg/macspeakstobed          | M1_H3K4_NK_peaks.bed                              |
-| ../results/mouse/macs_igg/macspeakstobed/M2_H3K27_NK_peaks.bed                               | file      | /macs_igg/macspeakstobed          | M2_H3K27_NK_peaks.bed                             |
-| ../results/mouse/macs_igg/macspeakstobed/M2_H3K4_NK_peaks.bed                                | file      | /macs_igg/macspeakstobed          | M2_H3K4_NK_peaks.bed                              |
-| ../results/mouse/macs_igg/seacr_callpeak                                                     | directory | /macs_igg/seacr_callpeak          |                                                   |
-| ../results/mouse/macs_igg/seacr_callpeak/M1_H3K27_NK_vs_M1_IgG_NK_norm.stringent.bed         | file      | /macs_igg/seacr_callpeak          | M1_H3K27_NK_vs_M1_IgG_NK_norm.stringent.bed       |
-| ../results/mouse/macs_igg/seacr_callpeak/M1_H3K4_NK_vs_M1_IgG_NK_norm.stringent.bed          | file      | /macs_igg/seacr_callpeak          | M1_H3K4_NK_vs_M1_IgG_NK_norm.stringent.bed        |
-| ../results/mouse/macs_igg/seacr_callpeak/M2_H3K27_NK_vs_M2_IgG_NK_norm.stringent.bed         | file      | /macs_igg/seacr_callpeak          | M2_H3K27_NK_vs_M2_IgG_NK_norm.stringent.bed       |
-| ../results/mouse/macs_igg/seacr_callpeak/M2_H3K4_NK_vs_M2_IgG_NK_norm.stringent.bed          | file      | /macs_igg/seacr_callpeak          | M2_H3K4_NK_vs_M2_IgG_NK_norm.stringent.bed        |
-| ../results/mouse/macs_igg/seacr_plotenrichment                                               | directory | /macs_igg/seacr_plotenrichment    |                                                   |
-| ../results/mouse/macs_igg/seacr_plotenrichment/M1_H3K27_NK.plotEnrichment.pdf                | file      | /macs_igg/seacr_plotenrichment    | M1_H3K27_NK.plotEnrichment.pdf                    |
-| ../results/mouse/macs_igg/seacr_plotenrichment/M1_H3K27_NK.plotEnrichment.txt                | file      | /macs_igg/seacr_plotenrichment    | M1_H3K27_NK.plotEnrichment.txt                    |
-| ../results/mouse/macs_igg/seacr_plotenrichment/M1_H3K4_NK.plotEnrichment.pdf                 | file      | /macs_igg/seacr_plotenrichment    | M1_H3K4_NK.plotEnrichment.pdf                     |
-| ../results/mouse/macs_igg/seacr_plotenrichment/M1_H3K4_NK.plotEnrichment.txt                 | file      | /macs_igg/seacr_plotenrichment    | M1_H3K4_NK.plotEnrichment.txt                     |
-| ../results/mouse/macs_no_igg                                                                 | directory | /macs_no_igg                      |                                                   |
-| ../results/mouse/macs_no_igg/macs2_callpeak                                                  | directory | /macs_no_igg/macs2_callpeak       |                                                   |
-| ../results/mouse/macs_no_igg/macs2_callpeak/M1_H3K27_NK_control_lambda.bdg                   | file      | /macs_no_igg/macs2_callpeak       | M1_H3K27_NK_control_lambda.bdg                    |
-| ../results/mouse/macs_no_igg/macs2_callpeak/M1_H3K27_NK_peaks.narrowPeak                     | file      | /macs_no_igg/macs2_callpeak       | M1_H3K27_NK_peaks.narrowPeak                      |
-| ../results/mouse/macs_no_igg/macs2_callpeak/M1_H3K27_NK_peaks.xls                            | file      | /macs_no_igg/macs2_callpeak       | M1_H3K27_NK_peaks.xls                             |
-| ../results/mouse/macs_no_igg/macs2_callpeak/M1_H3K27_NK_summits.bed                          | file      | /macs_no_igg/macs2_callpeak       | M1_H3K27_NK_summits.bed                           |
-| ../results/mouse/macs_no_igg/macs2_plotenrichment                                            | directory | /macs_no_igg/macs2_plotenrichment |                                                   |
-| ../results/mouse/macs_no_igg/macs2_plotenrichment/M1_H3K27_NK.plotEnrichment.pdf             | file      | /macs_no_igg/macs2_plotenrichment | M1_H3K27_NK.plotEnrichment.pdf                    |
-| ../results/mouse/macs_no_igg/macs2_plotenrichment/M1_H3K27_NK.plotEnrichment.txt             | file      | /macs_no_igg/macs2_plotenrichment | M1_H3K27_NK.plotEnrichment.txt                    |
-| ../results/mouse/macs_no_igg/macs2_plotenrichment/M1_H3K4_NK.plotEnrichment.pdf              | file      | /macs_no_igg/macs2_plotenrichment | M1_H3K4_NK.plotEnrichment.pdf                     |
-| ../results/mouse/macs_no_igg/macs2_plotenrichment/M1_H3K4_NK.plotEnrichment.txt              | file      | /macs_no_igg/macs2_plotenrichment | M1_H3K4_NK.plotEnrichment.txt                     |
-| ../results/mouse/macs_no_igg/macspeakstobed                                                  | directory | /macs_no_igg/macspeakstobed       |                                                   |
-| ../results/mouse/macs_no_igg/macspeakstobed/M1_H3K27_NK_peaks.bed                            | file      | /macs_no_igg/macspeakstobed       | M1_H3K27_NK_peaks.bed                             |
-| ../results/mouse/macs_no_igg/macspeakstobed/M1_H3K4_NK_peaks.bed                             | file      | /macs_no_igg/macspeakstobed       | M1_H3K4_NK_peaks.bed                              |
-| ../results/mouse/macs_no_igg/macspeakstobed/M2_H3K27_NK_peaks.bed                            | file      | /macs_no_igg/macspeakstobed       | M2_H3K27_NK_peaks.bed                             |
-| ../results/mouse/macs_no_igg/macspeakstobed/M2_H3K4_NK_peaks.bed                             | file      | /macs_no_igg/macspeakstobed       | M2_H3K4_NK_peaks.bed                              |
-| ../results/mouse/macs_no_igg/seacr_callpeak                                                  | directory | /macs_no_igg/seacr_callpeak       |                                                   |
-| ../results/mouse/macs_no_igg/seacr_callpeak/M1_H3K27_NK_vs_M1_IgG_NK_norm.stringent.bed      | file      | /macs_no_igg/seacr_callpeak       | M1_H3K27_NK_vs_M1_IgG_NK_norm.stringent.bed       |
-| ../results/mouse/macs_no_igg/seacr_callpeak/M1_H3K4_NK_vs_M1_IgG_NK_norm.stringent.bed       | file      | /macs_no_igg/seacr_callpeak       | M1_H3K4_NK_vs_M1_IgG_NK_norm.stringent.bed        |
-| ../results/mouse/macs_no_igg/seacr_callpeak/M2_H3K27_NK_vs_M2_IgG_NK_norm.stringent.bed      | file      | /macs_no_igg/seacr_callpeak       | M2_H3K27_NK_vs_M2_IgG_NK_norm.stringent.bed       |
-| ../results/mouse/macs_no_igg/seacr_callpeak/M2_H3K4_NK_vs_M2_IgG_NK_norm.stringent.bed       | file      | /macs_no_igg/seacr_callpeak       | M2_H3K4_NK_vs_M2_IgG_NK_norm.stringent.bed        |
-| ../results/mouse/macs_no_igg/seacr_plotenrichment                                            | directory | /macs_no_igg/seacr_plotenrichment |                                                   |
-| ../results/mouse/macs_no_igg/seacr_plotenrichment/M1_H3K27_NK.plotEnrichment.pdf             | file      | /macs_no_igg/seacr_plotenrichment | M1_H3K27_NK.plotEnrichment.pdf                    |
-| ../results/mouse/macs_no_igg/seacr_plotenrichment/M1_H3K27_NK.plotEnrichment.txt             | file      | /macs_no_igg/seacr_plotenrichment | M1_H3K27_NK.plotEnrichment.txt                    |
-| ../results/mouse/macs_no_igg/seacr_plotenrichment/M1_H3K4_NK.plotEnrichment.pdf              | file      | /macs_no_igg/seacr_plotenrichment | M1_H3K4_NK.plotEnrichment.pdf                     |
-| ../results/mouse/macs_no_igg/seacr_plotenrichment/M1_H3K4_NK.plotEnrichment.txt              | file      | /macs_no_igg/seacr_plotenrichment | M1_H3K4_NK.plotEnrichment.txt                     |
-| ../results/mouse/multiqc                                                                     | directory | /multiqc                          |                                                   |
-| ../results/mouse/picard_markduplicates                                                       | directory | /picard_markduplicates            |                                                   |
-| ../results/mouse/picard_markduplicates/M1_H3K27_NK.markedDup.MarkDuplicates.metrics.txt      | file      | /picard_markduplicates            | M1_H3K27_NK.markedDup.MarkDuplicates.metrics.txt  |
-| ../results/mouse/picard_markduplicates/M1_H3K27_NK.markedDup.bai                             | file      | /picard_markduplicates            | M1_H3K27_NK.markedDup.bai                         |
-| ../results/mouse/picard_markduplicates/M1_H3K27_NK.markedDup.bam                             | file      | /picard_markduplicates            | M1_H3K27_NK.markedDup.bam                         |
-| ../results/mouse/picard_markduplicates/M1_H3K27_NK.markedDup.bam.md5                         | file      | /picard_markduplicates            | M1_H3K27_NK.markedDup.bam.md5                     |
-| ../results/mouse/samtools_faidx                                                              | directory | /samtools_faidx                   |                                                   |
-| ../results/mouse/samtools_faidx/mm39.fa.fai                                                  | file      | /samtools_faidx                   | mm39.fa.fai                                       |
-| ../results/mouse/samtools_index                                                              | directory | /samtools_index                   |                                                   |
-| ../results/mouse/samtools_index/M1_H3K27_NK.markedDup.filter.sort.bam.bai                    | file      | /samtools_index                   | M1_H3K27_NK.markedDup.filter.sort.bam.bai         |
-| ../results/mouse/samtools_index/M1_H3K4_NK.markedDup.filter.sort.bam.bai                     | file      | /samtools_index                   | M1_H3K4_NK.markedDup.filter.sort.bam.bai          |
-| ../results/mouse/samtools_index/M1_IgG_NK.markedDup.filter.sort.bam.bai                      | file      | /samtools_index                   | M1_IgG_NK.markedDup.filter.sort.bam.bai           |
-| ../results/mouse/samtools_index/M2_H3K27_NK.markedDup.filter.sort.bam.bai                    | file      | /samtools_index                   | M2_H3K27_NK.markedDup.filter.sort.bam.bai         |
-| ../results/mouse/samtools_nsort                                                              | directory | /samtools_nsort                   |                                                   |
-| ../results/mouse/samtools_nsort/M1_H3K27_NK.markedDup.filter.nsort.bam                       | file      | /samtools_nsort                   | M1_H3K27_NK.markedDup.filter.nsort.bam            |
-| ../results/mouse/samtools_nsort/M1_H3K4_NK.markedDup.filter.nsort.bam                        | file      | /samtools_nsort                   | M1_H3K4_NK.markedDup.filter.nsort.bam             |
-| ../results/mouse/samtools_nsort/M1_IgG_NK.markedDup.filter.nsort.bam                         | file      | /samtools_nsort                   | M1_IgG_NK.markedDup.filter.nsort.bam              |
-| ../results/mouse/samtools_nsort/M2_H3K27_NK.markedDup.filter.nsort.bam                       | file      | /samtools_nsort                   | M2_H3K27_NK.markedDup.filter.nsort.bam            |
-| ../results/mouse/samtools_sort                                                               | directory | /samtools_sort                    |                                                   |
-| ../results/mouse/samtools_sort/M1_H3K27_NK.markedDup.filter.sort.bam                         | file      | /samtools_sort                    | M1_H3K27_NK.markedDup.filter.sort.bam             |
-| ../results/mouse/samtools_sort/M1_H3K4_NK.markedDup.filter.sort.bam                          | file      | /samtools_sort                    | M1_H3K4_NK.markedDup.filter.sort.bam              |
-| ../results/mouse/samtools_sort/M1_IgG_NK.markedDup.filter.sort.bam                           | file      | /samtools_sort                    | M1_IgG_NK.markedDup.filter.sort.bam               |
-| ../results/mouse/samtools_sort/M2_H3K27_NK.markedDup.filter.sort.bam                         | file      | /samtools_sort                    | M2_H3K27_NK.markedDup.filter.sort.bam             |
-| ../results/mouse/samtools_stats                                                              | directory | /samtools_stats                   |                                                   |
-| ../results/mouse/samtools_stats/M1_H3K27_NK.markedDup.stats                                  | file      | /samtools_stats                   | M1_H3K27_NK.markedDup.stats                       |
-| ../results/mouse/samtools_stats/M1_H3K4_NK.markedDup.stats                                   | file      | /samtools_stats                   | M1_H3K4_NK.markedDup.stats                        |
-| ../results/mouse/samtools_stats/M1_IgG_NK.markedDup.stats                                    | file      | /samtools_stats                   | M1_IgG_NK.markedDup.stats                         |
-| ../results/mouse/samtools_stats/M2_H3K27_NK.markedDup.stats                                  | file      | /samtools_stats                   | M2_H3K27_NK.markedDup.stats                       |
-| ../results/mouse/samtools_view                                                               | directory | /samtools_view                    |                                                   |
-| ../results/mouse/samtools_view/M1_H3K27_NK.markedDup.filter.bam                              | file      | /samtools_view                    | M1_H3K27_NK.markedDup.filter.bam                  |
-| ../results/mouse/samtools_view/M1_H3K4_NK.markedDup.filter.bam                               | file      | /samtools_view                    | M1_H3K4_NK.markedDup.filter.bam                   |
-| ../results/mouse/samtools_view/M1_IgG_NK.markedDup.filter.bam                                | file      | /samtools_view                    | M1_IgG_NK.markedDup.filter.bam                    |
-| ../results/mouse/samtools_view/M2_H3K27_NK.markedDup.filter.bam                              | file      | /samtools_view                    | M2_H3K27_NK.markedDup.filter.bam                  |
-| ../results/mouse/trimgalore                                                                  | directory | /trimgalore                       |                                                   |
-| ../results/mouse/trimgalore/M1_H3K27_NK_1.fastq.gz_trimming_report.txt                       | file      | /trimgalore                       | M1_H3K27_NK_1.fastq.gz_trimming_report.txt        |
-| ../results/mouse/trimgalore/M1_H3K27_NK_1\_val_1.fq.gz                                       | file      | /trimgalore                       | M1_H3K27_NK_1\_val_1.fq.gz                        |
-| ../results/mouse/trimgalore/M1_H3K27_NK_2.fastq.gz_trimming_report.txt                       | file      | /trimgalore                       | M1_H3K27_NK_2.fastq.gz_trimming_report.txt        |
-| ../results/mouse/trimgalore/M1_H3K27_NK_2\_val_2.fq.gz                                       | file      | /trimgalore                       | M1_H3K27_NK_2\_val_2.fq.gz                        |
+| path                                                                                         | type      | process                          | filename                                          |
+|:---------------------------------------------------------------------------------------------|:----------|:---------------------------------|:--------------------------------------------------|
+| ../results/mouse/bamtobedgraph                                                               | directory | /bamtobedgraph                   |                                                   |
+| ../results/mouse/bamtobedgraph/M1_H3K27_NK_aligned.bed                                       | file      | /bamtobedgraph                   | M1_H3K27_NK_aligned.bed                           |
+| ../results/mouse/bamtobedgraph/M1_H3K27_NK_aligned.clean.bed                                 | file      | /bamtobedgraph                   | M1_H3K27_NK_aligned.clean.bed                     |
+| ../results/mouse/bamtobedgraph/M1_H3K27_NK_aligned.fragments.bed                             | file      | /bamtobedgraph                   | M1_H3K27_NK_aligned.fragments.bed                 |
+| ../results/mouse/bamtobedgraph/M1_H3K27_NK_aligned_fragments.bg                              | file      | /bamtobedgraph                   | M1_H3K27_NK_aligned_fragments.bg                  |
+| ../results/mouse/bowtie2_align                                                               | directory | /bowtie2_align                   |                                                   |
+| ../results/mouse/bowtie2_align/M1_H3K27_NK.sort.bam                                          | file      | /bowtie2_align                   | M1_H3K27_NK.sort.bam                              |
+| ../results/mouse/bowtie2_align/M1_H3K27_NK.sort.bowtie2.log                                  | file      | /bowtie2_align                   | M1_H3K27_NK.sort.bowtie2.log                      |
+| ../results/mouse/bowtie2_align/M1_H3K4_NK.sort.bam                                           | file      | /bowtie2_align                   | M1_H3K4_NK.sort.bam                               |
+| ../results/mouse/bowtie2_align/M1_H3K4_NK.sort.bowtie2.log                                   | file      | /bowtie2_align                   | M1_H3K4_NK.sort.bowtie2.log                       |
+| ../results/mouse/deeptools_bamcoverage                                                       | directory | /deeptools_bamcoverage           |                                                   |
+| ../results/mouse/deeptools_bamcoverage/M1_H3K27_NK_CPM.bigWig                                | file      | /deeptools_bamcoverage           | M1_H3K27_NK_CPM.bigWig                            |
+| ../results/mouse/deeptools_bamcoverage/M1_H3K4_NK_CPM.bigWig                                 | file      | /deeptools_bamcoverage           | M1_H3K4_NK_CPM.bigWig                             |
+| ../results/mouse/deeptools_bamcoverage/M1_IgG_NK_CPM.bigWig                                  | file      | /deeptools_bamcoverage           | M1_IgG_NK_CPM.bigWig                              |
+| ../results/mouse/deeptools_bamcoverage/M2_H3K27_NK_CPM.bigWig                                | file      | /deeptools_bamcoverage           | M2_H3K27_NK_CPM.bigWig                            |
+| ../results/mouse/deeptools_multibigwigsummary                                                | directory | /deeptools_multibigwigsummary    |                                                   |
+| ../results/mouse/deeptools_multibigwigsummary/test_dataset_sample_sheet_scores_per_bin.npz   | file      | /deeptools_multibigwigsummary    | test_dataset_sample_sheet_scores_per_bin.npz      |
+| ../results/mouse/deeptools_plotcorrelation                                                   | directory | /deeptools_plotcorrelation       |                                                   |
+| ../results/mouse/deeptools_plotcorrelation/test_dataset_sample_sheet.plotCorrelation.mat.tab | file      | /deeptools_plotcorrelation       | test_dataset_sample_sheet.plotCorrelation.mat.tab |
+| ../results/mouse/deeptools_plotcorrelation/test_dataset_sample_sheet.plotCorrelation.pdf     | file      | /deeptools_plotcorrelation       | test_dataset_sample_sheet.plotCorrelation.pdf     |
+| ../results/mouse/deeptools_plotfingerprint                                                   | directory | /deeptools_plotfingerprint       |                                                   |
+| ../results/mouse/deeptools_plotfingerprint/M1_H3K27_NK.plotFingerprint.pdf                   | file      | /deeptools_plotfingerprint       | M1_H3K27_NK.plotFingerprint.pdf                   |
+| ../results/mouse/deeptools_plotfingerprint/M1_H3K27_NK.plotFingerprint.qcmetrics.txt         | file      | /deeptools_plotfingerprint       | M1_H3K27_NK.plotFingerprint.qcmetrics.txt         |
+| ../results/mouse/deeptools_plotfingerprint/M1_H3K27_NK.plotFingerprint.raw.txt               | file      | /deeptools_plotfingerprint       | M1_H3K27_NK.plotFingerprint.raw.txt               |
+| ../results/mouse/deeptools_plotfingerprint/M1_H3K4_NK.plotFingerprint.pdf                    | file      | /deeptools_plotfingerprint       | M1_H3K4_NK.plotFingerprint.pdf                    |
+| ../results/mouse/deeptools_plotpca                                                           | directory | /deeptools_plotpca               |                                                   |
+| ../results/mouse/deeptools_plotpca/test_dataset_sample_sheet.plotPCA.pdf                     | file      | /deeptools_plotpca               | test_dataset_sample_sheet.plotPCA.pdf             |
+| ../results/mouse/deeptools_plotpca/test_dataset_sample_sheet.plotPCA.tab                     | file      | /deeptools_plotpca               | test_dataset_sample_sheet.plotPCA.tab             |
+| ../results/mouse/fastqc                                                                      | directory | /fastqc                          |                                                   |
+| ../results/mouse/fastqc/M1_H3K27_NK_FASTQC                                                   | directory | /fastqc                          |                                                   |
+| ../results/mouse/fastqc/M1_H3K27_NK_FASTQC/M1_H3K27_NK_1\_fastqc.html                        | file      | /fastqc                          | M1_H3K27_NK_1\_fastqc.html                        |
+| ../results/mouse/fastqc/M1_H3K27_NK_FASTQC/M1_H3K27_NK_1\_fastqc.zip                         | file      | /fastqc                          | M1_H3K27_NK_1\_fastqc.zip                         |
+| ../results/mouse/fastqc/M1_H3K27_NK_FASTQC/M1_H3K27_NK_2\_fastqc.html                        | file      | /fastqc                          | M1_H3K27_NK_2\_fastqc.html                        |
+| ../results/mouse/fastqc_trim                                                                 | directory | /fastqc_trim                     |                                                   |
+| ../results/mouse/fastqc_trim/M1_H3K27_NK_FASTQC_TRIM                                         | directory | /fastqc_trim                     |                                                   |
+| ../results/mouse/fastqc_trim/M1_H3K27_NK_FASTQC_TRIM/M1_H3K27_NK_1\_fastqc.html              | file      | /fastqc_trim                     | M1_H3K27_NK_1\_fastqc.html                        |
+| ../results/mouse/fastqc_trim/M1_H3K27_NK_FASTQC_TRIM/M1_H3K27_NK_1\_fastqc.zip               | file      | /fastqc_trim                     | M1_H3K27_NK_1\_fastqc.zip                         |
+| ../results/mouse/fastqc_trim/M1_H3K27_NK_FASTQC_TRIM/M1_H3K27_NK_2\_fastqc.html              | file      | /fastqc_trim                     | M1_H3K27_NK_2\_fastqc.html                        |
+| ../results/mouse/multiqc                                                                     | directory | /multiqc                         |                                                   |
+| ../results/mouse/peak_calls                                                                  | directory | /peak_calls                      |                                                   |
+| ../results/mouse/peak_calls/macs2_callpeak                                                   | directory | /peak_calls/macs2_callpeak       |                                                   |
+| ../results/mouse/peak_calls/macs2_callpeak/M1_H3K27_NK_control_lambda.bdg                    | file      | /peak_calls/macs2_callpeak       | M1_H3K27_NK_control_lambda.bdg                    |
+| ../results/mouse/peak_calls/macs2_callpeak/M1_H3K27_NK_peaks.narrowPeak                      | file      | /peak_calls/macs2_callpeak       | M1_H3K27_NK_peaks.narrowPeak                      |
+| ../results/mouse/peak_calls/macs2_callpeak/M1_H3K27_NK_peaks.xls                             | file      | /peak_calls/macs2_callpeak       | M1_H3K27_NK_peaks.xls                             |
+| ../results/mouse/peak_calls/macs2_callpeak/M1_H3K27_NK_summits.bed                           | file      | /peak_calls/macs2_callpeak       | M1_H3K27_NK_summits.bed                           |
+| ../results/mouse/peak_calls/macs2_plotenrichment                                             | directory | /peak_calls/macs2_plotenrichment |                                                   |
+| ../results/mouse/peak_calls/macs2_plotenrichment/M1_H3K27_NK.plotEnrichment.pdf              | file      | /peak_calls/macs2_plotenrichment | M1_H3K27_NK.plotEnrichment.pdf                    |
+| ../results/mouse/peak_calls/macs2_plotenrichment/M1_H3K27_NK.plotEnrichment.txt              | file      | /peak_calls/macs2_plotenrichment | M1_H3K27_NK.plotEnrichment.txt                    |
+| ../results/mouse/peak_calls/macs2_plotenrichment/M1_H3K4_NK.plotEnrichment.pdf               | file      | /peak_calls/macs2_plotenrichment | M1_H3K4_NK.plotEnrichment.pdf                     |
+| ../results/mouse/peak_calls/macs2_plotenrichment/M1_H3K4_NK.plotEnrichment.txt               | file      | /peak_calls/macs2_plotenrichment | M1_H3K4_NK.plotEnrichment.txt                     |
+| ../results/mouse/peak_calls/macspeakstobed                                                   | directory | /peak_calls/macspeakstobed       |                                                   |
+| ../results/mouse/peak_calls/macspeakstobed/M1_H3K27_NK_peaks.bed                             | file      | /peak_calls/macspeakstobed       | M1_H3K27_NK_peaks.bed                             |
+| ../results/mouse/peak_calls/macspeakstobed/M1_H3K4_NK_peaks.bed                              | file      | /peak_calls/macspeakstobed       | M1_H3K4_NK_peaks.bed                              |
+| ../results/mouse/peak_calls/macspeakstobed/M2_H3K27_NK_peaks.bed                             | file      | /peak_calls/macspeakstobed       | M2_H3K27_NK_peaks.bed                             |
+| ../results/mouse/peak_calls/macspeakstobed/M2_H3K4_NK_peaks.bed                              | file      | /peak_calls/macspeakstobed       | M2_H3K4_NK_peaks.bed                              |
+| ../results/mouse/peak_calls/seacr_callpeak                                                   | directory | /peak_calls/seacr_callpeak       |                                                   |
+| ../results/mouse/peak_calls/seacr_callpeak/M1_H3K27_NK_vs_M1_IgG_NK_norm.stringent.bed       | file      | /peak_calls/seacr_callpeak       | M1_H3K27_NK_vs_M1_IgG_NK_norm.stringent.bed       |
+| ../results/mouse/peak_calls/seacr_callpeak/M1_H3K4_NK_vs_M1_IgG_NK_norm.stringent.bed        | file      | /peak_calls/seacr_callpeak       | M1_H3K4_NK_vs_M1_IgG_NK_norm.stringent.bed        |
+| ../results/mouse/peak_calls/seacr_callpeak/M2_H3K27_NK_vs_M2_IgG_NK_norm.stringent.bed       | file      | /peak_calls/seacr_callpeak       | M2_H3K27_NK_vs_M2_IgG_NK_norm.stringent.bed       |
+| ../results/mouse/peak_calls/seacr_callpeak/M2_H3K4_NK_vs_M2_IgG_NK_norm.stringent.bed        | file      | /peak_calls/seacr_callpeak       | M2_H3K4_NK_vs_M2_IgG_NK_norm.stringent.bed        |
+| ../results/mouse/peak_calls/seacr_plotenrichment                                             | directory | /peak_calls/seacr_plotenrichment |                                                   |
+| ../results/mouse/peak_calls/seacr_plotenrichment/M1_H3K27_NK.plotEnrichment.pdf              | file      | /peak_calls/seacr_plotenrichment | M1_H3K27_NK.plotEnrichment.pdf                    |
+| ../results/mouse/peak_calls/seacr_plotenrichment/M1_H3K27_NK.plotEnrichment.txt              | file      | /peak_calls/seacr_plotenrichment | M1_H3K27_NK.plotEnrichment.txt                    |
+| ../results/mouse/peak_calls/seacr_plotenrichment/M1_H3K4_NK.plotEnrichment.pdf               | file      | /peak_calls/seacr_plotenrichment | M1_H3K4_NK.plotEnrichment.pdf                     |
+| ../results/mouse/peak_calls/seacr_plotenrichment/M1_H3K4_NK.plotEnrichment.txt               | file      | /peak_calls/seacr_plotenrichment | M1_H3K4_NK.plotEnrichment.txt                     |
+| ../results/mouse/picard_markduplicates                                                       | directory | /picard_markduplicates           |                                                   |
+| ../results/mouse/picard_markduplicates/M1_H3K27_NK.markedDup.MarkDuplicates.metrics.txt      | file      | /picard_markduplicates           | M1_H3K27_NK.markedDup.MarkDuplicates.metrics.txt  |
+| ../results/mouse/picard_markduplicates/M1_H3K27_NK.markedDup.bai                             | file      | /picard_markduplicates           | M1_H3K27_NK.markedDup.bai                         |
+| ../results/mouse/picard_markduplicates/M1_H3K27_NK.markedDup.bam                             | file      | /picard_markduplicates           | M1_H3K27_NK.markedDup.bam                         |
+| ../results/mouse/picard_markduplicates/M1_H3K27_NK.markedDup.bam.md5                         | file      | /picard_markduplicates           | M1_H3K27_NK.markedDup.bam.md5                     |
+| ../results/mouse/samtools_faidx                                                              | directory | /samtools_faidx                  |                                                   |
+| ../results/mouse/samtools_faidx/mm39.fa.fai                                                  | file      | /samtools_faidx                  | mm39.fa.fai                                       |
+| ../results/mouse/samtools_index                                                              | directory | /samtools_index                  |                                                   |
+| ../results/mouse/samtools_index/M1_H3K27_NK.markedDup.filter.sort.bam.bai                    | file      | /samtools_index                  | M1_H3K27_NK.markedDup.filter.sort.bam.bai         |
+| ../results/mouse/samtools_index/M1_H3K4_NK.markedDup.filter.sort.bam.bai                     | file      | /samtools_index                  | M1_H3K4_NK.markedDup.filter.sort.bam.bai          |
+| ../results/mouse/samtools_index/M1_IgG_NK.markedDup.filter.sort.bam.bai                      | file      | /samtools_index                  | M1_IgG_NK.markedDup.filter.sort.bam.bai           |
+| ../results/mouse/samtools_index/M2_H3K27_NK.markedDup.filter.sort.bam.bai                    | file      | /samtools_index                  | M2_H3K27_NK.markedDup.filter.sort.bam.bai         |
+| ../results/mouse/samtools_nsort                                                              | directory | /samtools_nsort                  |                                                   |
+| ../results/mouse/samtools_nsort/M1_H3K27_NK.markedDup.filter.nsort.bam                       | file      | /samtools_nsort                  | M1_H3K27_NK.markedDup.filter.nsort.bam            |
+| ../results/mouse/samtools_nsort/M1_H3K4_NK.markedDup.filter.nsort.bam                        | file      | /samtools_nsort                  | M1_H3K4_NK.markedDup.filter.nsort.bam             |
+| ../results/mouse/samtools_nsort/M1_IgG_NK.markedDup.filter.nsort.bam                         | file      | /samtools_nsort                  | M1_IgG_NK.markedDup.filter.nsort.bam              |
+| ../results/mouse/samtools_nsort/M2_H3K27_NK.markedDup.filter.nsort.bam                       | file      | /samtools_nsort                  | M2_H3K27_NK.markedDup.filter.nsort.bam            |
+| ../results/mouse/samtools_sort                                                               | directory | /samtools_sort                   |                                                   |
+| ../results/mouse/samtools_sort/M1_H3K27_NK.markedDup.filter.sort.bam                         | file      | /samtools_sort                   | M1_H3K27_NK.markedDup.filter.sort.bam             |
+| ../results/mouse/samtools_sort/M1_H3K4_NK.markedDup.filter.sort.bam                          | file      | /samtools_sort                   | M1_H3K4_NK.markedDup.filter.sort.bam              |
+| ../results/mouse/samtools_sort/M1_IgG_NK.markedDup.filter.sort.bam                           | file      | /samtools_sort                   | M1_IgG_NK.markedDup.filter.sort.bam               |
+| ../results/mouse/samtools_sort/M2_H3K27_NK.markedDup.filter.sort.bam                         | file      | /samtools_sort                   | M2_H3K27_NK.markedDup.filter.sort.bam             |
+| ../results/mouse/samtools_stats                                                              | directory | /samtools_stats                  |                                                   |
+| ../results/mouse/samtools_stats/M1_H3K27_NK.markedDup.stats                                  | file      | /samtools_stats                  | M1_H3K27_NK.markedDup.stats                       |
+| ../results/mouse/samtools_stats/M1_H3K4_NK.markedDup.stats                                   | file      | /samtools_stats                  | M1_H3K4_NK.markedDup.stats                        |
+| ../results/mouse/samtools_stats/M1_IgG_NK.markedDup.stats                                    | file      | /samtools_stats                  | M1_IgG_NK.markedDup.stats                         |
+| ../results/mouse/samtools_stats/M2_H3K27_NK.markedDup.stats                                  | file      | /samtools_stats                  | M2_H3K27_NK.markedDup.stats                       |
+| ../results/mouse/samtools_view                                                               | directory | /samtools_view                   |                                                   |
+| ../results/mouse/samtools_view/M1_H3K27_NK.markedDup.filter.bam                              | file      | /samtools_view                   | M1_H3K27_NK.markedDup.filter.bam                  |
+| ../results/mouse/samtools_view/M1_H3K4_NK.markedDup.filter.bam                               | file      | /samtools_view                   | M1_H3K4_NK.markedDup.filter.bam                   |
+| ../results/mouse/samtools_view/M1_IgG_NK.markedDup.filter.bam                                | file      | /samtools_view                   | M1_IgG_NK.markedDup.filter.bam                    |
+| ../results/mouse/samtools_view/M2_H3K27_NK.markedDup.filter.bam                              | file      | /samtools_view                   | M2_H3K27_NK.markedDup.filter.bam                  |
+| ../results/mouse/trimgalore                                                                  | directory | /trimgalore                      |                                                   |
+| ../results/mouse/trimgalore/M1_H3K27_NK_1.fastq.gz_trimming_report.txt                       | file      | /trimgalore                      | M1_H3K27_NK_1.fastq.gz_trimming_report.txt        |
+| ../results/mouse/trimgalore/M1_H3K27_NK_1\_val_1.fq.gz                                       | file      | /trimgalore                      | M1_H3K27_NK_1\_val_1.fq.gz                        |
+| ../results/mouse/trimgalore/M1_H3K27_NK_2.fastq.gz_trimming_report.txt                       | file      | /trimgalore                      | M1_H3K27_NK_2.fastq.gz_trimming_report.txt        |
+| ../results/mouse/trimgalore/M1_H3K27_NK_2\_val_2.fq.gz                                       | file      | /trimgalore                      | M1_H3K27_NK_2\_val_2.fq.gz                        |
