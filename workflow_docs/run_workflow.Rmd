@@ -267,14 +267,13 @@ You can edit the command line parameters for `SEACR` and `MACS2` parameters that
 
 ```{r eval=TRUE, echo=FALSE}
 process_lines <- c(grep("Computational resource", config_file), 
-                  grep("FASTQC process", config_file)-1)
+                  grep("Picard to mark duplicate reads", config_file)-1)
 
 config_file[c(process_lines[1]:process_lines[2])] %>% 
     gsub("^.+(mode:.+|saveAs.+|fail.+).+$","", .) %>% 
     gsub("\\]$", "", .)  %>% 
     .[-grep("^$", .)] %>% 
     gsub("\\[  path.+", "[...]",.)
-    # cat(.,sep = "\n")
 ```
 
 SEACR has the option to be set to SEACR v1.4 or SEACR v1.3 - which have particularly different commandline interfaces, changes in the methods for normalization to IgG, and v1.4 can optionally remove peaks found in IgG. Please see [here](https://github.com/FredHutch/SEACR/releases) for the full changelog. 

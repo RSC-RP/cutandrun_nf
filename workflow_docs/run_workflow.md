@@ -353,107 +353,39 @@ the appropriate peak-set to use. For example, `MACS2` broad and narrow
 peak calling parameters for different histone modifications which can be
 modified using the `ext.args` parameter.
 
-    ##   [1] // Computational resource allocation for the processes run in the workflow                                     
-    ##   [2] process {                                                                                                      
-    ##   [3]     //Bowtie2 aligner process specific parameters                                                              
-    ##   [4]     withName: BOWTIE2_ALIGN {                                                                                  
-    ##   [5]         cpus = { 2 * task.attempt }                                                                            
-    ##   [6]         memory = { 32.GB * task.attempt }                                                                      
-    ##   [7]         ext.prefix = { "${meta.id}.sort" }                                                                     
-    ##   [8]         ext.args = '--local --very-sensitive-local --no-unal --no-mixed --no-discordant --phred33 -I 10 -X 700'
-    ##   [9]         ext.args2 = ''      //command line arguments for `samtools sort`                                       
-    ##  [10]     }                                                                                                          
-    ##  [11]     //SEACR peak calling resources                                                                             
-    ##  [12]     withName: SEACR_CALLPEAK {                                                                                 
-    ##  [13]         cpus = { 1 * task.attempt }                                                                            
-    ##  [14]         memory = { 16.GB * task.attempt }                                                                      
-    ##  [15]         ext.version = '1.4' //version 1.3 and 1.4 supported                                                    
-    ##  [16]         ext.args = '--normalize norm --mode stringent --remove yes'                                            
-    ##  [17]         publishDir = [...]                                                                                     
-    ##  [18]                                                                                                                
-    ##  [19]     }                                                                                                          
-    ##  [20]     //MACS2 peak calling resources                                                                             
-    ##  [21]     withName: MACS2_CALLPEAK {                                                                                 
-    ##  [22]         cpus = { 1 * task.attempt }                                                                            
-    ##  [23]         memory = { 16.GB * task.attempt }                                                                      
-    ##  [24]         ext.args = '-q 0.01 --keep-dup all --bdg'                                                              
-    ##  [25]         publishDir = [...]                                                                                     
-    ##  [26]                                                                                                                
-    ##  [27]     }                                                                                                          
-    ##  [28]     //BAMCOVERAGE bigwig file  parameters                                                                      
-    ##  [29]     withName: DEEPTOOLS_BAMCOVERAGE {                                                                          
-    ##  [30]         cpus = { 4 * task.attempt }                                                                            
-    ##  [31]         memory = { 16.GB * task.attempt }                                                                      
-    ##  [32]         ext.args = '--normalizeUsing CPM --centerReads --verbose'                                              
-    ##  [33]     }                                                                                                          
-    ##  [34]     //Picard to mark duplicate reads                                                                           
-    ##  [35]     withName: PICARD_MARKDUPLICATES {                                                                          
-    ##  [36]         cpus = { 2 * task.attempt }                                                                            
-    ##  [37]         memory = { 32.GB * task.attempt }                                                                      
-    ##  [38]         ext.prefix = { "${meta.id}.markedDup" }                                                                
-    ##  [39]         ext.args = '--CREATE_MD5_FILE true --CREATE_INDEX true'                                                
-    ##  [40]     }                                                                                                          
-    ##  [41]     //Picard to Remove duplicate reads                                                                         
-    ##  [42]     withName: PICARD_RMDUPLICATES {                                                                            
-    ##  [43]         cpus = { 2 * task.attempt }                                                                            
-    ##  [44]         memory = { 32.GB * task.attempt }                                                                      
-    ##  [45]         ext.prefix = { "${meta.id}.rmDup" }                                                                    
-    ##  [46]         ext.args = '--REMOVE_DUPLICATES true --CREATE_MD5_FILE true --CREATE_INDEX true'                       
-    ##  [47]     }                                                                                                          
-    ##  [48]     //Samtools to filter the aligned reads                                                                     
-    ##  [49]     if ( params.filter_bam ){                                                                                  
-    ##  [50]         withName: SAMTOOLS_VIEW {                                                                              
-    ##  [51]             cpus = { 2 * task.attempt }                                                                        
-    ##  [52]             memory = { 32.GB * task.attempt }                                                                  
-    ##  [53]             ext.prefix = { "${input.baseName}.filter" }                                                        
-    ##  [54]             ext.args = { "-q $params.mapq" }                                                                   
-    ##  [55]         }                                                                                                      
-    ##  [56]     }                                                                                                          
-    ##  [57]     //Samtools sort by read name parameters                                                                    
-    ##  [58]     withName: SAMTOOLS_NSORT {                                                                                 
-    ##  [59]         cpus = { 1 * task.attempt }                                                                            
-    ##  [60]         memory = { 32.GB * task.attempt }                                                                      
-    ##  [61]         ext.prefix = { "${bam.baseName.replaceAll(/.sort/,"")}.nsort" }                                        
-    ##  [62]         ext.args = '-n'                                                                                        
-    ##  [63]     }                                                                                                          
-    ##  [64]     //convert bamtobed to bedgraph process specific resources                                                  
-    ##  [65]     withName: BAMTOBEDGRAPH {                                                                                  
-    ##  [66]         cpus = { 1 * task.attempt }                                                                            
-    ##  [67]         memory = { 8.GB * task.attempt }                                                                       
-    ##  [68]         ext.args = '' //for bedtools bamtobed                                                                  
-    ##  [69]         ext.args2 = '' //for bedtools genomecov                                                                
-    ##  [70]     }                                                                                                          
-    ##  [71]     //Samtools sort by coordinate (for bedtools process below)                                                 
-    ##  [72]     withName: SAMTOOLS_SORT {                                                                                  
-    ##  [73]         cpus = { 1 * task.attempt }                                                                            
-    ##  [74]         memory = { 32.GB * task.attempt }                                                                      
-    ##  [75]         ext.prefix = { "${bam.baseName}.sort" }                                                                
-    ##  [76]         ext.args = ''                                                                                          
-    ##  [77]     }                                                                                                          
-    ##  [78]     //Samtools sort by coordinate (for bedtools process below)                                                 
-    ##  [79]     withName: SAMTOOLS_INDEX {                                                                                 
-    ##  [80]         cpus = { 1 * task.attempt }                                                                            
-    ##  [81]         memory = { 16.GB * task.attempt }                                                                      
-    ##  [82]         ext.args = ''                                                                                          
-    ##  [83]     }                                                                                                          
-    ##  [84]     withName: SAMTOOLS_STATS {                                                                                 
-    ##  [85]         cpus = { 1 * task.attempt }                                                                            
-    ##  [86]         memory = { 16.GB * task.attempt }                                                                      
-    ##  [87]         ext.args = ''                                                                                          
-    ##  [88]     }                                                                                                          
-    ##  [89]     if ( params.build_index ){                                                                                 
-    ##  [90]         //Bowtie2 aligner process specific parameters                                                          
-    ##  [91]         withName: BOWTIE2_BUILD {                                                                              
-    ##  [92]             cpus = { 4 * task.attempt }                                                                        
-    ##  [93]             memory = { 32.GB * task.attempt }                                                                  
-    ##  [94]             ext.args = '--verbose'                                                                             
-    ##  [95]         }                                                                                                      
-    ##  [96]     }                                                                                                          
-    ##  [97]     withName: SAMTOOLS_FAIDX {                                                                                 
-    ##  [98]         cpus = { 1 * task.attempt }                                                                            
-    ##  [99]         memory = { 16.GB * task.attempt }                                                                      
-    ## [100]         ext.args = ''                                                                                          
-    ## [101]     }
+    ##  [1] // Computational resource allocation for the processes run in the workflow                                     
+    ##  [2] process {                                                                                                      
+    ##  [3]     //Bowtie2 aligner process specific parameters                                                              
+    ##  [4]     withName: BOWTIE2_ALIGN {                                                                                  
+    ##  [5]         cpus = { 2 * task.attempt }                                                                            
+    ##  [6]         memory = { 32.GB * task.attempt }                                                                      
+    ##  [7]         ext.prefix = { "${meta.id}.sort" }                                                                     
+    ##  [8]         ext.args = '--local --very-sensitive-local --no-unal --no-mixed --no-discordant --phred33 -I 10 -X 700'
+    ##  [9]         ext.args2 = ''      //command line arguments for `samtools sort`                                       
+    ## [10]     }                                                                                                          
+    ## [11]     //SEACR peak calling resources                                                                             
+    ## [12]     withName: SEACR_CALLPEAK {                                                                                 
+    ## [13]         cpus = { 1 * task.attempt }                                                                            
+    ## [14]         memory = { 16.GB * task.attempt }                                                                      
+    ## [15]         ext.version = '1.4' //version 1.3 and 1.4 supported                                                    
+    ## [16]         ext.args = '--normalize norm --mode stringent --remove yes'                                            
+    ## [17]         publishDir = [...]                                                                                     
+    ## [18]                                                                                                                
+    ## [19]     }                                                                                                          
+    ## [20]     //MACS2 peak calling resources                                                                             
+    ## [21]     withName: MACS2_CALLPEAK {                                                                                 
+    ## [22]         cpus = { 1 * task.attempt }                                                                            
+    ## [23]         memory = { 16.GB * task.attempt }                                                                      
+    ## [24]         ext.args = '-q 0.01 --keep-dup all --bdg'                                                              
+    ## [25]         publishDir = [...]                                                                                     
+    ## [26]                                                                                                                
+    ## [27]     }                                                                                                          
+    ## [28]     //BAMCOVERAGE bigwig file  parameters                                                                      
+    ## [29]     withName: DEEPTOOLS_BAMCOVERAGE {                                                                          
+    ## [30]         cpus = { 4 * task.attempt }                                                                            
+    ## [31]         memory = { 16.GB * task.attempt }                                                                      
+    ## [32]         ext.args = '--normalizeUsing CPM --centerReads --verbose'                                              
+    ## [33]     }
 
 SEACR has the option to be set to SEACR v1.4 or SEACR v1.3 - which have
 particularly different commandline interfaces, changes in the methods
