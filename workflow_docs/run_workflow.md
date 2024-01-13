@@ -486,11 +486,12 @@ will find directories named for each of the modules.
 
 ### Final Outputs
 
-`results/{params.outdir}` - `samtools_view/` - aligned, coordinate
-sorted, marked duplicates, and optionally quality filtered bam file
+`results/{params.outdir}`
 
+-   `samtools_view/`
+    -   aligned, coordinate sorted, marked duplicates, and optionally
+        quality filtered bam file
     -   {sample_id}.markedDup.filter.bam
-
 -   `samtools_index/`
     -   {sample_id}.markedDup.filter.sort.bam.bai
 -   `deeptools_bamcoverage/`
