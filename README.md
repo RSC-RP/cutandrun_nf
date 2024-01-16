@@ -116,53 +116,17 @@ Then create the conda environment that has the appropriate software, including `
 conda env create -f env/nextflow.yaml
 conda activate nextflow
 ```
+### Optional: Conda/Mamba at SCRI
 
-### Conda/Mamba at SCRI
+SCRI uses a TLS and/or SSL Certificate to inspect web traffic and its specific to SCRI. Nextflow itself orchestrates many types of downloads such as genomic references, scientific software images from public repositories, and conda packages. 
 
-SCRI uses a TLS and/or SSL Certificate to inspect web traffic and its specific to SCRI. Nextflow itself orchestrates many types of downloads such as genomic references,  container workflow_docs/images from public repositories, and conda packages. 
+If you are running into SSL errors, you will need to configure your conda installation to use SCRI certificates. 
 
-It must be configured to use the SCRI certificates. See this [bitbucket repo](https://childrens-atlassian/bitbucket/projects/EC/repos/entcerts-tmp/browse) for the current certificates.
-
-1. refresh certs in bitbucket repo
-
-```
-git clone https://childrens-atlassian/bitbucket/projects/EC/repos/entcerts-tmp/browse
-git pull origin main
-```
-
-2. Set env variables in `.bashrc`
-
-```
-export REQUESTS_CA_BUNDLE="<your path to entcerts-tmp/*.crt>"
-export CURL_CA_BUNDLE="<your path entcerts-tmp/*.crt>"
-```
-
-3. copy certs to mamba/conda env
-
-```
-conda config --set ssl_verify <your path entcerts-tmp/*.crt>
-cp <your path entcerts-tmp/*.crt> ~/mambaforge/ssl/cacert.pem
-```
-
-4. deactivate and remove old conda environment 
-
-`mamba env remove -n nextflow`
-
-5. remove old nextflow cache (just in case)
-
-`rm -rf  ~/.nextflow/`
-
-6. re-generate the conda/mamba environment
-
-`mamba env create -f env/nextflow.yaml`
-
-you will see this warning and its showing that your copy command (step #3) did indeed work OK. 
-> 'warning  libmamba Invalid package cache, file 'mambaforge/pkgs/ca-certificates-2023.7.22-hbcca054_0/ssl/cacert.pem' has incorrect size'. 
+Please see Research Scientific Computing for more help in getting set-up and this [bitbucket repo](https://childrens-atlassian/bitbucket/projects/EC/repos/) for the current certificates. 
 
 # Run the pipeline 
 
 Open the step-by-step instructions to run the workflow in **[`workflow_docs/workflow_run.md`](workflow_docs/run_workflow.md)**. 
-
 
 ## Authors
 

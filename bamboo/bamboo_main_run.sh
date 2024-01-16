@@ -61,6 +61,3 @@ nextflow -C ${NFX_CONFIG}\
     -with-dag artifacts/dag/${PREFIX}_dag.pdf \
     -cache FALSE
 
-# add permissions to reports and dags
-chmod -R 644 artifacts/reports
-chmod -R 644 artifacts/dag
