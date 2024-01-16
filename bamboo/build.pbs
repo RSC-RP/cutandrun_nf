@@ -1,0 +1,18 @@
+#!/bin/bash
+#PBS -N build.pbs
+#PBS -q paidq
+#PBS -P 95b3beda-8f4a-41a6-ac94-0aaad86bfd9d
+#PBS -M RSCCoreApp@seattlechildrens.org
+#PBS -l select=1:mem=16gb:ncpus=1
+#PBS -j oe
+#PBS -m a
+#PBS -o /active/taylor_s/build/RPDEV/cutandrun_nf/logs/
+
+# bamboo automation assumes workingdir is environment variable TEMP_DIR passed in from qsub -v
+cd $TEMP_DIR
+
+echo "create artifact dir"
+mkdir -p artifacts
+
+echo "create artifacts"
+echo "bar" > artifacts/foo.txt

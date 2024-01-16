@@ -1,0 +1,47 @@
+#!/bin/bash
+#PBS -N test.pbs
+#PBS -q paidq
+#PBS -P 95b3beda-8f4a-41a6-ac94-0aaad86bfd9d
+#PBS -M RSCCoreApp@seattlechildrens.org
+#PBS -l select=1:mem=16gb:ncpus=1
+#PBS -j oe
+#PBS -m a
+#PBS -o /active/taylor_s/build/RPDEV/cutandrun_nf/logs/
+
+# bamboo automation assumes workingdir is environment variable TEMP_DIR passed in from qsub -v
+cd $TEMP_DIR
+
+echo "prepare test reporting dir"
+mkdir -p test-reports
+
+echo "PYTHON Unit Test Example"
+echo "load python"
+module load python/3.8.0
+
+echo "set up and activate test environment"
+pip install --upgrade pip virtualenv
+virtualenv env
+source env/bin/activate
+
+#echo "install module into the test environment"
+#pip install .
+
+echo "install testing packages"
+pip install pytest pylint black==21.12b0
+
+echo "execute test suite"
+pytest --junitxml=test-reports/out_report.xml
+
+echo "clean up for no impact testing"
+rm -rf env
+
+echo "R Unit Test Example"
+echo "load R"
+module use /depot/rhel/easybuild/modules/all/
+module load R/4.1.0-foss-2020b
+
+echo "run test suite"
+Rscript --vanilla -e 'library(testthat); options(testthat.output_file = "test-out.xml"); test_dir("tests/testthat", reporter = "junit")'
+
+echo "move results to reporting dir"
+mv tests/testthat/test-out.xml test-reports/test-out.xml

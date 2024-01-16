@@ -1,47 +1,111 @@
 {
-    "name": "",
-    "homePage": "",
-    "repos": {
-        "nf-core/modules": {
-            "bowtie2/align": {
-                "git_sha": "cbc47767f7bb4751a9d178395bd66f051401a0c1"
-            },
-            "bowtie2/build": {
-                "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d"
-            },
-            "deeptools/bamcoverage": {
-                "git_sha": "a21cfb666eed7517060f1d2d61a21c340753b0ec"
-            },
-            "fastqc": {
-                "git_sha": "49b18b1639f4f7104187058866a8fab33332bdfe"
-            },
-            "khmer/uniquekmers": {
-                "git_sha": "82fdff4fb4ce6cafcc028a7503da835427f35352"
-            },
-            "macs2/callpeak": {
-                "git_sha": "f0800157544a82ae222931764483331a81812012"
-            },
-            "multiqc": {
-                "git_sha": "90aef30f432332bdf0ce9f4b9004aa5d5c4960bb"
-            },
-            "picard/markduplicates": {
-                "git_sha": "682f789f93070bd047868300dd018faf3d434e7c"
-            },
-            "samtools/index": {
-                "git_sha": "897c33d5da084b61109500ee44c01da2d3e4e773"
-            },
-            "samtools/sort": {
-                "git_sha": "d5d785b3d8b422cda9c6d84a23f629a8e9ff8cd8"
-            },
-            "samtools/stats": {
-                "git_sha": "f48a24770e24358e58de66e9b805a70d77cd154b"
-            },
-            "seacr/callpeak": {
-                "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d"
-            },
-            "trimgalore": {
-                "git_sha": "85ec13ff1fc2196c5a507ea497de468101baabed"
-            }
+  "name": "",
+  "homePage": "",
+  "repos": {
+    "https://github.com/nf-core/modules.git": {
+      "modules": {
+        "nf-core": {
+          "bowtie2/align": {
+            "branch": "master",
+            "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
+            "installed_by": ["modules"]
+          },
+          "bowtie2/build": {
+            "branch": "master",
+            "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
+            "installed_by": ["modules"]
+          },
+          "custom/dumpsoftwareversions": {
+            "branch": "master",
+            "git_sha": "7101db4432d3268b7fcb5b8f75fa0a022dc5561b",
+            "installed_by": ["modules"]
+          },
+          "deeptools/bamcoverage": {
+            "branch": "master",
+            "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
+            "installed_by": ["modules"]
+          },
+          "deeptools/plotcorrelation": {
+            "branch": "master",
+            "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
+            "installed_by": ["modules"]
+          },
+          "deeptools/plotfingerprint": {
+            "branch": "master",
+            "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
+            "installed_by": ["modules"]
+          },
+          "deeptools/plotpca": {
+            "branch": "master",
+            "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
+            "installed_by": ["modules"]
+          },
+          "fastqc": {
+            "branch": "master",
+            "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
+            "installed_by": ["modules"],
+            "patch": "modules/nf-core/fastqc/fastqc.diff"
+          },
+          "khmer/uniquekmers": {
+            "branch": "master",
+            "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
+            "installed_by": ["modules"]
+          },
+          "macs2/callpeak": {
+            "branch": "master",
+            "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
+            "installed_by": ["modules"]
+          },
+          "multiqc": {
+            "branch": "master",
+            "git_sha": "ee80d14721e76e2e079103b8dcd5d57129e584ba",
+            "installed_by": ["modules"]
+          },
+          "picard/markduplicates": {
+            "branch": "master",
+            "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
+            "installed_by": ["modules"]
+          },
+          "samtools/faidx": {
+            "branch": "master",
+            "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
+            "installed_by": ["modules"]
+          },
+          "samtools/index": {
+            "branch": "master",
+            "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
+            "installed_by": ["modules"]
+          },
+          "samtools/sort": {
+            "branch": "master",
+            "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
+            "installed_by": ["modules"]
+          },
+          "samtools/stats": {
+            "branch": "master",
+            "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
+            "installed_by": ["modules"]
+          },
+          "samtools/view": {
+            "branch": "master",
+            "git_sha": "0f8a77ff00e65eaeebc509b8156eaa983192474b",
+            "installed_by": ["modules"]
+          },
+          "seacr/callpeak": {
+            "branch": "master",
+            "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
+            "installed_by": ["modules"]
+          },
+          "trimgalore": {
+            "branch": "master",
+            "git_sha": "72ffbd7128015a1d4b65b95ff8d37be8fee2f981",
+            "installed_by": ["modules"]
+          }
         }
+      },
+      "subworkflows": {
+        "nf-core": {}
+      }
     }
+  }
 }

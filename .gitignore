@@ -3,6 +3,7 @@
 .Rhistory
 .RData
 .Ruserdata
+.vscode
 
 # nextflow pipeline files
 .nextflow/
@@ -23,5 +24,12 @@ sample_sheets/
 env/macs.yml
 env/create_test_dataset.yml
 notes.txt
+test_data/*.skeleton 
+test_data/*.txt
+notes/
+samk/
+sample_sheet_val/
+*testing*
 alias_testing/
 notes/
+nextflow-*-edge-all
