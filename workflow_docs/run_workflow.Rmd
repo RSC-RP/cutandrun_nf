@@ -2,6 +2,12 @@
 title: "Run Cut&Run Peak Calling"
 always_allow_html: true
 output:
+  github_document:
+    html_preview: false
+    toc: true
+    fig_width: 5
+    fig_height: 5
+    toc_depth: 3
   html_document:
     theme: yeti
     highlight: breezedark
@@ -11,9 +17,10 @@ output:
     number_sections: true
     fig_caption: true
     df_print: paged
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
-
-# Set-up 
 
 ```{r set-up, echo=FALSE}
 knitr::opts_chunk$set(tidy.opts=list(width.cutoff=80),
@@ -34,191 +41,92 @@ library(tidyr)
 library(tibble)
 ```
 
-# Define functions
+# About the Pipeline
 
-```{r}
-#Function to create symlinks to the original data files on active to the current working directory of the R project. 
-mk_symlinks <- function(linked_dirname,filepaths){
-  dir.create(linked_dirname, recursive = TRUE)
-  lapply(filepaths,function(file){
-    target <- file.path(linked_dirname, basename(file))
-    if(!file.exists(target)){
-      command <- glue::glue("ln -svf '{file}' '{target}'")
-      system(command)
-    }
-  })
-}
-```
+The pipeline runs the
+[Bowtie2](https://bowtie-bio.sourceforge.net/bowtie2/manual.shtml)
+alignment, quality trimming of reads with trimgalore,
+[SEACR](https://github.com/FredHutch/SEACR) peak calling, and optionally
+[MACS2](https://github.com/macs3-project/MACS) peak calling. MACS2
+requires an effective genome size to call peaks, which you can provide
+directly or call
+[`unique-kmers.py`](https://deeptools.readthedocs.io/en/develop/content/feature/effectiveGenomeSize.html)
+to calculate the effective genome size on the fly. Coverage tracks are
+produced for visualization in [IGV](https://igv.org/doc/desktop/).
 
-# Background Information 
+It will also perform general QC statistics on the fastqs with
+[fastqc](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/),
+the alignment, peak calling, and sample similarity using
+[deeptools](https://deeptools.readthedocs.io/en/develop/). Finally, the
+QC reports are collected into a single file using
+[multiQC](https://multiqc.info/).
 
-SEACR Methodology:
-
-  * [SEACR publication](https://epigeneticsandchromatin.biomedcentral.com/articles/10.1186/s13072-019-0287-4#Abs1)
-
-
-Library Prep Protocol:
-
-  * [Protocols.io](https://www.protocols.io/view/cut-amp-run-targeted-in-situ-genome-wide-profiling-14egnr4ql5dy/v3?step=113)
-
-# About the Pipeline 
-
-The pipeline runs the Bowtie2 alignment, quality trimming of reads with trimgalore, SEACR peak calling, and optionally MACS2 peak calling. It will also perform general QC statistics on the fastqs with [fastqc](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/) and the alignment. Finally, the QC reports are collected into a single file using [multiQC](https://multiqc.info/).
-
-A DAG (directed acyclic graph) of the workflow is show below:
+A DAG (directed acyclic graph) of the default workflow is show below:
 
 ```{r echo=FALSE, eval=TRUE}
 knitr::include_graphics("images/dag.png")
 ```
 
-# Activate the Environment
+# Activate the Environment on HPC
 
-## Code Repository
+The directions to set-up the Nextflow workflow requirements are found in
+the [README.md](../README.md). Ensure that you have followed the steps
+to fork and clone the repository and created the conda nextflow
+environment before starting with this document.
 
-First, fork the [repository](https://childrens-atlassian/bitbucket/projects/RP/repos/cutandrun_nf/browse) from Children’s bitbucket. Do this by clicking the “create fork” symbol from the bitbucket web interface and fork it to your personal bitbucket account, as illustrated below.
+### 1) Interactive Session
 
-The figures are from another pipeline, but the steps are the same for forking the respository and selecting the appropriate version. 
-
-```{r eval=TRUE, echo=FALSE}
-knitr::include_graphics("images/bitbucket_fork1.png")
-knitr::include_graphics("images/bitbucket_fork2.png")
-knitr::include_graphics("images/bitbucket_fork3.png")
-```
-
-Next, you will need to clone your personal repository to your home in Cybertron. See the image below for where you can find the correct URL on your forked bitbucket repo. 
-
-```{r eval=TRUE, echo=FALSE}
-knitr::include_graphics("images/bitbucket_clone.png")
-```
-
-Copy that URL to replace the one below. 
-
-```{bash}
-#on a terminal on the Cybertron login nodes
-cd ~
-
-# your fork should have your own userID (rather than jsmi26)
-git clone https://childrens-atlassian/bitbucket/scm/~jsmi26/cutandrun_nf.git
-
-cd ~/cutandrun_nf
-```
-
-Once inside the code repository, use the latest release branch or make sure you're using the same release as prior analysis by using `git`.
-
-```{bash}
-git fetch
-git branch -a
-```
-
-The git branch command will show all available remote branches, including remote branches, like:
-
-```
-* main
-  remotes/origin/HEAD -> origin/main
-  remotes/origin/dev
-  remotes/origin/feature/sample_sheet_val
-  remotes/origin/main
-  remotes/origin/release/1.0.0
-  remotes/origin/release/1.1.0
- ```
-
-Checkout the release branch using this command:
-
-```{bash}
-git checkout release/1.1.0
-```
-
-Which will state that you are now on `release/1.1.0` branch and that it is tracking the release branch in your personal repository. 
-
-```
-Checking out files: 100% (55/55), done.
-Branch release/1.1.0 set up to track remote branch release/1.1.0 from origin.
-Switched to a new branch 'release/1.1.0'
-```
-
-## Conda Environment
-
-Optional: use tmux on the cybertron login nodes. Name the session nextflow and then request an interactive session before activating the nextflow conda environment. The project codes can be found with `project info` command. 
-
-Change the QUEUE and NAME variables in the code chunk below to be accurate for your Cybertron projects. 
+Optional but recommended: use `tmux` on the cybertron login nodes. Name
+the session nextflow and then request an interactive session, then
+activate the nextflow conda environment. The project codes can be found
+with `project info` command. Change the `$QUEUE` and `$NAME` variables
+in the code chunk below to be accurate for your Cybertron projects.
 
 ```{bash optional, eval=FALSE}
 tmux new-session -s nextflow
+project info
 NAME="RSC_adhoc"
 QUEUE="sceaq"
 qsub -I -q $QUEUE -P $(project code $NAME) -l select=1:ncpus=1:mem=8g -l walltime=8:00:00
 ```
 
-Next, for the conda environment to be solved, you will need to set channel_priority to flexible in your conda configs as well. To read more about conda environments and thier configurations, check out the [documentation](https://docs.conda.io/projects/conda/en/latest/commands/config.html#conda-config). 
+### 2) Open CutandRun workflow folder
 
-```{bash, eval=FALSE}
-conda config --describe channel_priority # print your current conda settings
-conda config --set channel_priority flexible # set to flexible if not already done
+Navigate to where you place the cloned (copied) cutandrun_nf directory,
+and then checkout the latest release branch.
+
+```{bash eval=FALSE}
+cd /path/to/my/cutandrun_nf
+git fetch
+# this will list all branches of the repository. Find the release branch with the latest version in red text, which means you don't yet have a local copy of that branch. 
+git branch -a
+# then select the latest version, for example 2.0.0. This downloads the stable version of pipeline locally. 
+git checkout release/2.0.0
+# Now the * indicates that you're on the release branch and its no longer red text. 
+git branch
 ```
 
-Then create the conda environment that has the appropriate software, including `nextflow`, `nf-core`, and `graphviz`. The conda environment will need to be built only 1 time, afterwards, simply use `conda activate nextflow`.
+### 3) Activate conda environement
+
+Activate the Nextflow conda environment.
 
 ```{bash required, eval=FALSE}
 conda env create -f env/nextflow.yaml
 conda activate nextflow
 ```
 
-### Conda/Mamba at SCRI
-
-SCRI uses a TLS and/or SSL Certificate is used to encrypt web traffic and its specific to SCRI. Nextflow itself orchestrates many types of downloads from genomic references to container images from public repositories to conda packages. 
-
-Thus it must be configured to use the SCRI certificates. See this [bitbucket repo](https://childrens-atlassian/bitbucket/projects/EC/repos/entcerts-tmp/browse) for the current certificates.
-
-Known Error - cannot download the container images from quay.io on 11/6/2023
-> java.lang.IllegalStateException: java.lang.IllegalStateException: Failed to pull singularity image  
-  command: apptainer pull  --name quay.io-biocontainers-deeptools-3.5.1--py_0.img.pulling.  1699305035994 docker://quay.io/biocontainers/deeptools:3.5.1--py_0 > /dev/null  
-  status : 255  
-  message:  
-    INFO:    Converting OCI blobs to SIF format  
-    INFO:    Starting build...  
-    Getting image source signatures  
-    Copying blob sha256: [...]  
-    FATAL:   While making image from oci registry: error fetching image to cache: while building SIF  from layers: conveyor failed to get: no descriptor found for reference  "5d16e7a95afb816a455df599646ef25335c624b0a0142f4f159d6275a09aa8dc"  
-
-While this error message does not explicely say SSL errors, its the most likely cause due to: 'While trying to use SSH, you may get a response indicating permission is denied. Or if you get an error with a **code of 255**, it means there's a problem with your SSH connection. The command failed with the exit code: 255.'
-
-1. refresh certs in bitbucket repo
-
-git clone https://childrens-atlassian/bitbucket/projects/EC/repos/entcerts-tmp/browse
-git pull origin main
-
-2. Set env variables in .bashrc 
-
-export REQUESTS_CA_BUNDLE="<your path to entcerts-tmp/*.crt>"
-export CURL_CA_BUNDLE="<your path entcerts-tmp/*.crt>"
-
-3. copy certs to mamba/conda env 
-conda config --set ssl_verify <your path entcerts-tmp/*.crt>
-cp <your path entcerts-tmp/*.crt> ~/mambaforge/ssl/cacert.pem
-
-4. deactivate and remove old conda environment 
-mamba env remove -n nextflow
-
-5. remove old nextflow cache (just in case)
-rm -rf  ~/.nextflow/
-
-6. re-generate the conda/mamba environment
-mamba env create -f env/nextflow.yaml
-
-you will see this warning and its showing that your copy command (step #3) did indeed work OK. 
-'warning  libmamba Invalid package cache, file 'mambaforge/pkgs/ca-certificates-2023.7.22-hbcca054_0/ssl/cacert.pem' has incorrect size'. 
-
-
 # Examine the Sample Sheet
 
-A sample sheet in csv (comma separated values) format is used as input to the pipeline.  This sample sheet **must** have the following column names in any order:
+A sample sheet in csv (comma separated values) format is used as input
+to the pipeline. This sample sheet **must** have the following column
+names in any order:
 
-  * "sample"
-  * "sample_id"
-  * "target_or_control"
-  * "single_end"
-  * "read1"
-  * "read2"
+-   "sample"
+-   "sample_id"
+-   "target_or_control"
+-   "single_end"
+-   "read1"
+-   "read2"
 
 ```{r echo=FALSE, eval=TRUE}
 sample_desc <- c("Any alphanumeric string for each biological sample in the dataset. Will have the same sample IDs for each antibody used. For example SAMPLE_1 has both H3K27me3 and IgG control CUT&RUN, and thus SAMPLE_1 has 1 row with the files for H3K27me3, and SAMPLE_1 has 2nd row with the files for IgG data.")
@@ -235,41 +143,68 @@ single_end <- c("For CUT&RUN data it should always be [false] case-sensitive.")
 ```{r eval=TRUE, echo=FALSE}
 data.frame(column_name=c("sample","sample_id", "target_or_control","read1", "read2","single_end"),
        column_description=c(sample_desc,sample_id_desc,target_desc,read1, read2, single_end)) %>% 
-  DT::datatable()
+  knitr::kable()
 ```
- 
-Below is an example of a complete sample sheet for use in the pipeline, which can be edited for your own samples in `test_data/test_dataset_sample_sheet.csv`.
- 
-```{r eval=TRUE}
+
+### Examples
+
+**1)** Below is an example of a complete sample sheet for use in the
+pipeline, which can be edited for your own samples in
+`test_data/test_dataset_sample_sheet.csv`.
+
+-   It contains IgG control samples for peak calling.
+-   This sample sheets OK to use even if you elect to skip IgG
+    normalization in SEACR or use IgG background in MACS2. The pipeline
+    will simply not use the controls.
+-   Use `threshold`, and `no_control_macs2` parameters in
+    `nextflow.config` to change this. Details found in [Configure
+    Pipeline for Your Data](#configure-pipeline-for-your-data)
+
+```{r eval=TRUE, echo=FALSE}
 sample_sheet <- read.csv(here::here("test_data/test_dataset_sample_sheet.csv")) %>% 
   mutate(single_end="false") %>% 
   mutate(sample=str_split_fixed(sample_id, pattern = "_", n=3)[,1]) %>%
   select(sample, everything())
 
-head(sample_sheet)
+head(sample_sheet) %>% 
+    knitr::kable()
 # dim(sample_sheet)
 ```
 
-```{r echo=FALSE, eval=FALSE}
-sample_sheet_noCtrl <- sample_sheet %>% 
-    mutate(target_or_control="target")
+**2)** Below is another example of a complete sample sheet for use in
+the pipeline.
 
-# write.csv(sample_sheet_noCtrl,"../test_data/test_dataset_noCtrl_sample_sheet.csv", row.names = FALSE, quote = F)
+-   It lacks IgG control samples for peak calling.
+-   This sample sheets OK to use only if you modify the parameters to
+    skip using IgG controls.
+-   Use `threshold`, and `no_control_macs2` parameters in
+    `nextflow.config` to modify this. Details found in [Configure
+    Pipeline for Your Data](#configure-pipeline-for-your-data).
+
+```{r echo=FALSE, eval=TRUE}
+sample_sheet_noCtrl <- sample_sheet %>% 
+    mutate(target_or_control="target") 
+
+head(sample_sheet_noCtrl) %>% 
+    knitr::kable()
 ```
 
 # Run the Example Data
 
-To ensure that the pipeline works, first run the test data set. This example will run using the data found in the `test_sample_sheet.csv`. 
+To ensure that the pipeline works, first run the test data set. This
+example will run using the data found in the `test_sample_sheet.csv`.
 
 ```{bash}
 ./main_run.sh "test_dataset"
 ```
 
-# Configure Pipeline for Your Data
+# Configure Pipeline for Your Data {#configure-pipeline-for-your-data}
 
-## Configuration file 
+## Configuration file
 
-Open the configuration file `nextflow.config` and edit the necessary parameters for building the index, and/or running the alignment or peak calling steps. 
+Open the configuration file `nextflow.config` and edit the necessary
+parameters for building the index, and/or running the alignment or peak
+calling steps.
 
 ```{r warning=FALSE, echo=FALSE, eval=TRUE}
 config_file <- readLines(here::here("nextflow.config")) %>% 
@@ -291,78 +226,138 @@ config_file %>%
 
 Be sure to change the following lines for the global parameters:
 
- * sample_sheet
- * queue 
- * project code 
- * outdir
- * peak_outdir
+-   sample_sheet
+-   queue
+-   project code
+-   outdir
+-   peak_outdir
 
 ```{r echo=FALSE, eval=TRUE}
 end <- grep("Bowtie params",config_file)-1
 config_file[params_lines[1]:end] %>% 
     cat(.,sep = "\n")
 ```
+
 ## Genomic References
 
-Additionally, determine if you require a new bowtie2 index to be build for the target genome and/or the spike-in genome. The pipeline requires either a fasta filepath OR Bowtie2 index filepath. This is also required for the spike-in, with E. Coli provided as a default. 
+Additionally, determine if you require a new bowtie2 index to be build
+for the target genome and/or the spike-in genome. The pipeline requires
+either a fasta filepath OR Bowtie2 index filepath. This is also required
+for the spike-in, with E. Coli provided as a default.
 
-E. coli is the default since it that is a carry over DNA from the Cut&Run library prep methodology and is expected to be present in all Cut&Run experiments regardless if exogenous spike-in is used like Yeast. Please see [here](https://doi.org/10.7554/eLife.46314) for more information on spike-in normalization. 
+E. coli is the default since it that is a carry over DNA from the
+Cut&Run library prep methodology and is expected to be present in all
+Cut&Run experiments regardless if exogenous spike-in is used like Yeast.
+Please see [here](https://doi.org/10.7554/eLife.46314) for more
+information on spike-in normalization.
 
 Change the following lines for alignment reference files when needed:
 
- * build_index
- * fasta
- * index 
- * build_spike_index
- * spike_fasta
- * spike_index
+-   build_index
+-   fasta
+-   index
+-   build_spike_index
+-   spike_fasta
+-   spike_index
 
 ```{r echo=FALSE, eval=TRUE}
 bowtie2 <- c(grep("Bowtie params", config_file), grep("\\sspike_index.+\\=", config_file))
 config_file[bowtie2[1]:bowtie2[2]] %>% 
     cat(.,sep = "\n")
 ```
-## Optional: MACS2
 
-Finally, decide whether to run MACS2 calls along with the SEACR peak calling algorithm (default = true).  MACS2 will use the effective genome size value provided in `gsize` parameter. 
+## SEACR
 
-If you are using a non-model organism or simply don't want to use the effective genome size provided in literature or MACS2 documentation, you can set `run_khmer = true` to calculate an effective genome size using the target genome fasta `fasta` filepath and read-length. 
+SEACR defaults to using IgG control normalization and stringent peak
+calling, eg `SEACR_1.3.sh target_bedgraph igg_bedgraph norm stringent`.
 
- * gsize
- * run_macs2
- * run_khmer
- 
+If skipping the use of IgG control all together, set `threshold` to any
+value \> 0.
+
+If you would like to use a spike-in normalization, either E. Coli or an
+exongenous spike-in like Drosophila, set `spike_norm` to true. You must
+see [Advanced Options](#advanced-options) for details on turning off igg
+normalization.
+
+-   threshold
+-   spike_norm
+-   chrom_sizes
+-   scale_factor_constant
+
 ```{r echo=FALSE, eval=TRUE}
-c(config_file[grep("Effective genome size", config_file):grep("gsize.+\\=", config_file)],
-    noquote("    <...>"),
-    config_file[grep("MACS2 and", config_file):grep("kmer_size", config_file)]
-  ) %>% 
-    cat(.,sep = "\n")
+c( config_file[grep("SEACR params", config_file):(grep("scale_factor_constant", config_file)+1)]) %>% 
+  cat(.,sep = "\n") 
 ```
 
-## Advanced Options
+## Optional: MACS2
 
-In the `nextflow.config`, you can define additional command line arguments to the scientific software under [process scope](https://www.nextflow.io/docs/latest/process.html#). You may use the advanced options to change computational resources requested for different processes. The CPUs and memory parameters can updated to request a larger amount of resources like CPUs or memory if files are large. You may also edit the commandline parameters for processes in the workflow using the `ext.arg` [directive](https://www.nextflow.io/docs/latest/process.html#directives). Please be aware the **default command line parameters for `Bowtie2` processes are already provided for both target and spike-in alignment**, but can be edited. 
+Finally, decide whether to run MACS2 calls along with the SEACR peak
+calling algorithm (default = true). MACS2 will use the effective genome
+size value provided in `gsize` parameter.
 
-The most commonly modified and important process parameters are listed toward the top of the process scope in the `nextflow.config` file.  
+If you are using a non-model organism or simply don't want to use the
+effective genome size provided in literature or MACS2 documentation, you
+can set `calc_effective_gsize = true` to calculate an effective genome
+size using the target genome fasta `fasta` filepath and read-length.
 
-You can edit the command line parameters for `SEACR` and `MACS2` parameters that often need to be re-run multiple times when deciding on the appropriate peak-set to use. For example, `MACS2` broad and narrow peak calling parameters for different histone modifications which can be modified using the `ext.args` parameter.  
+-   run_macs2
+-   no_control_macs2
+-   gsize
+-   calc_effective_gsize
+-   read_length
+
+```{r echo=FALSE, eval=TRUE}
+c( config_file[grep("MACS2 params", config_file):(grep("no_control", config_file)+1)], 
+   config_file[grep("\\sgsize.+\\=", config_file):grep("read_length", config_file)]) %>% 
+  cat(.,sep = "\n")
+```
+
+## Advanced Options {#advanced-options}
+
+In the `nextflow.config`, you can define additional command line
+arguments to the scientific software under [process
+scope](https://www.nextflow.io/docs/latest/process.html#). You may use
+the advanced options to change computational resources requested for
+different processes. The CPUs and memory parameters can updated to
+request a larger amount of resources like CPUs or memory if files are
+large. You may also edit the commandline parameters for processes in the
+workflow using the `ext.arg`
+[directive](https://www.nextflow.io/docs/latest/process.html#directives).
+Please be aware the **default command line parameters for `Bowtie2`
+processes are already provided for both target and spike-in alignment**,
+but can be edited.
+
+The most commonly modified and important process parameters are listed
+toward the top of the process scope in the `nextflow.config` file.
+
+You can edit the command line parameters for `SEACR` and `MACS2`
+parameters that often need to be re-run multiple times when deciding on
+the appropriate peak-set to use. For example, `MACS2` broad and narrow
+peak calling parameters for different histone modifications which can be
+modified using the `ext.args` parameter.
 
 ```{r eval=TRUE, echo=FALSE}
 process_lines <- c(grep("Computational resource", config_file), 
-                  grep("FASTQC process", config_file)-1)
+                  grep("Picard to mark duplicate reads", config_file)-1)
 
 config_file[c(process_lines[1]:process_lines[2])] %>% 
     gsub("^.+(mode:.+|saveAs.+|fail.+).+$","", .) %>% 
     gsub("\\]$", "", .)  %>% 
     .[-grep("^$", .)] %>% 
     gsub("\\[  path.+", "[...]",.)
-    # cat(.,sep = "\n")
 ```
 
-SEACR has the option to be set to SEACR v1.4 or SEACR v1.3 - which have particularly different commandline interfaces, changes in the methods for normalization to IgG, and v1.4 can optionally remove peaks found in IgG. Please see [here](https://github.com/FredHutch/SEACR/releases) for the full changelog. 
+SEACR has the option to be set to SEACR v1.4 or SEACR v1.3 - which have
+particularly different commandline interfaces, changes in the methods
+for normalization to IgG, and v1.4 can optionally remove peaks found in
+IgG. Please see [here](https://github.com/FredHutch/SEACR/releases) for
+the full changelog.
 
-For SEACR v1.3, Often, you will need to change `SEACR` from "non" to "norm" for different normalization strategies whether you're using IgG normalization or spike-in normalization. The example below demonstrates how to change the commandline params and version by editing `ext.version` and `ext.args`. 
+For SEACR v1.3, Often, you will need to change `SEACR` from "non" to
+"norm" for different normalization strategies whether you're using IgG
+normalization or spike-in normalization. The example below demonstrates
+how to change the commandline params and version by editing
+`ext.version` and `ext.args`.
 
 ```{r eval=TRUE, echo=FALSE}
 seacr_lines <- c(grep("SEACR peak calling", config_file), 
@@ -379,8 +374,7 @@ config_file[c(seacr_lines[1]:seacr_lines[2])] %>%
 
 ```
 
-
-# Run Script 
+# Run Script
 
 ```{r eval=TRUE}
 usethis::edit_file(here::here("main_run.sh"))
@@ -391,17 +385,22 @@ main_run <- readLines(here::here("main_run.sh"))
 # main_run
 ```
 
-Decide on the `NFX_PROFILE`, which allows you to run the processes either locally, or using the PBS job scheduler on Cybertron, and determine if you'd like to use singularity containers or docker containers.
+Decide on the `NFX_PROFILE`, which allows you to run the processes
+either locally, or using the PBS job scheduler on Cybertron, and
+determine if you'd like to use singularity containers or docker
+containers.
 
-  2) `PBS_singularity` [DEFAULT, recommended]
-    * you can submit a PBS job that will use singularity containers on Cybertron
-    * This takes care of requesting the appropriate resources using PBS
-    
-  1) `local_singularity`
-    * locally on an interactive session Cybertron with singularity 
-    * requires appropriate computational resources be requested using `qsub -I -q <queue_name> -P <project_code> -l select=1:ncpus=4:mem=32GB`
+2)  `PBS_singularity` [DEFAULT, recommended] \* you can submit a PBS job
+    that will use singularity containers on Cybertron \* This takes care
+    of requesting the appropriate resources using PBS
 
-Edit the script `main_run.sh` and change the values for the `NFX_PROFILE` variable if desired. 
+3)  `local_singularity` \* locally on an interactive session Cybertron
+    with singularity \* requires appropriate computational resources be
+    requested using
+    `qsub -I -q <queue_name> -P <project_code> -l select=1:ncpus=4:mem=32GB`
+
+Edit the script `main_run.sh` and change the values for the
+`NFX_PROFILE` variable if desired.
 
 ```{r eval=TRUE, echo=FALSE}
 idx <- c(grep("#Options", main_run), grep("#Options", main_run)+1) %>% 
@@ -411,17 +410,21 @@ main_run[head(idx,2)] %>%
     cat(.,sep = "\n")
 ```
 
-
 ## Alignment and Peak Calls
 
-Edit the variables in the `main_run.sh` script for entry-point of the workflow. The default option *"align_call_peaks"* for the `NFX_ENTRY` will run the full pipeline (QC, alignment,  peak calling, coverage tracks). 
+Edit the variables in the `main_run.sh` script for entry-point of the
+workflow. The default option *"align_call_peaks"* for the `NFX_ENTRY`
+will run the full pipeline (QC, alignment, peak calling, coverage
+tracks).
 
 ```{r eval=TRUE, echo=FALSE}
 main_run[tail(idx, n=2)] %>% 
     cat(.,sep = "\n") 
 ```
 
-If you already have aligned BAM files, see `test_data/test_dataset_bams_sample_sheet.csv` for an example to call peaks only using the entry `call_peaks`. 
+If you already have aligned BAM files, see
+`test_data/test_dataset_bams_sample_sheet.csv` for an example to call
+peaks only using the entry `call_peaks`.
 
 ```{r eval=TRUE, echo=FALSE}
 main_run[tail(idx, n=2)] %>% 
@@ -429,16 +432,21 @@ main_run[tail(idx, n=2)] %>%
     cat(.,sep = "\n") 
 ```
 
-Then, execute the `main_run.sh` script in order to complete the peak calling on the samples. Provide a small descriptive prefix for the pipeline run. 
+Then, execute the `main_run.sh` script in order to complete the peak
+calling on the samples. Provide a small descriptive prefix for the
+pipeline run.
 
 ```{bash}
 ./main_run.sh "my_analysis"
 ```
 
-
 ## Optional: Build the Index and Exit Pipeline
 
-You can also change the entry-point of the workflow, which is accomplished by setting the `NFX_ENTRY` variable in the `main_run.sh` script  to be `bowtie2_index_only`. This will allow the pipeline to run only the Bowtie2 build process and exit upon completion of the index building step.
+You can also change the entry-point of the workflow, which is
+accomplished by setting the `NFX_ENTRY` variable in the `main_run.sh`
+script to be `bowtie2_index_only`. This will allow the pipeline to run
+only the Bowtie2 build process and exit upon completion of the index
+building step.
 
 ```{r eval=TRUE, echo=FALSE}
 main_run[tail(idx, n=2)] %>% 
@@ -450,68 +458,94 @@ main_run[tail(idx, n=2)] %>%
 ./main_run.sh "bowtie2_index"
 ```
 
+# Expected Outputs
 
-# Expected Outputs 
+Under the path provided in the nextflow config for params "outdir", you
+will find directories named for each of the modules.
 
-Under the path provided in the nextflow config for params "outdir", you will find directories named for each of the modules. Lets say `params.outdir = ./results/mouse`, and `peaks_outdir = "${params.outdir}/peak_calls"`. 
+### Final Outputs
 
-There will be the following file structure:
+`results/{params.outdir}`
 
-* results/mouse/
-  
-    * bamtobedgraph/
+-   `samtools_view/`
+    -   aligned, coordinate sorted, marked duplicates, and optionally
+        quality filtered bam file
+    -   {sample_id}.markedDup.filter.bam
+-   `samtools_index/`
+    -   {sample_id}.markedDup.filter.sort.bam.bai
+-   `deeptools_bamcoverage/`
+    -   Counts per million normalized coverage track (bigwig) file.
+    -   {sample_id}\_CPM.bigWig
+-   `{params.peaks_outdir}/seacr_callpeak/`
+    -   If using IgG normalization, the {sample_id} of the IgG control
+        used is appended to the target
+    -   {sample_id}\_[norm,non].[stringent,relaxed].bed
+-   `{params.peaks_outdir}/macs2_callpeak/`
+    -   Optional output if `run_macs2 = true`
+    -   {sample_id}\_peaks.[narrowPeak,broadPeak]
 
-    * bowtie2_align/
-        * {sample_id}.bam
-        * {sample_id}.bowtie2.log
-        
-    * deeptools_bamcoverage/
-    
-    * fastqc/
-    
-    * fastqc_trim/
-    
-    * multiqc/
-    
-    * peak_calls/
-     
-        * seacr_callpeak/
-            * {sample_id}.[norm or non].[stringent or relaxed].bed
-        
-        * macs2_call_peak/
-            * {sample_id}_peaks.[narrowPeak or broadPeak]
-            * {sample_id}_peaks.xls 
-            * {sample_id}_summits.bed
 
-    * picard_markduplicates/
-    
-    * samtools_index/
-    
-    * samtools_nsort/
-    
-    * samtools_sort/
-    
-    * spikein_align/
-        * {sample_id}_spikein.bam
-        * {sample_id}_spikein.bowtie2.log
-        
-    * trimgalore/
-        * {sample_id}_1.gz_trimming_report.txt
-        * {sample_id}_2.gz_trimming_report.txt
-        * {sample_id}.M1_H3K27_NK_1_val_1.fq.gz
-        * {sample_id}.M1_H3K27_NK_1_val_2.fq.gz
+## Pipeline Reports
 
-## Pipeline Reports 
+In addition, there will be an HTML report with information on where the
+temp data is stored in the `workDir` path, and general run statistics
+such as resource utilized versus requested, which helps with
+optimization. It will also provide information on how much walltime was
+used per sample, total CPU hours, etc.
 
-In addition, there will be an HTML report with information on where the temp data is stored in the `workDir` path, and general run statistics such as resource utilized  versus requested, which helps with optimization. It will also provide information on how much walltime was used per sample, total CPU hours, etc. 
+The HTML file is found in `reports` directory and will have the prefix
+defined on the command line when the `./main_run.sh "my_analysis"` was
+invoked, so in this example it would be named
+"my_analysis\_{DATE}.html".
 
-The HTML file is found in `reports` directory and will have the prefix defined on the command line when the `./main_run.sh "my_analysis"` was invoked, so in this example it would be named "my_analysis_{DATE}.html". 
+There will also be a detailed nextflow log file that is useful for
+de-bugging which will also be named in this example,
+"my_analysis\_{DATE}\_nextflow.log".
 
-There will also be a detailed nextflow log file that is useful for de-bugging which will also be named in this example, "my_analysis_{DATE}_nextflow.log".
-
-Finally, the pipeline will produce a DAG - Directed acyclic graph,  which describes the workflow channels (inputs) and the modules. The DAG image will be saved under `dag/` directory with the name "my_analysis_{DATE}_dag.pdf". 
+Finally, the pipeline will produce a DAG - Directed acyclic graph, which
+describes the workflow channels (inputs) and the modules. The DAG image
+will be saved under `dag/` directory with the name
+"my_analysis\_{DATE}\_dag.pdf".
 
 ```{r echo=FALSE, eval=TRUE}
 knitr::include_graphics("images/dag.png")
 ```
 
+
+### Complete File Structure
+
+There will be the following file structure:
+
+```{r eval=TRUE, echo = FALSE}
+outdir <- config_file[grep("\\soutdir.+\ = (.+)$", config_file)] %>% 
+    str_split_fixed(., pattern = ' = ', n = 2) %>% 
+    .[,2] %>% 
+    gsub('\\"', "", . ) %>% 
+    gsub("\\.", "..", .)
+
+fs::dir_tree(outdir, recurse = 1)
+```
+
+### Detailed File Structure
+
+Within each directory you will find the following files (top 5 files per
+directory are shown):
+
+```{r eval=TRUE, echo = FALSE}
+results_dirs <- fs::dir_info(outdir, recurse = TRUE)
+
+results_dirs %>% 
+    select(path, type) %>% 
+    mutate(process = gsub(outdir,"", path), 
+           filename = ifelse(type == 'file', basename(path), "")) %>%
+    filter(!grepl("multiqc_report|params[2-9]", process)) %>% 
+    mutate_at(vars(process), ~ case_when(
+                   type == 'file' & grepl("fastqc", .) ~ dirname(dirname(.)),
+                   grepl("FASTQC", .) ~ dirname(.),
+                   type == 'file' ~ dirname(.),
+                   TRUE ~ .)) %>%
+    group_by(process) %>%
+    dplyr::slice(1:5) %>% 
+    ungroup() %>% 
+    knitr::kable()
+```
