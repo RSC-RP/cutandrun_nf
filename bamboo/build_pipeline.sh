@@ -33,7 +33,7 @@ echo "create new mamba environment"
 # print out the software version information. Assumes svc account has mamba installed in default location.
 VER=$(mamba --version)
 echo "mamba version:" $VER
-mamba env create --quiet --force -f env/nextflow.yaml --name "$CONDA_ENV_NAME"
+mamba env create --quiet --force -f env/nextflow.yaml --name "$CONDA_ENV_NAME" --prune
 
 echo "activate nextflow mamba environment"
 conda activate $CONDA_ENV_NAME

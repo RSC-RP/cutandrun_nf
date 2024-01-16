@@ -3,8 +3,8 @@
 set -eu
 DATE=$(date +%F)
 NFX_CONFIG=./nextflow_test.config
-#Options: 'PBS_apptainer','local_apptainer','local_singularity', 'PBS_singularity'
-NFX_PROFILE='local_apptainer'
+#Options: 'PBS_singularity', 'local_singularity'
+NFX_PROFILE='PBS_singularity'
 #Options: 'bowtie2_index_only', 'align_call_peaks', 'call_peaks'
 NFX_ENTRY='align_call_peaks'
 
