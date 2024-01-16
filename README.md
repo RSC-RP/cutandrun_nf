@@ -161,7 +161,7 @@ you will see this warning and its showing that your copy command (step #3) did i
 
 # Run the pipeline 
 
-Open the step-by-step instructions to run the workflow in **`workflow_docs/workflow_run.Rmd`** and is rendered into an HTML document in **`workflow_docs/workflow_run.html`**. 
+Open the step-by-step instructions to run the workflow in **[`workflow_docs/workflow_run.md`](workflow_docs/run_workflow.md)**. 
 
 
 ## Authors
