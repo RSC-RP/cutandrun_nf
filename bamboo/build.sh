@@ -53,22 +53,22 @@ TEMP_DIR=$(sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "mkdir -p $PREFIX; m
 sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "chmod -R 775 $TEMP_DIR"
 echo "created $TEMP_DIR on $BUILD_SERVER"
 
-echo "create cache dir for singularity/apptainer images"
+echo "create cache dir for container images"
 IMAGE_CACHE=/home/$SVC_USER/bamboo_tmp/$(basename $TEMP_DIR)
 sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "mkdir -p $IMAGE_CACHE"
 echo "created cache dir $IMAGE_CACHE on $BUILD_SERVER"
 
-# # echo "copy repo to docker build machine"
-# sshpass -f $SVC_PASS ssh $SVC_USER@$DOCKER_SERVER "mkdir -p $TEMP_DIR"
-# sshpass -f $SVC_PASS scp -r * $SVC_USER@$DOCKER_SERVER:$TEMP_DIR
-# echo "created $TEMP_DIR on $DOCKER_SERVER"
+echo "copy repo to docker build machine"
+sshpass -f $SVC_PASS ssh $SVC_USER@$DOCKER_SERVER "mkdir -p $TEMP_DIR"
+sshpass -f $SVC_PASS scp -r * $SVC_USER@$DOCKER_SERVER:$TEMP_DIR
+echo "created $TEMP_DIR on $DOCKER_SERVER"
 
-# # echo "build nextflow docker image on docker build machine" 
-# sshpass -f $SVC_PASS ssh $SVC_USER@$DOCKER_SERVER "cd $TEMP_DIR; ./bamboo/build_image.sh"
+echo "build nextflow docker image on docker build machine" 
+sshpass -f $SVC_PASS ssh $SVC_USER@$DOCKER_SERVER "cd $TEMP_DIR; ./bamboo/build_image.sh"
 
 echo "copy repo with nextflow image to build machine tmp"
-# sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "cd $(dirname $TEMP_DIR); scp -r $SVC_USER@$DOCKER_SERVER:$TEMP_DIR ."
-sshpass -f $SVC_PASS scp -r * $SVC_USER@$BUILD_SERVER:$TEMP_DIR
+sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "cd $(dirname $TEMP_DIR); scp -r $SVC_USER@$DOCKER_SERVER:$TEMP_DIR ."
+# sshpass -f $SVC_PASS scp -r * $SVC_USER@$BUILD_SERVER:$TEMP_DIR
 
 echo "schedule the build remotely"
 # sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "$TEMP_DIR/bamboo/pbs_remote.sh $TEMP_DIR/bamboo/build.pbs $TEMP_DIR"
@@ -85,7 +85,7 @@ fi
 sshpass -f $SVC_PASS scp -r $SVC_USER@$BUILD_SERVER:$TEMP_DIR/artifacts .
 
 echo "clean up build machine"
-# sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "rm -rf $TEMP_DIR"
+sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "if [[ -d $TEMP_DIR ]]; then rm -rf $TEMP_DIR/*; fi; if [[ -d $WORK_DIR ]]; then rm -rf $WORK_DIR/*; fi"
 
 echo "FINISHED BUILD"
 exit
