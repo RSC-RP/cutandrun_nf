@@ -1,0 +1,28 @@
+#!/bin/bash
+#PBS -N cutandrun_docs
+#PBS -q paidq
+#PBS -P 95b3beda-8f4a-41a6-ac94-0aaad86bfd9d
+#PBS -M RSCCoreApp@seattlechildrens.org
+#PBS -l select=1:mem=16gb:ncpus=1
+#PBS -j oe
+#PBS -m a
+#PBS -o /active/taylor_s/build/RPDEV/cutandrun_nf/logs
+
+set -eou pipefail
+
+# Set-up Environment, load R
+export RSTUDIO_PANDOC="/usr/lib/rstudio-server/bin/pandoc"
+module load R/4.1.0-foss-2020b
+
+# change directory to temp dir
+cd $TEMP_DIR
+
+# create artifacts directory
+echo "create artifact dir"
+mkdir -p artifacts
+
+# render the markdown file
+Rscript -e 'rmarkdown::render("workflow_docs/run_workflow.Rmd", encoding = "UTF-8")'
+
+# copy output to artifacts dir
+cp -r workflow_docs artifacts/

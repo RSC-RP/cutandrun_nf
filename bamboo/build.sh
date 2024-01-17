@@ -72,9 +72,9 @@ sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "cd $(dirname $TEMP_DIR); scp -
 # sshpass -f $SVC_PASS scp -r * $SVC_USER@$BUILD_SERVER:$TEMP_DIR
 
 echo "schedule the build remotely"
-# sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "$TEMP_DIR/bamboo/pbs_remote.sh $TEMP_DIR/bamboo/build.pbs $TEMP_DIR"
 WORK_DIR="$ASSOC_DIR/nextflow_temp/$PLAN_NAME"
 sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "TEMP_DIR=$TEMP_DIR IMAGE_CACHE=$IMAGE_CACHE WORK_DIR=$WORK_DIR $TEMP_DIR/bamboo/build_pipeline.sh"
+sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "$TEMP_DIR/bamboo/pbs_remote.sh $TEMP_DIR/bamboo/build_documentation.pbs $TEMP_DIR"
 echo "remote job scheduled"
 wait # wait for pbs jobs to finish running
 

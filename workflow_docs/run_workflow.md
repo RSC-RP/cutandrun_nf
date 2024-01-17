@@ -438,7 +438,7 @@ Edit the script `main_run.sh` and change the values for the
 `NFX_PROFILE` variable if desired.
 
     ## #Options: 'PBS_apptainer','local_apptainer','local_singularity', 'PBS_singularity'
-    ## NFX_PROFILE='PBS_apptainer'
+    ## NFX_PROFILE='PBS_singularity'
 
 ## Alignment and Peak Calls
 
