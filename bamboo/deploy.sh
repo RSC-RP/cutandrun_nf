@@ -43,13 +43,14 @@ echo $DEPLOY_DIR_LOG
 echo "clean out deploy_dir_log"
 if [[ -d $DEPLOY_DIR_LOG ]]
 then
-    rm -rf $DEPLOY_DIR_LOG/*
+    rm -rf $DEPLOY_DIR_LOG
+    mkdir -p $DEPLOY_DIR_LOG
 fi
 
 echo "deploy artifacts logs"
-mkdir -p $DEPLOY_DIR_LOG
+
 cp -R $ART_DIR/* $DEPLOY_DIR_LOG/ || { echo "artifacts not found"; exit 1; }
-chmod -R 775 $DEPLOY_DIR_LOG/*
+chmod -R 775 $DEPLOY_DIR_LOG
 
 echo "Passed argument: $DEPLOY"
 echo "define the deployment directory"
@@ -64,14 +65,14 @@ fi
 echo "clean out deployment directory"
 if [[ -d $OUTDIR ]]
 then
-    rm -rf $OUTDIR/*
+    rm -rf $OUTDIR
+    mkdir -p $OUTDIR
 fi
 
 echo "copy artifacts to deploy machine"
 # echo "if something needs to fail, have it exit with non-zero error code and Bamboo will fail the task"
-mkdir -p $OUTDIR
 cp -R $ART_DIR/* $OUTDIR/ || { echo "artifacts not found"; exit 1; }
-chmod -R 775 $OUTDIR/*
+chmod -R 775 $OUTDIR
 
 echo "FINISHED DEPLOYMENT"
 exit
