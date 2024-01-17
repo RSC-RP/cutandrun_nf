@@ -16,13 +16,18 @@ module load R/4.1.0-foss-2020b
 
 # change directory to temp dir
 cd $TEMP_DIR
+echo "the current working directory is $PWD"
 
 # create artifacts directory
 echo "create artifact dir"
 mkdir -p artifacts
+OUTDIR='../artifacts/results/mouse'
 
 # render the markdown file
-Rscript -e 'rmarkdown::render("workflow_docs/run_workflow.Rmd", encoding = "UTF-8")'
+Rscript -e "rmarkdown::render('workflow_docs/run_workflow.Rmd',
+                                encoding = 'UTF-8', 
+                                output_dir = '../artifacts/workflow_docs',
+                                params = list(outdir = $OUTDIR))"
 
 # copy output to artifacts dir
 cp -r workflow_docs artifacts/
