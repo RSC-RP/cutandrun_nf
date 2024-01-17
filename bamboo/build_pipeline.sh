@@ -15,10 +15,12 @@ CONDA_ENV_NAME="nxf_temp"
 # nextflow is installed in a non-standard directory in the container
 # see https://apptainer.org/docs/user/main/environment_and_metadata.html#manipulating-path
 # export APPTAINERENV_APPEND_PATH="/opt/conda/bin:/depot/apps/apptainer/1.1.9/bin:/opt/pbspro/2020.1/bin"
-export APPTAINERENV_APPEND_PATH="/opt/conda/bin"
-# apptainer exec $IMAGE /bin/bash -c "nextflow -version"
-# apptainer exec $IMAGE -B /opt/pbspro/2020.1 -B /depot/apps/apptainer/1.1.9/ /bin/bash -c "nextflow -version"
-# apptainer shell -B $PWD -B /opt/pbspro/2020.1 -B /depot/apps/apptainer/1.1.9/ $IMAGE
+# export APPTAINERENV_APPEND_PATH="/opt/conda/bin"
+# appt_version=$(ml apptainer; apptainer exec $IMAGE /bin/bash -c "nextflow -version")
+# echo $appt_version
+export SINGULARITYENV_APPEND_PATH="/opt/conda/bin"
+sing_version=$(ml singularity; singularity exec $IMAGE /bin/bash -c "nextflow -version")
+echo $sing_version
 
 echo "create new mamba environment"
 # print out the software version information. Assumes svc account has mamba installed in default location.
@@ -40,7 +42,6 @@ mkdir -p $WORK_DIR
 echo $WORK_DIR
 
 echo "create artifacts"
-cp bamboo/bamboo_main_run.sh ./artifacts
 # run the pipeline using the default parameters
 REPORT1="default"
 bash ./bamboo/bamboo_main_run.sh $REPORT1 --outdir "$OUTDIR/$REPORT1" -work-dir "$WORK_DIR"

@@ -86,7 +86,7 @@ fi
 sshpass -f $SVC_PASS scp -r $SVC_USER@$BUILD_SERVER:$TEMP_DIR/artifacts .
 
 echo "clean up build machine"
-sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "if [[ -d $TEMP_DIR ]]; then rm -rf $TEMP_DIR/*; fi; if [[ -d $WORK_DIR ]]; then rm -rf $WORK_DIR/*; fi"
+sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "if [[ -d $TEMP_DIR ]]; then rm -rf $TEMP_DIR; fi; if [[ -d $WORK_DIR ]]; then rm -rf $WORK_DIR; fi"
 
 echo "FINISHED BUILD"
 exit
