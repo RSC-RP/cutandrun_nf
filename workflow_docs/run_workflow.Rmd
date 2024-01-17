@@ -45,6 +45,10 @@ library(tidyr)
 library(tibble)
 ```
 
+```{r}
+print(c("The output is is", params$outdir))
+```
+
 # About the Pipeline
 
 The pipeline runs the

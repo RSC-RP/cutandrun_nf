@@ -24,8 +24,10 @@ mkdir -p artifacts
 OUTDIR='../artifacts/results/mouse'
 
 # render the markdown file
-Rscript -e "rmarkdown::render('workflow_docs/run_workflow.Rmd',
+Rscript -e "print("$OUTDIR"); rmarkdown::render('workflow_docs/run_workflow.Rmd',
                                 encoding = 'UTF-8', 
-                                output_dir = '../artifacts/workflow_docs',
                                 params = list(outdir = "$OUTDIR"))"
 
+# copy the output to artifacts
+# https://github.com/rstudio/rmarkdown/issues/587
+cp -r workflow_docs ./artifacts/
