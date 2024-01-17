@@ -27,7 +27,5 @@ OUTDIR='../artifacts/results/mouse'
 Rscript -e "rmarkdown::render('workflow_docs/run_workflow.Rmd',
                                 encoding = 'UTF-8', 
                                 output_dir = '../artifacts/workflow_docs',
-                                params = list(outdir = $OUTDIR))"
+                                params = list(outdir = "$OUTDIR"))"
 
-# copy output to artifacts dir
-cp -r workflow_docs artifacts/
