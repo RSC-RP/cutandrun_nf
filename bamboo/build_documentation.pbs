@@ -21,12 +21,12 @@ echo "the current working directory is $PWD"
 # create artifacts directory
 echo "create artifact dir"
 mkdir -p artifacts
-OUTDIR='../artifacts/results/mouse'
+export OUTDIR='../artifacts/results/mouse'
 
 # render the markdown file
-Rscript -e "print("$OUTDIR"); rmarkdown::render('workflow_docs/run_workflow.Rmd',
-                                encoding = 'UTF-8', 
-                                params = list(outdir = "$OUTDIR"))"
+Rscript -e "rmarkdown::render('workflow_docs/run_workflow.Rmd',
+                               encoding = 'UTF-8', 
+                               params = list(outdir = Sys.getenv($OUTDIR))"
 
 # copy the output to artifacts
 # https://github.com/rstudio/rmarkdown/issues/587

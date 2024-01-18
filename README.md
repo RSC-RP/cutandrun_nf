@@ -1,4 +1,4 @@
-# Cut&Run Alignement, QC, and Peak Calling Pipeline
+# Cut&Run Alignment, QC, and Peak Calling Pipeline
 
 This pipeline uses publically available modules from [nf-core](https://nf-co.re/) with some locally created modules. The primary functionality is to run a workflow on 10s - 1000s of samples in parallel on the Seattle Children's Cybertron HPC using the PBS job scheduler and containerized scientific software.
 
