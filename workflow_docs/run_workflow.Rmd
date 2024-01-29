@@ -3,7 +3,7 @@ title: "Run Cut&Run Peak Calling"
 always_allow_html: true
 params:
   outdir:
-    value: NULL
+    value: ""
     input: text
 output:
   github_document:
@@ -43,10 +43,6 @@ library(magrittr)
 library(dplyr)
 library(tidyr)
 library(tibble)
-```
-
-```{r}
-print(c("The output is is", params$outdir))
 ```
 
 # About the Pipeline
@@ -525,14 +521,14 @@ knitr::include_graphics("images/dag.png")
 There will be the following file structure:
 
 ```{r eval=TRUE, echo = FALSE}
-if (is.null(outdir)) {
+outdir <- params$outdir
+
+if ( outdir == "" ) {
     outdir <- config_file[grep("\\soutdir.+\ = (.+)$", config_file)] %>% 
         str_split_fixed(., pattern = ' = ', n = 2) %>% 
         .[,2] %>% 
         gsub('\\"', "", . ) %>% 
         gsub("\\.", "..", .)
-} else {
-    outdir <- params$outdir
 }
 
 fs::dir_tree(outdir, recurse = 1)
