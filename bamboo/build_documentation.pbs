@@ -8,6 +8,9 @@
 #PBS -m a
 #PBS -o /active/taylor_s/build/RPDEV/cutandrun_nf/logs
 
+#95b3beda-8f4a-41a6-ac94-0aaad86bfd9d
+#207f23bf-acb6-4835-8bfe-142436acb58c
+
 set -eou pipefail
 
 # Set-up Environment, load R
@@ -21,9 +24,10 @@ echo "the current working directory is $PWD"
 # create artifacts directory
 echo "create artifact dir"
 mkdir -p artifacts
-export OUTDIR="../artifacts/results/mouse"
+export OUTDIR="$TEMP_DIR/artifacts/results/mouse"
 
 # render the markdown file
+Rscript -e "print(Sys.getenv('OUTDIR'))"
 Rscript -e "rmarkdown::render('workflow_docs/run_workflow.Rmd',
                                encoding = 'UTF-8', 
                                params = list(outdir = Sys.getenv('OUTDIR'))"
