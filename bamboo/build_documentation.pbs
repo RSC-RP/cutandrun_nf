@@ -28,7 +28,7 @@ export OUTDIR="$TEMP_DIR/artifacts/results/mouse"
 
 # render the markdown file
 Rscript -e "print(Sys.getenv('OUTDIR'))"
-Rscript -e "rmarkdown::render('workflow_docs/run_workflow.Rmd', encoding = 'UTF-8', params = list(outdir = Sys.getenv('OUTDIR')))"
+Rscript -e "rmarkdown::render('workflow_docs/run_workflow.Rmd', encoding = 'UTF-8', params = list(outdir = Sys.getenv('OUTDIR')), output_format = 'all')"
 
 # copy the output to artifacts
 # https://github.com/rstudio/rmarkdown/issues/587

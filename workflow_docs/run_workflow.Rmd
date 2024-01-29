@@ -6,12 +6,6 @@ params:
     value: ""
     input: text
 output:
-  github_document:
-    html_preview: false
-    toc: true
-    fig_width: 5
-    fig_height: 5
-    toc_depth: 3
   html_document:
     theme: yeti
     highlight: breezedark
@@ -21,6 +15,12 @@ output:
     number_sections: true
     fig_caption: true
     df_print: paged
+  github_document:
+    html_preview: false
+    toc: true
+    fig_width: 5
+    fig_height: 5
+    toc_depth: 3
 editor_options: 
   markdown: 
     wrap: 72
