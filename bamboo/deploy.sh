@@ -67,7 +67,7 @@ then
     rm -rf $OUTDIR
 fi
 
-echo "copy artifacts to deploy machine"
+echo "copy artifacts to deploy machine in $OUTDIR"
 # echo "if something needs to fail, have it exit with non-zero error code and Bamboo will fail the task"
 mkdir -p $OUTDIR
 cp -R $ART_DIR/* $OUTDIR/ || { echo "artifacts not found"; exit 1; }
