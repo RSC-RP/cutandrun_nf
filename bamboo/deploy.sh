@@ -68,10 +68,16 @@ then
 fi
 
 echo "copy artifacts to deploy machine in $OUTDIR"
-# echo "if something needs to fail, have it exit with non-zero error code and Bamboo will fail the task"
 mkdir -p $OUTDIR
-cp -R $ART_DIR/* $OUTDIR/ || { echo "artifacts not found"; exit 1; }
-chmod -R 775 $OUTDIR
+if [[ ! -d $ART_DIR ]]
+then
+    echo "artifacts not found"
+    exit 1
+fi
+
+# use scp/ssh since main branch deploy directory is on cybertron GPFS (not mounted)
+sshpass -f $SVC_PASS scp -r $ART_DIR/* $SVC_USER@$BUILD_SERVER:$OUTDIR
+sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "chmod -R 775 $OUTDIR"
 
 echo "FINISHED DEPLOYMENT"
 exit
