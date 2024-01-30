@@ -75,7 +75,7 @@ echo "schedule the build remotely"
 WORK_DIR="$ASSOC_DIR/nextflow_temp/$PLAN_NAME"
 sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "TEMP_DIR=$TEMP_DIR IMAGE_CACHE=$IMAGE_CACHE WORK_DIR=$WORK_DIR $TEMP_DIR/bamboo/build_pipeline.sh"
 sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "$TEMP_DIR/bamboo/pbs_remote.sh $TEMP_DIR/bamboo/build_documentation.pbs $TEMP_DIR"
-echo "remote job scheduled"
+echo "remote job scheduled on $BUILD_SERVER"
 wait # wait for pbs jobs to finish running
 
 echo "copy build output to bamboo machine"

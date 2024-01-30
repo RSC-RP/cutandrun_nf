@@ -68,7 +68,6 @@ then
 fi
 
 echo "copy artifacts to deploy machine in $OUTDIR"
-mkdir -p $OUTDIR
 if [[ ! -d $ART_DIR ]]
 then
     echo "artifacts not found"
@@ -76,6 +75,7 @@ then
 fi
 
 # use scp/ssh since main branch deploy directory is on cybertron GPFS (not mounted)
+sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "mkdir -p $OUTDIR"
 sshpass -f $SVC_PASS scp -r $ART_DIR/* $SVC_USER@$BUILD_SERVER:$OUTDIR
 sshpass -f $SVC_PASS ssh $SVC_USER@$BUILD_SERVER "chmod -R 775 $OUTDIR"
 
