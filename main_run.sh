@@ -18,13 +18,6 @@ then
     singularity cache clean --force
 fi
 
-if [[ $NFX_PROFILE =~ "apptainer" ]]
-then
-    module load apptainer
-    apptainer --version
-    apptainer cache clean --force
-fi
-
 # Nextflow run to execute the workflow 
 PREFIX=${REPORT}_${DATE}
 nextflow -C ${NFX_CONFIG}\
